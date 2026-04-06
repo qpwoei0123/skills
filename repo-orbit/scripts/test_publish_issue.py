@@ -38,11 +38,27 @@ class PublishIssueTest(unittest.TestCase):
     def test_github_pagination_finds_issue_on_second_page(self):
         responses = [
             (
-                [{"number": 1, "body": "not this"}],
+                [{
+                    "number": 1,
+                    "body": "\n".join([
+                        "본문",
+                        "",
+                        "format_version: repo-orbit/v2",
+                        "fingerprint: pipeline:owner/repo:SAFE:E0",
+                    ]),
+                }],
                 {"Link": '<https://api.github.com/next>; rel="next"'},
             ),
             (
-                [{"number": 7, "body": "pipeline:owner/repo:SAFE:E1"}],
+                [{
+                    "number": 7,
+                    "body": "\n".join([
+                        "본문",
+                        "",
+                        "format_version: repo-orbit/v2",
+                        "fingerprint: pipeline:owner/repo:SAFE:E1",
+                    ]),
+                }],
                 {"Link": ""},
             ),
         ]
@@ -60,6 +76,49 @@ class PublishIssueTest(unittest.TestCase):
             )
 
         self.assertEqual(issue["number"], 7)
+        self.assertEqual(len(responses), 0)
+
+    def test_find_existing_issue_requires_exact_fingerprint_match(self):
+        responses = [
+            (
+                [{
+                    "number": 1,
+                    "body": "\n".join([
+                        "본문",
+                        "",
+                        "format_version: repo-orbit/v2",
+                        "fingerprint: pipeline:owner/repo:SAFE:E10",
+                    ]),
+                }],
+                {"Link": '<https://api.github.com/next>; rel="next"'},
+            ),
+            (
+                [{
+                    "number": 2,
+                    "body": "\n".join([
+                        "본문",
+                        "",
+                        "format_version: repo-orbit/v2",
+                        "fingerprint: pipeline:owner/repo:SAFE:E1",
+                    ]),
+                }],
+                {"Link": ""},
+            ),
+        ]
+
+        def fake_api_request(method, url, platform, token, data=None):
+            return responses.pop(0)
+
+        with patch.object(MODULE, "api_request", side_effect=fake_api_request):
+            issue = MODULE.find_existing_issue(
+                "github",
+                "https://api.github.com",
+                "owner/repo",
+                "token",
+                "pipeline:owner/repo:SAFE:E1",
+            )
+
+        self.assertEqual(issue["number"], 2)
         self.assertEqual(len(responses), 0)
 
     def test_invalid_contract_returns_manual_payload(self):
@@ -98,6 +157,7 @@ class PublishIssueTest(unittest.TestCase):
 
         self.assertEqual(result["action"], "reopened")
         self.assertEqual(result["issue_id"], 9)
+        self.assertEqual(update_mock.call_args.args[-2], ["automation"])
         self.assertEqual(update_mock.call_args.args[-1], "reopen")
 
     def test_title_is_trimmed_before_create(self):
@@ -122,6 +182,33 @@ class PublishIssueTest(unittest.TestCase):
 
         self.assertEqual(result["action"], "created")
         self.assertEqual(len(create_mock.call_args.args[3]), 50)
+
+    def test_github_update_reapplies_labels(self):
+        fingerprint = "pipeline:owner/repo:SAFE:E3"
+
+        with patch.object(MODULE, "load_auth", return_value=("token", "https://api.github.com")):
+            with patch.object(MODULE, "github_ensure_labels"):
+                with patch.object(
+                    MODULE,
+                    "find_existing_issue",
+                    return_value={"number": 5, "state": "open"},
+                ):
+                    with patch.object(
+                        MODULE,
+                        "github_update",
+                        return_value={"number": 5, "html_url": "https://github.com/owner/repo/issues/5"},
+                    ) as update_mock:
+                        result = MODULE.publish_issue(
+                            "https://github.com/owner/repo",
+                            "[view: SAFE] 테스트",
+                            self.make_body(fingerprint),
+                            fingerprint,
+                            ["automation"],
+                        )
+
+        self.assertEqual(result["action"], "updated")
+        self.assertEqual(update_mock.call_args.args[-2], ["automation"])
+        self.assertEqual(update_mock.call_args.args[-1], "open")
 
 
 if __name__ == "__main__":

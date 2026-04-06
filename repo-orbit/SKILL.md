@@ -6,7 +6,7 @@ description: >
   프롬프트에서 직접 `$repo-orbit`처럼 호출해 사용한다.
 ---
 
-# repo-orbit
+# repo-orbit 🪐
 
 7개 관점(view)을 요일마다 하나씩 고정 배정해 레포를 분석하고, 기준을 통과한 finding만 이슈로 발행한다.
 각 view는 **3개의 서브 에이전트**를 병렬 실행하고, **Orchestrator**가 사실 관찰을 병합해 채점한다.

@@ -90,6 +90,14 @@ def normalize_title(title: str) -> str:
     return title[:MAX_TITLE_LENGTH]
 
 
+def has_exact_fingerprint(body: str | None, fingerprint: str) -> bool:
+    """본문 footer에 exact fingerprint가 있는지 확인한다."""
+    if not body:
+        return False
+    expected = f"fingerprint: {fingerprint}"
+    return any(line.strip() == expected for line in body.splitlines())
+
+
 def validate_issue_contract(title: str, body: str, fingerprint: str) -> str:
     """repo-orbit 발행 계약을 검증한다."""
     normalized_title = normalize_title(title)
@@ -98,7 +106,7 @@ def validate_issue_contract(title: str, body: str, fingerprint: str) -> str:
         raise PublishFallback("제목은 반드시 [view: <view_id>] 접두어로 시작해야 합니다.")
     if "format_version: repo-orbit/v2" not in body:
         raise PublishFallback("본문 하단에 format_version: repo-orbit/v2 가 필요합니다.")
-    if f"fingerprint: {fingerprint}" not in body:
+    if not has_exact_fingerprint(body, fingerprint):
         raise PublishFallback("본문 하단 fingerprint 값이 요청 fingerprint와 일치해야 합니다.")
 
     return normalized_title
@@ -217,7 +225,7 @@ def find_existing_issue(
 
     for issue in iterator:
         body = issue.get("body") if platform == "github" else issue.get("description")
-        if fingerprint in (body or ""):
+        if has_exact_fingerprint(body, fingerprint):
             return issue
     return None
 
@@ -276,6 +284,7 @@ def github_update(
     number: int,
     title: str,
     body: str,
+    labels: list[str],
     state: str = "open",
 ) -> dict:
     """GitHub 이슈를 업데이트한다."""
@@ -284,7 +293,7 @@ def github_update(
         f"{api_base}/repos/{project}/issues/{number}",
         "github",
         token,
-        {"title": title, "body": body, "state": state},
+        {"title": title, "body": body, "labels": labels, "state": state},
     )
     return payload
 
@@ -309,11 +318,12 @@ def gitlab_update(
     iid: int,
     title: str,
     body: str,
+    labels: list[str],
     state_event: str | None = None,
 ) -> dict:
     """GitLab 이슈를 업데이트한다."""
     encoded = urllib.parse.quote(project, safe="")
-    payload = {"title": title, "description": body}
+    payload = {"title": title, "description": body, "labels": ",".join(labels)}
     if state_event:
         payload["state_event"] = state_event
 
@@ -404,6 +414,7 @@ def publish_issue(
                 existing["number"],
                 title,
                 body,
+                labels,
                 "open",
             )
             action = "reopened" if is_closed else "updated"
@@ -422,6 +433,7 @@ def publish_issue(
             existing["iid"],
             title,
             body,
+            labels,
             "reopen" if is_closed else None,
         )
         action = "reopened" if is_closed else "updated"
