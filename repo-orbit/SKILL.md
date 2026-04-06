@@ -3,8 +3,7 @@ name: repo-orbit
 description: >
   레포지터리를 요일별 고정 view(SAFE/ARCH/DEP/BUILD/DATA/OPS/DOC)로 분석하고
   기준을 통과한 finding만 GitHub 또는 GitLab 이슈로 자동 발행하는 파이프라인 스킬.
-  프롬프트에서 직접 `$repo-orbit`, `$repo-orbit --summary`, `$repo-orbit --focus-view BUILD`
-  처럼 호출해 사용한다.
+  프롬프트에서 직접 `$repo-orbit`처럼 호출해 사용한다.
 ---
 
 # repo-orbit
@@ -33,8 +32,7 @@ repo-orbit/
 │   ├── execution-lifecycle.md
 │   ├── triage-rules.md
 │   ├── output-templates.md
-│   ├── coverage-log-schema.md
-│   └── view-rotation.md
+│   └── coverage-log-schema.md
 └── scripts/
     ├── publish_issue.py
     └── test_publish_issue.py
@@ -44,10 +42,6 @@ repo-orbit/
 
 ```text
 $repo-orbit
-$repo-orbit --summary
-$repo-orbit --focus-view BUILD
-$repo-orbit --multi-view SAFE,DEP,OPS
-$repo-orbit --branch feature/my-branch
 ```
 
 ## 요일별 View 배정
@@ -62,22 +56,14 @@ $repo-orbit --branch feature/my-branch
 | 토 | `OPS`   | 운영 관측성 | 장애 시 로그·알림·복구 경로를 빠르게 찾을 수 있는가 |
 | 일 | `DOC`   | 지식 내구성 | 문서·의사결정 기록·온보딩 경로가 남아 있는가 |
 
-## 실행 옵션
+## 실행 방식
 
-이 스킬은 실제 CLI parser가 아니라 **프롬프트 관례**로 옵션을 해석한다.
-
-| 옵션 | 설명 |
-|------|------|
-| `--focus-view <VIEW>` | 요일 배정 무시하고 지정 view 실행 |
-| `--multi-view <V1,V2>` | 복수 view를 LRU 순으로 실행 |
-| `--branch <name>` | `origin/<name>` HEAD 기준으로 분석 |
-| `--summary` | 이슈 본문과 최종 실행 보고를 요약형으로 렌더링 |
-
-복수 view 실행, 강제 지정 세부 동작, 편중 경고는 [`references/view-rotation.md`](references/view-rotation.md)에서만 읽는다.
+이 스킬은 별도 옵션 없이 실행한다.
+오늘 날짜 기준으로 view 하나를 선택해 Step 1~6을 순서대로 수행한다.
 
 ## 파이프라인 핵심
 
-1. **View 결정**: 오늘 날짜 기준으로 기본 view를 선택하거나 `--focus-view`를 적용한다.
+1. **View 결정**: 오늘 날짜 기준으로 기본 view를 선택한다.
 2. **레포 구조 파악**: 상위 트리와 설정 파일을 확인해 스킵 조건을 판정한다.
 3. **사실 관찰 수집**: 선택된 view의 서브 에이전트 3개를 병렬 실행해 사실 관찰만 받는다.
 4. **병합·채점**: 중복 관찰을 병합하고 Orchestrator가 impact/urgency/confidence/actionability를 부여한다.
@@ -101,7 +87,6 @@ $repo-orbit --branch feature/my-branch
 일 DOC
 ```
 
-- `--focus-view DATA` 또는 `--focus-view "데이터 구조 & 흐름"` 이 있으면 요일 배정을 무시한다.
 - 날짜·요일은 항상 확인하되, 요일과 view가 달라도 오류가 아니다.
 - Step 1 완료 후 최소한 아래를 보고한다.
 
@@ -117,7 +102,6 @@ Orchestrator가 직접 아래를 확인한다.
 
 **브랜치 기준:** 파일 트리 확인 전 반드시 `git fetch`를 먼저 실행한다. 원격 최신 상태를 기준으로 분석한다.
 기본값은 `origin/main` 또는 `origin/master`의 최신 HEAD다.
-`--branch <branch-name>` 옵션이 있으면 `origin/<branch-name>` HEAD를 기준으로 한다.
 
 - 파일 트리 상위 2단계
 - `package.json`, `vite.config.*`, `tsconfig.*`
@@ -321,14 +305,12 @@ python3 scripts/publish_issue.py \
   - Step 2~6 공통 제어 순서와 어떤 파일을 언제 읽는지 필요할 때
 - `agents/<VIEW>.md`
   - 선택된 view의 서브태스크와 스킵 조건이 필요할 때
-- [`references/view-rotation.md`](references/view-rotation.md)
-  - `--focus-view`, `--multi-view`, 편중 경고, 강제 지정 세부 동작이 필요할 때
 - [`references/execution-lifecycle.md`](references/execution-lifecycle.md)
   - observation/rebuttal/query/result.json/comment_history/reexamination의 정확한 형식이 필요할 때
 - [`references/triage-rules.md`](references/triage-rules.md)
   - triage override, 재검토 트리거, 상세 스킵 정책이 필요할 때
 - [`references/output-templates.md`](references/output-templates.md)
-  - full/summary 이슈 본문과 최종 실행 보고 템플릿이 필요할 때
+  - 이슈 본문과 최종 실행 보고 템플릿이 필요할 때
 - [`references/coverage-log-schema.md`](references/coverage-log-schema.md)
   - coverage-log 저장 위치와 스키마, 에이전트 실패 기록 방식이 필요할 때
 - [`scripts/publish_issue.py`](scripts/publish_issue.py)

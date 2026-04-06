@@ -37,8 +37,6 @@ repo-orbit/
 
 ```text
 $repo-orbit
-$repo-orbit --summary
-$repo-orbit --focus-view BUILD
 ```
 
 발행 스크립트를 직접 실행할 때:
