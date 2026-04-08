@@ -2,10 +2,18 @@
 
 `repo-orbit`의 Step 6 발행 템플릿과 최종 실행 보고 템플릿을 모아 둔 문서다.
 
+## format_version
+
+현재: **`repo-orbit/v2`**
+
+이슈 본문 footer에 `format_version: repo-orbit/v2`가 찍힌다.
+기존 이슈를 업데이트할 때 footer의 `format_version`이 현재 버전과 다르면, 점수·판정은 유지한 채 **현재 포맷으로 본문을 재작성**한다.
+
 ## 목차
 
 - 이슈 제목 형식
 - 이슈 본문 템플릿
+- 출력 예시
 - 발행 필수 파라미터
 - 최종 실행 보고
 
@@ -18,78 +26,74 @@
 예:
 
 ```text
-[view: DATA] src/features/order/model/store.ts 중복 상태 제거
+[view: DEP] .github/workflows/ci.yml npm install → npm ci 교체
 ```
 
 ## 이슈 본문 템플릿
 
 ```markdown
-## [view: {view_id}] {제목}
-
+> [!WARNING]
 > {result.json claim}
+>
+> {result.json impact_surface — 영향 범위를 구체적으로. API 엔드포인트, 빌드 산출물 경로, DB 테이블 등.}
 
-## 왜 중요한가
+```diff
+{문제 코드 before/after — 코드 근거가 없으면 이 블록 생략}
+```
 
-> {result.json impact_surface}
+`{result.json evidence[0]}` (file:line)
 
-## 근거
-
-> {result.json evidence[0]} (file:line)
-
-## 지금 할 일
-
+> [!TIP]
 > {result.json actionability.next_step}
+>
+> - [ ] {구체적 행동 1}
+> - [ ] {구체적 행동 2 — 단일 행동이면 1줄만}
 
-## 분석 히스토리
+---
 
-이 finding이 거쳐온 전체 흐름을 시간순으로 기록한다.
-각 단계의 주체가 자신의 관찰·판단·반론을 직접 코멘트로 남긴다.
+> **분석 히스토리**
 
-### N. 1차 제출 · Agent {X} ({서브태스크 역할})
+#### 1차 제출 · Agent {X} ({역할})
 
-{Agent의 첫 관찰을 직접 화법으로}
+{관찰 직접 화법}
 
 > 근거: `{file:line}`, `{file:line}`
 
-### N. 교차 반박 · Agent {Y} ({서브태스크 역할})   ← 발생했을 때만
+#### 교차 반박 · Agent {Y} ({역할})   ← 발생했을 때만
 
-{Agent Y의 반박}
+{반박}
 
 > 근거: `{file:line}`
 
-### N. 1차 판정 · Orchestrator
+#### 판정 · Orchestrator
 
-{초기 채점과 판정 이유}
-
-> 판정: `passed` 또는 `skipped ({사유})`
 > 점수: impact {n}, urgency {n}, confidence {h/m/l}, actionability {n}
 
-### N. Orchestrator 반박   ← 재조사 발동 시만
+#### 재조사 · Agent {X}   ← 발동 시만
 
-{기술적 의문 제기}
+> 근거: `{file:line}` · 결론: `claim_refined` / `claim_withdrawn` / `claim_upheld`
 
-### N. 재조사 · Agent {X} ({서브태스크 역할})   ← 재조사 발동 시만
+#### 이의 제기 · Agent {X}   ← 발동 시만
 
-{재조사 결과}
+{이의 근거와 새 evidence 설명}
 
-> 근거: `{file:line}`
-> 결론: `claim_refined` / `claim_withdrawn` / `claim_upheld`
+> 새 근거: `{file:line}`, `{file:line}`
+> 요청: {contested_field} {current_score} → {requested_score}
 
-### N. 최종 판정 · Orchestrator   ← 재조사 발동 시만
+#### 이의 판정 · Orchestrator   ← 발동 시만
 
-{재조사 후 최종 판단}
+> 판정: `sustained` / `overruled` · 사유: {한 문장}
 
-> 판정: `passed` 또는 `skipped (확정)`
-> 점수 변화: `{예: actionability 2 → 4}`
+---
 
-## 이슈화 근거
+> **이슈화 근거**
 
-| 항목 | 점수 | 기준치 | 판정 | 비고 |
-|------|------|--------|------|------|
-| impact | {n}/5 | ≥ 4 | ✅ | {왜 이 점수인지 한 줄} |
-| urgency | {n}/5 | ≥ 3 | ✅ | {왜 이 점수인지 한 줄} |
-| confidence | {high/medium} | ≠ low | ✅ | {근거 파일 또는 직접 확인 여부} |
-| actionability | {n}/5 | ≥ 3 | ✅ | {적용된 rule 나열} |
+| 항목 | 점수 | 기준 | 근거 |
+|------|------|------|------|
+| impact | {n}/5 | ≥ 4 | {한 줄} |
+| urgency | {n}/5 | ≥ 3 | {한 줄} |
+| confidence | {h/m} | ≠ low | {한 줄} |
+| actionability | {n}/5 | ≥ 3 | {한 줄} |
 
 `format_version: repo-orbit/v2`
 `fingerprint: pipeline:{repo}:{view_id}:{finding_id}`
@@ -97,12 +101,132 @@
 
 작성 규칙:
 
-- 첫 화면에서는 `왜 중요한가`, `근거`, `지금 할 일`이 먼저 보여야 한다.
-- `왜 중요한가`와 `근거`를 섞지 않는다.
-- `왜 중요한가`에는 가능하면 실제 산출물 경로(`dist/**`, `.next/` 등)를 쓴다.
-- 분석 히스토리는 접지 않는다.
+- `[!WARNING]` 블록 안에 claim과 impact_surface를 함께 넣는다. 빈 줄(`>`)로 구분한다.
+- `diff` 블록은 문제 코드의 before/after를 보여줄 수 있을 때만 쓴다. 코드로 보여줄 수 없으면 생략하고 evidence 경로만 남긴다.
+- `[!TIP]` 블록 안에 next_step 한 문장과 체크리스트를 함께 넣는다.
+- `##` 제목은 사용하지 않는다. alert 블록과 코드 블록이 시각적 구조를 대신한다.
+- 분석 히스토리와 이슈화 근거는 `---` 구분선 뒤에 펼쳐서 보여준다.
 - `format_version`은 본문 하단 코드 한 줄로 남긴다.
-- 상단 카드 구조나 필수 섹션 구성이 바뀌면 `format_version`을 올린다.
+
+## 출력 예시
+
+아래는 실제로 발행되는 이슈 본문 예시다.
+
+```markdown
+> [!WARNING]
+> CI 워크플로우가 `npm install`을 사용해 lockfile을 무시하고 있어, 로컬과 CI 빌드 간 패키지 버전이 달라질 수 있다.
+>
+> `npm install`은 `package-lock.json`이 있어도 최신 호환 버전을 새로 받을 수 있다. CI에서만 재현되는 빌드 실패가 이 차이에서 비롯되며, 배포 아티팩트의 재현성이 보장되지 않는다.
+
+```diff
+- run: npm install
++ run: npm ci
+```
+
+`.github/workflows/ci.yml:14`
+
+> [!TIP]
+> `.github/workflows/ci.yml:14`의 `npm install`을 `npm ci`로 교체한다.
+>
+> - [ ] `ci.yml:14` `npm install` → `npm ci` 변경
+> - [ ] `package-lock.json`이 `.gitignore`에서 제외되어 있는지 확인
+
+---
+
+> **분석 히스토리**
+
+#### 1차 제출 · Agent B (CI 설정 + lockfile 상태 분석)
+
+`.github/workflows/ci.yml` 14번째 줄에서 `npm install`이 사용되고 있음을 직접 확인했다. `package-lock.json`은 존재하지만 이 커맨드로는 무시된다.
+
+> 근거: `.github/workflows/ci.yml:14`, `package-lock.json:1`
+
+#### 판정 · Orchestrator
+
+CI 전 단계에 걸쳐 재현성에 영향을 주므로 impact 4로 판정. 다음 PR 병합 시점부터 즉시 재현 가능하므로 urgency 3.
+
+> 점수: impact 4, urgency 3, confidence high, actionability 4
+
+---
+
+> **이슈화 근거**
+
+| 항목 | 점수 | 기준 | 근거 |
+|------|------|------|------|
+| impact | 4/5 | ≥ 4 | CI 전 단계 재현성에 직접 영향 |
+| urgency | 3/5 | ≥ 3 | 다음 배포 시 즉시 재현 가능 |
+| confidence | high | ≠ low | ci.yml:14 직접 확인 |
+| actionability | 4/5 | ≥ 3 | 파일경로+2, 식별자+1, 한문장+1 |
+
+`format_version: repo-orbit/v2`
+`fingerprint: pipeline:owner/repo:DEP:E1`
+```
+
+### 이의 제기 포함 예시
+
+아래는 에이전트 이의 제기가 인용(sustained)되어 triage를 통과한 경우의 이슈 본문 예시다.
+
+```markdown
+> [!WARNING]
+> 인증 미들웨어가 `/api/admin/*` 경로에 적용되지 않아 관리자 API가 무인증 접근에 노출된다.
+>
+> `src/middleware/auth.ts`의 경로 매칭 패턴이 `/api/admin`을 포함하지 않는다. 관리자 전용 엔드포인트(사용자 삭제, 설정 변경)가 인증 없이 호출 가능하다.
+
+```diff
+- app.use('/api/user/*', authMiddleware)
++ app.use('/api/user/*', authMiddleware)
++ app.use('/api/admin/*', authMiddleware)
+```
+
+`src/middleware/auth.ts:12`
+
+> [!TIP]
+> `src/middleware/auth.ts:12`의 경로 매칭에 `/api/admin/*` 패턴을 추가한다.
+>
+> - [ ] `auth.ts:12` 경로 목록에 `/api/admin/*` 추가
+> - [ ] 관리자 API 엔드포인트에 대한 인증 테스트 작성
+
+---
+
+> **분석 히스토리**
+
+#### 1차 제출 · Agent A (라우트 + 미들웨어 분석)
+
+`src/middleware/auth.ts` 12번째 줄의 경로 매칭 배열에 `/api/admin` 패턴이 빠져 있음을 확인했다.
+
+> 근거: `src/middleware/auth.ts:12`
+
+#### 판정 · Orchestrator
+
+인증 누락이지만 admin 경로 사용 빈도가 불명확하여 impact 3으로 판정. triage 기준 미달(impact < 4).
+
+> 점수: impact 3, urgency 4, confidence high, actionability 4
+
+#### 이의 제기 · Agent A
+
+admin API가 사용자 삭제와 시스템 설정 변경을 포함하고 있어 영향 범위가 impact 3보다 넓다.
+
+> 새 근거: `src/api/routes.ts:42`, `src/api/routes.ts:58`
+> 요청: impact 3 → 5
+
+#### 이의 판정 · Orchestrator
+
+> 판정: `sustained` · 사유: admin API에 deleteUser, updateSystemConfig이 포함되어 핵심 보안 경로에 해당
+
+---
+
+> **이슈화 근거**
+
+| 항목 | 점수 | 기준 | 근거 |
+|------|------|------|------|
+| impact | 5/5 | ≥ 4 | 관리자 API(사용자 삭제, 시스템 설정) 무인증 노출 |
+| urgency | 4/5 | ≥ 3 | 현재 production에서 재현 가능 |
+| confidence | high | ≠ low | auth.ts:12 직접 확인 + routes.ts 추가 근거 |
+| actionability | 4/5 | ≥ 3 | 파일경로+2, 식별자+1, 한문장+1 |
+
+`format_version: repo-orbit/v2`
+`fingerprint: pipeline:owner/repo:SAFE:E3`
+```
 
 ## 발행 필수 파라미터
 

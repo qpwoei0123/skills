@@ -9,10 +9,17 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import time
 import urllib.error
 import urllib.parse
 import urllib.request
 from pathlib import Path
+
+
+# 재시도 정책: 429(rate limit) 와 5xx(일시 오류) 에 한정
+_RETRY_STATUS = {429, 500, 502, 503, 504}
+_MAX_RETRIES = 3
+_BASE_DELAY = 1.0  # seconds
 
 
 class PublishFallback(Exception):
@@ -119,7 +126,11 @@ def api_request(
     token: str,
     data: dict | None = None,
 ) -> tuple[object, dict]:
-    """JSON API 요청을 보내고 본문과 헤더를 반환한다."""
+    """JSON API 요청을 보내고 본문과 헤더를 반환한다.
+
+    429(rate limit)와 5xx(일시 오류)는 최대 _MAX_RETRIES 회 지수 백오프 재시도한다.
+    그 외 4xx는 즉시 PublishFallback을 올린다.
+    """
     body = json.dumps(data).encode("utf-8") if data is not None else None
     headers = {
         "Accept": "application/json",
@@ -131,18 +142,37 @@ def api_request(
     else:
         headers["PRIVATE-TOKEN"] = token
 
-    request = urllib.request.Request(url, data=body, headers=headers, method=method)
+    last_error: Exception | None = None
 
-    try:
-        with urllib.request.urlopen(request) as response:
-            raw = response.read().decode("utf-8")
-            payload = json.loads(raw) if raw else {}
-            return payload, dict(response.headers.items())
-    except urllib.error.HTTPError as error:
-        raw = error.read().decode("utf-8", errors="replace")
-        raise PublishFallback(f"HTTP {error.code} - {url}\n{raw}") from error
-    except urllib.error.URLError as error:
-        raise PublishFallback(f"네트워크 오류 - {error.reason}") from error
+    for attempt in range(_MAX_RETRIES + 1):
+        request = urllib.request.Request(url, data=body, headers=headers, method=method)
+        try:
+            with urllib.request.urlopen(request) as response:
+                raw = response.read().decode("utf-8")
+                payload = json.loads(raw) if raw else {}
+                return payload, dict(response.headers.items())
+        except urllib.error.HTTPError as error:
+            if error.code in _RETRY_STATUS and attempt < _MAX_RETRIES:
+                # Retry-After 헤더가 있으면 그 값을 존중한다
+                retry_after_raw = error.headers.get("Retry-After", "")
+                try:
+                    delay = float(retry_after_raw)
+                except (ValueError, TypeError):
+                    delay = _BASE_DELAY * (2 ** attempt)
+                last_error = error
+                time.sleep(delay)
+                continue
+            raw = error.read().decode("utf-8", errors="replace")
+            raise PublishFallback(f"HTTP {error.code} - {url}\n{raw}") from error
+        except urllib.error.URLError as error:
+            if attempt < _MAX_RETRIES:
+                time.sleep(_BASE_DELAY * (2 ** attempt))
+                last_error = error
+                continue
+            raise PublishFallback(f"네트워크 오류 - {error.reason}") from error
+
+    # 재시도 소진
+    raise PublishFallback(f"재시도 {_MAX_RETRIES}회 초과: {last_error}") from last_error
 
 
 def build_manual_payload(
@@ -466,6 +496,11 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--body-file", help="이슈 본문 파일 경로")
     parser.add_argument("--fingerprint", required=True, help="중복 체크용 fingerprint")
     parser.add_argument("--labels", default="automation", help="쉼표 구분 라벨 목록")
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="API 호출 없이 발행 payload만 출력한다.",
+    )
     return parser.parse_args()
 
 
@@ -483,6 +518,30 @@ def main() -> None:
     args = parse_args()
     body = read_body(args)
     labels = [item.strip() for item in args.labels.split(",") if item.strip()]
+
+    if args.dry_run:
+        platform, _, project = detect_platform(args.repo_url)
+        safe_title = normalize_title(args.title)
+        label_text = ", ".join(labels) if labels else "(없음)"
+        result = {
+            "action": "dry_run",
+            "platform": platform,
+            "project": project,
+            "title": safe_title,
+            "fingerprint": args.fingerprint,
+            "labels": labels,
+            "copy_paste_text": "\n".join([
+                "[dry-run — 실제 발행 없음]",
+                f"title: {safe_title}",
+                f"labels: {label_text}",
+                f"fingerprint: {args.fingerprint}",
+                "",
+                body,
+            ]),
+        }
+        print(json.dumps(result, ensure_ascii=False, indent=2))
+        return
+
     result = publish_issue(args.repo_url, args.title, body, args.fingerprint, labels)
     print(json.dumps(result, ensure_ascii=False, indent=2))
 
