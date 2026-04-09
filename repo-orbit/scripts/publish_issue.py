@@ -436,6 +436,19 @@ def publish_issue(
 
         is_closed = (existing.get("state") or "") == "closed"
 
+        # 닫힌 이슈는 사람이 의도적으로 닫은 것일 수 있으므로 reopen하지 않는다.
+        # Orchestrator가 보고에서 언급하고, 사용자가 원할 때 새 이슈를 열 수 있도록 한다.
+        if is_closed:
+            issue_id = existing.get("number") or existing.get("iid")
+            issue_url = existing.get("html_url") or existing.get("web_url", "")
+            return {
+                "action": "skipped_closed",
+                "platform": platform,
+                "project": project,
+                "issue_id": issue_id,
+                "issue_url": issue_url,
+            }
+
         if platform == "github":
             result = github_update(
                 api_base,
@@ -445,11 +458,10 @@ def publish_issue(
                 title,
                 body,
                 labels,
-                "open",
+                None,
             )
-            action = "reopened" if is_closed else "updated"
             return {
-                "action": action,
+                "action": "updated",
                 "platform": platform,
                 "project": project,
                 "issue_id": result["number"],
@@ -464,11 +476,10 @@ def publish_issue(
             title,
             body,
             labels,
-            "reopen" if is_closed else None,
+            None,
         )
-        action = "reopened" if is_closed else "updated"
         return {
-            "action": action,
+            "action": "updated",
             "platform": platform,
             "project": project,
             "issue_id": result["iid"],

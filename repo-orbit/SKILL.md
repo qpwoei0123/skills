@@ -1,7 +1,8 @@
 ---
 name: repo-orbit
-version: 1.4.0
 license: Apache-2.0
+metadata:
+  version: 1.5.0
 description: >
   레포지터리를 7가지 관점(SAFE/ARCH/DEP/BUILD/DATA/OPS/DOC)으로 자동 분석하고
   기준을 통과한 기술 이슈만 GitHub/GitLab 이슈로 발행하는 코드베이스 점검 파이프라인.
@@ -436,7 +437,7 @@ dry-run이 아닌 경우 triage 통과 finding마다 `python3 scripts/publish_is
 - 페이지네이션 처리
 - JSON 구조 파싱
 - 동일 fingerprint open 이슈 update
-- 동일 fingerprint closed 이슈 reopen + update
+- 동일 fingerprint closed 이슈 → reopen하지 않고 `skipped_closed`로 반환
 - 토큰/네트워크 오류 시 manual payload 반환
 
 Orchestrator는 중복 체크용 임시 `grep` 로직을 만들지 않는다.
@@ -455,10 +456,10 @@ python3 scripts/publish_issue.py \
 ### 핵심 규칙
 
 - 제목은 50자 이내로 자른다.
-- 이슈 본문 하단에 `format_version: repo-orbit/v2`와 `fingerprint`를 반드시 포함한다.
+- 이슈 본문 하단에 `format_version: repo-orbit/v2.0.1`와 `fingerprint`를 반드시 포함한다.
 - 동일 fingerprint open 이슈 → 제목·본문·label을 현재 포맷으로 update.
-- 동일 fingerprint closed 이슈 → reopen + update.
-- update·reopen 모두 발행 성공 건수에 포함한다.
+- 동일 fingerprint closed 이슈 → reopen하지 않는다. 최종 보고에 "이미 닫힌 이슈" 항목으로 기록하고, 사용자가 원하면 새 이슈를 열 수 있음을 안내한다.
+- update 성공만 발행 성공 건수에 포함한다. `skipped_closed`는 별도 항목으로 집계한다.
 - 발행 실패 항목이 있어도 나머지 finding은 계속 진행한다.
 - 스크립트가 `manual_required`를 반환하면 title/body/labels/fingerprint를 그대로 최종 보고에 포함한다.
 
@@ -513,4 +514,4 @@ python3 scripts/publish_issue.py \
 - Step 3에서는 선택된 view 파일만 읽는다.
 - fingerprint는 `pipeline:<repo>:<view_id>:<finding_id>`를 유지한다.
 - 동일 fingerprint open 이슈는 스킵하지 않고 최신 `format_version`으로 update한다.
-- 동일 fingerprint closed 이슈는 reopen + update한다.
+- 동일 fingerprint closed 이슈는 reopen하지 않는다. 최종 보고에 별도 항목으로 표시하고 사용자에게 안내한다.

@@ -4,9 +4,9 @@
 
 ## format_version
 
-현재: **`repo-orbit/v2`**
+현재: **`repo-orbit/v2.0.1`**
 
-이슈 본문 footer에 `format_version: repo-orbit/v2`가 찍힌다.
+이슈 본문 footer에 `format_version: repo-orbit/v2.0.1`가 찍힌다.
 기존 이슈를 업데이트할 때 footer의 `format_version`이 현재 버전과 다르면, 점수·판정은 유지한 채 **현재 포맷으로 본문을 재작성**한다.
 
 ## 목차
@@ -26,16 +26,17 @@
 예:
 
 ```text
-[view: DEP] .github/workflows/ci.yml npm install → npm ci 교체
+[view: DEP] .gitlab-ci.yml pnpm 버전 고정
 ```
 
 ## 이슈 본문 템플릿
 
-```markdown
-> [!WARNING]
-> {result.json claim}
->
-> {result.json impact_surface — 영향 범위를 구체적으로. API 엔드포인트, 빌드 산출물 경로, DB 테이블 등.}
+````markdown
+## 문제
+
+{result.json claim}
+
+{result.json impact_surface — 영향 범위를 구체적으로. API 엔드포인트, 빌드 산출물 경로, DB 테이블 등.}
 
 ```diff
 {문제 코드 before/after — 코드 근거가 없으면 이 블록 생략}
@@ -43,15 +44,16 @@
 
 `{result.json evidence[0]}` (file:line)
 
-> [!TIP]
-> {result.json actionability.next_step}
->
-> - [ ] {구체적 행동 1}
-> - [ ] {구체적 행동 2 — 단일 행동이면 1줄만}
+## 조치
+
+{result.json actionability.next_step}
+
+- [ ] {구체적 행동 1}
+- [ ] {구체적 행동 2 — 단일 행동이면 1줄만}
 
 ---
 
-> **분석 히스토리**
+## 분석 히스토리
 
 #### 1차 제출 · Agent {X} ({역할})
 
@@ -86,7 +88,7 @@
 
 ---
 
-> **이슈화 근거**
+## 이슈화 근거
 
 | 항목 | 점수 | 기준 | 근거 |
 |------|------|------|------|
@@ -95,82 +97,86 @@
 | confidence | {h/m} | ≠ low | {한 줄} |
 | actionability | {n}/5 | ≥ 3 | {한 줄} |
 
-`format_version: repo-orbit/v2`
+`format_version: repo-orbit/v2.0.1`
 `fingerprint: pipeline:{repo}:{view_id}:{finding_id}`
-```
+````
 
 작성 규칙:
 
-- `[!WARNING]` 블록 안에 claim과 impact_surface를 함께 넣는다. 빈 줄(`>`)로 구분한다.
+- `## 문제` 헤더 아래에 claim과 impact_surface를 빈 줄로 구분해 넣는다.
 - `diff` 블록은 문제 코드의 before/after를 보여줄 수 있을 때만 쓴다. 코드로 보여줄 수 없으면 생략하고 evidence 경로만 남긴다.
-- `[!TIP]` 블록 안에 next_step 한 문장과 체크리스트를 함께 넣는다.
-- `##` 제목은 사용하지 않는다. alert 블록과 코드 블록이 시각적 구조를 대신한다.
-- 분석 히스토리와 이슈화 근거는 `---` 구분선 뒤에 펼쳐서 보여준다.
+- `## 조치` 헤더 아래에 next_step 한 문장과 체크리스트를 넣는다.
+- `## 분석 히스토리`와 `## 이슈화 근거`는 `---` 구분선 뒤에 `##` 헤더로 표시한다.
+- GitLab은 `[!WARNING]` / `[!TIP]` 구문을 렌더링하지 않으므로 사용하지 않는다.
 - `format_version`은 본문 하단 코드 한 줄로 남긴다.
 
 ## 출력 예시
 
 아래는 실제로 발행되는 이슈 본문 예시다.
 
-```markdown
-> [!WARNING]
-> CI 워크플로우가 `npm install`을 사용해 lockfile을 무시하고 있어, 로컬과 CI 빌드 간 패키지 버전이 달라질 수 있다.
->
-> `npm install`은 `package-lock.json`이 있어도 최신 호환 버전을 새로 받을 수 있다. CI에서만 재현되는 빌드 실패가 이 차이에서 비롯되며, 배포 아티팩트의 재현성이 보장되지 않는다.
+````markdown
+## 문제
+
+CI `before_script`가 `npm install -g pnpm`으로 `pnpm`을 최신 전역 패키지로 설치해, `package.json`의 `packageManager` 고정값 `pnpm@10.14.0`을 우회한다.
+
+이 경로는 모든 CI job의 `pnpm install --frozen-lockfile`에 영향을 주므로, 로컬과 CI의 패키지 매니저 버전이 달라진 상태에서 lockfile 해석과 설치 동작이 어긋날 수 있다.
 
 ```diff
-- run: npm install
-+ run: npm ci
+-  - npm install -g pnpm
++  - corepack enable
++  - corepack prepare pnpm@10.14.0 --activate
 ```
 
-`.github/workflows/ci.yml:14`
+`.gitlab-ci.yml:162`
 
-> [!TIP]
-> `.github/workflows/ci.yml:14`의 `npm install`을 `npm ci`로 교체한다.
->
-> - [ ] `ci.yml:14` `npm install` → `npm ci` 변경
-> - [ ] `package-lock.json`이 `.gitignore`에서 제외되어 있는지 확인
+## 조치
+
+`.gitlab-ci.yml:162`의 `npm install -g pnpm`을 `corepack enable && corepack prepare pnpm@10.14.0 --activate`로 바꿔 `package.json:213`의 `packageManager`와 같은 `pnpm` 버전을 쓰게 한다.
+
+- [ ] `.gitlab-ci.yml:162` 전역 `pnpm` 설치 제거
+- [ ] `package.json:213`의 `packageManager` 값과 동일한 버전으로 활성화
 
 ---
 
-> **분석 히스토리**
+## 분석 히스토리
 
-#### 1차 제출 · Agent B (CI 설정 + lockfile 상태 분석)
+#### 1차 제출 · Agent A (패키지 버전 고정 + lockfile 상태 분석)
 
-`.github/workflows/ci.yml` 14번째 줄에서 `npm install`이 사용되고 있음을 직접 확인했다. `package-lock.json`은 존재하지만 이 커맨드로는 무시된다.
+`package.json` 213번째 줄에 `pnpm@10.14.0`이 고정돼 있지만, `.gitlab-ci.yml` 161~163번째 줄은 매번 `npm install -g pnpm` 뒤에 `pnpm install --frozen-lockfile`을 실행한다.
 
-> 근거: `.github/workflows/ci.yml:14`, `package-lock.json:1`
+> 근거: `package.json:213`, `.gitlab-ci.yml:161`, `.gitlab-ci.yml:162`, `.gitlab-ci.yml:163`
 
 #### 판정 · Orchestrator
 
-CI 전 단계에 걸쳐 재현성에 영향을 주므로 impact 4로 판정. 다음 PR 병합 시점부터 즉시 재현 가능하므로 urgency 3.
+CI 전 job의 의존성 설치 경로에 직접 영향을 주므로 impact 4, 다음 파이프라인부터 바로 재현 가능한 drift(버전 표류)라 urgency 4로 판정했다.
 
-> 점수: impact 4, urgency 3, confidence high, actionability 4
+> 점수: impact 4, urgency 4, confidence high, actionability 5
 
 ---
 
-> **이슈화 근거**
+## 이슈화 근거
 
 | 항목 | 점수 | 기준 | 근거 |
 |------|------|------|------|
-| impact | 4/5 | ≥ 4 | CI 전 단계 재현성에 직접 영향 |
-| urgency | 3/5 | ≥ 3 | 다음 배포 시 즉시 재현 가능 |
-| confidence | high | ≠ low | ci.yml:14 직접 확인 |
-| actionability | 4/5 | ≥ 3 | 파일경로+2, 식별자+1, 한문장+1 |
+| impact | 4/5 | ≥ 4 | 모든 CI job의 `pnpm install --frozen-lockfile` 경로에 직접 영향 |
+| urgency | 4/5 | ≥ 3 | 다음 파이프라인부터 repo 고정 버전과 다른 `pnpm`을 받을 수 있음 |
+| confidence | high | ≠ low | `package.json:213`과 `.gitlab-ci.yml:161-163` 직접 확인 |
+| actionability | 5/5 | ≥ 3 | 파일경로+2, 식별자+1, 명령어+1, 한문장+1 |
 
-`format_version: repo-orbit/v2`
+`format_version: repo-orbit/v2.0.1`
 `fingerprint: pipeline:owner/repo:DEP:E1`
-```
+````
 
 ### 이의 제기 포함 예시
 
 아래는 에이전트 이의 제기가 인용(sustained)되어 triage를 통과한 경우의 이슈 본문 예시다.
 
-```markdown
-> [!WARNING]
-> 인증 미들웨어가 `/api/admin/*` 경로에 적용되지 않아 관리자 API가 무인증 접근에 노출된다.
->
-> `src/middleware/auth.ts`의 경로 매칭 패턴이 `/api/admin`을 포함하지 않는다. 관리자 전용 엔드포인트(사용자 삭제, 설정 변경)가 인증 없이 호출 가능하다.
+````markdown
+## 문제
+
+인증 미들웨어가 `/api/admin/*` 경로에 적용되지 않아 관리자 API가 무인증 접근에 노출된다.
+
+`src/middleware/auth.ts`의 경로 매칭 패턴이 `/api/admin`을 포함하지 않는다. 관리자 전용 엔드포인트(사용자 삭제, 설정 변경)가 인증 없이 호출 가능하다.
 
 ```diff
 - app.use('/api/user/*', authMiddleware)
@@ -180,15 +186,16 @@ CI 전 단계에 걸쳐 재현성에 영향을 주므로 impact 4로 판정. 다
 
 `src/middleware/auth.ts:12`
 
-> [!TIP]
-> `src/middleware/auth.ts:12`의 경로 매칭에 `/api/admin/*` 패턴을 추가한다.
->
-> - [ ] `auth.ts:12` 경로 목록에 `/api/admin/*` 추가
-> - [ ] 관리자 API 엔드포인트에 대한 인증 테스트 작성
+## 조치
+
+`src/middleware/auth.ts:12`의 경로 매칭에 `/api/admin/*` 패턴을 추가한다.
+
+- [ ] `auth.ts:12` 경로 목록에 `/api/admin/*` 추가
+- [ ] 관리자 API 엔드포인트에 대한 인증 테스트 작성
 
 ---
 
-> **분석 히스토리**
+## 분석 히스토리
 
 #### 1차 제출 · Agent A (라우트 + 미들웨어 분석)
 
@@ -215,7 +222,7 @@ admin API가 사용자 삭제와 시스템 설정 변경을 포함하고 있어 
 
 ---
 
-> **이슈화 근거**
+## 이슈화 근거
 
 | 항목 | 점수 | 기준 | 근거 |
 |------|------|------|------|
@@ -224,19 +231,19 @@ admin API가 사용자 삭제와 시스템 설정 변경을 포함하고 있어 
 | confidence | high | ≠ low | auth.ts:12 직접 확인 + routes.ts 추가 근거 |
 | actionability | 4/5 | ≥ 3 | 파일경로+2, 식별자+1, 한문장+1 |
 
-`format_version: repo-orbit/v2`
+`format_version: repo-orbit/v2.0.1`
 `fingerprint: pipeline:owner/repo:SAFE:E3`
-```
+````
 
 ## 발행 필수 파라미터
 
-- fingerprint: `pipeline:<repo>:<view_id>:<finding_id>`
+- fingerprint: `pipeline:<repo>:<view_id>:<finding_id}`
 - labels: `automation`
 - 제목 형식 준수 (50자 이내)
-- 본문 footer: `format_version: repo-orbit/v2`
+- 본문 footer: `format_version: repo-orbit/v2.0.1`
 
 동일 fingerprint open 이슈 → 최신 본문으로 update.
-동일 fingerprint closed 이슈 → reopen + update.
+동일 fingerprint closed 이슈 → reopen하지 않는다. 최종 보고에 "이미 닫힌 이슈" 항목으로 기록하고 사용자에게 안내한다.
 발행 실패 항목은 별도 기록하고 나머지는 계속 진행한다.
 
 ## 최종 실행 보고
@@ -253,6 +260,7 @@ Triage 통과      : N개
 Triage 스킵      : N개
 발행 성공        : N개
 발행 실패        : N개
+이미 닫힌 이슈   : N개 (원하시면 새 이슈로 올려드릴 수 있습니다)
 ────────────────────────────────────────
 내일 view     : OPS — 운영 관측성 (토요일)
 ```
