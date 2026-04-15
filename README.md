@@ -16,6 +16,13 @@ npx skills add qpwoei0123/skills
 
 ```text
 skills/
+├── docs/
+│   └── SKILL-STANDARD.md           # 저장소 공통 스킬 최소 형식
+├── scripts/
+│   └── validate_skills.py          # accepted 스킬 형식 검증 스크립트
+├── .github/
+│   └── workflows/
+│       └── validate-skills.yml     # 스킬 형식 자동 검증 CI
 ├── orbit/                      # 레포 점검/이슈 발행 워크플로 스킬
 │   ├── SKILL.md                     # 스킬 메인 규칙과 실행 흐름
 │   ├── assets/                      # README용 시각 에셋
@@ -39,11 +46,15 @@ skills/
 │   └── scripts/                     # 자동 발행과 테스트 스크립트
 │       ├── publish_issue.py         # GitHub/GitLab 이슈 create/update/reopen
 │       └── test_publish_issue.py    # 발행 스크립트 회귀 테스트
-└── welcome/                         # 최소 SKILL.md 예시 스킬
-    └── SKILL.md                     # 기본 템플릿
+├── ghostwriter/                     # 사용자 문체 기반 글쓰기 스킬
+│   ├── SKILL.md                     # 스킬 메인 규칙과 작성 플로우
+│   ├── README.md                    # 빠른 시작과 검증 방법
+│   ├── CHANGELOG.md                 # 변경 이력
+│   └── references/
+│       └── profile-template.md      # 글쓴이 프로필 템플릿
 ```
 
 ## Included Skills
 
 - `orbit 🪐` : 레포를 요일별 관점으로 분석하고 finding을 이슈로 발행하는 실험적 워크플로 스킬
-- `welcome`: 최소 `SKILL.md` 구조 예시
+- `ghostwriter`: 사용자 문체를 분석해 그 사람처럼 글을 써주는 글쓰기 스킬
