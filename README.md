@@ -8,6 +8,10 @@
 npx skills add qpwoei0123/skills
 ```
 
+## Standard
+
+- [docs/SKILL-STANDARD.md](/Users/han-won-yeong/Documents/project/skills/docs/SKILL-STANDARD.md): 이 저장소의 스킬 최소 형식과 편입 규칙
+
 ## Structure
 
 ```text
