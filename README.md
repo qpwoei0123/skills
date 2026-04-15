@@ -68,7 +68,15 @@ python3 scripts/validate_skills.py --skill ghostwriter
 자동 검증:
 
 - [scripts/validate_skills.py](/Users/han-won-yeong/Documents/project/skills/scripts/validate_skills.py)
+- [scripts/normalize_skill.py](/Users/han-won-yeong/Documents/project/skills/scripts/normalize_skill.py)
 - [.github/workflows/validate-skills.yml](/Users/han-won-yeong/Documents/project/skills/.github/workflows/validate-skills.yml)
+
+자동 수정 가능한 항목은 로컬에서 먼저 정규화할 수 있습니다.
+
+```bash
+python3 scripts/normalize_skill.py --skill ghostwriter --check
+python3 scripts/normalize_skill.py --skill ghostwriter --write
+```
 
 ## Repository Structure
 
@@ -96,5 +104,7 @@ skills/
 
 1. 새 스킬 초안을 밖에서 만든다.
 2. 이 저장소로 가져와 표준 형식에 맞춘다.
-3. `validate_skills.py`를 통과시킨다.
-4. changelog를 갱신하고 커밋한다.
+3. PR을 연다.
+4. CI가 실패하면 자동 normalize PR이 생성될 수 있다.
+5. normalize PR을 머지하고 원래 PR을 다시 검증한다.
+6. `validate_skills.py`를 통과시키고 changelog를 갱신한 뒤 머지한다.

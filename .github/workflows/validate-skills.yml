@@ -9,15 +9,178 @@ on:
 jobs:
   validate-skills:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      matrix: ${{ steps.compute-targets.outputs.matrix }}
+      has_targets: ${{ steps.compute-targets.outputs.has_targets }}
+      should_open_prs: ${{ steps.compute-targets.outputs.should_open_prs }}
+      source_branch: ${{ steps.compute-targets.outputs.source_branch }}
 
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
 
-      - name: Validate accepted skills
-        run: python3 scripts/validate_skills.py
+      - name: Capture validator JSON
+        id: validate-json
+        run: |
+          set +e
+          python3 scripts/validate_skills.py --json > validate-report.json
+          status=$?
+          echo "exit_code=$status" >> "$GITHUB_OUTPUT"
+          exit 0
+
+      - name: Upload validator artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: validate-report
+          path: validate-report.json
+
+      - name: Collect PR files
+        id: pr-files
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const files = await github.paginate(
+              github.rest.pulls.listFiles,
+              {
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: context.issue.number,
+                per_page: 100,
+              }
+            );
+            core.setOutput("files", JSON.stringify(files.map((file) => file.filename)));
+
+      - name: Compute normalize targets
+        id: compute-targets
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          REPOSITORY: ${{ github.repository }}
+          HEAD_REPO: ${{ github.event.pull_request.head.repo.full_name || '' }}
+          HEAD_REF: ${{ github.head_ref }}
+          CHANGED_FILES_JSON: ${{ steps.pr-files.outputs.files || '[]' }}
+        run: |
+          should_open_prs=false
+          has_targets=false
+          matrix='{"include":[]}'
+          source_branch=""
+
+          if [ "$EVENT_NAME" = "pull_request" ]; then
+            source_branch="$HEAD_REF"
+            if [ "$HEAD_REPO" = "$REPOSITORY" ] && [[ "$HEAD_REF" != codex/normalize-* ]]; then
+              should_open_prs=true
+              matrix=$(python3 scripts/compute_normalize_targets.py \
+                --validate-json validate-report.json \
+                --changed-files-json "$CHANGED_FILES_JSON" \
+                --source-branch "$HEAD_REF")
+              include_count=$(python3 - <<'PY' "$matrix"
+import json
+import sys
+
+payload = json.loads(sys.argv[1])
+print(len(payload.get("include", [])))
+PY
+)
+              if [ "$include_count" -gt 0 ]; then
+                has_targets=true
+              fi
+            fi
+          fi
+
+          {
+            echo "should_open_prs=$should_open_prs"
+            echo "has_targets=$has_targets"
+            echo "source_branch=$source_branch"
+            echo "matrix=$matrix"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Write validation summary
+        if: always()
+        env:
+          CHANGED_FILES_JSON: ${{ steps.pr-files.outputs.files || '[]' }}
+        run: |
+          python3 - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          changed_files = json.loads(os.environ.get("CHANGED_FILES_JSON", "[]"))
+          validate_payload = json.loads(Path("validate-report.json").read_text(encoding="utf-8"))
+          changed_skills = sorted({path.split("/", 1)[0] for path in changed_files if "/" in path})
+
+          lines = ["## Skill Validation Summary", ""]
+          if changed_skills:
+              lines.append(f"- Changed top-level paths: {', '.join(changed_skills)}")
+          else:
+              lines.append("- Changed top-level paths: none")
+
+          skill_reports = {skill["name"]: skill for skill in validate_payload.get("skills", [])}
+          for skill_name in changed_skills:
+              report = skill_reports.get(skill_name)
+              if not report or not report.get("errors"):
+                  continue
+              manual_errors = [error for error in report["errors"] if not error.get("autofixable")]
+              if not manual_errors:
+                  continue
+              lines.append("")
+              lines.append(f"### {skill_name}")
+              for error in manual_errors:
+                  lines.append(f"- manual: [{error['code']}] {error['message']}")
+
+          Path(os.environ["GITHUB_STEP_SUMMARY"]).write_text("\n".join(lines) + "\n", encoding="utf-8")
+          PY
+
+      - name: Fail if validation has errors
+        if: steps.validate-json.outputs.exit_code != '0'
+        run: exit 1
+
+  open-normalize-prs:
+    needs: validate-skills
+    if: ${{ always() && needs.validate-skills.outputs.should_open_prs == 'true' && needs.validate-skills.outputs.has_targets == 'true' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJson(needs.validate-skills.outputs.matrix) }}
+
+    steps:
+      - name: Check out source branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ needs.validate-skills.outputs.source_branch }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Normalize skill
+        run: python3 scripts/normalize_skill.py --skill "${{ matrix.skill }}" --write
+
+      - name: Verify normalized skill
+        run: python3 scripts/validate_skills.py --skill "${{ matrix.skill }}"
+
+      - name: Create normalize pull request
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ github.token }}
+          commit-message: Normalize ${{ matrix.skill }} to repository skill standard
+          branch: ${{ matrix.branch }}
+          base: ${{ needs.validate-skills.outputs.source_branch }}
+          title: ${{ matrix.title }}
+          body: ${{ matrix.body }}
+          add-paths: |
+            ${{ matrix.skill }}/

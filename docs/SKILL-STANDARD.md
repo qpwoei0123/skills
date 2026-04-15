@@ -240,6 +240,34 @@ orbit/
 4. 선택 디렉터리(`agents/`, `references/`, `scripts/`, `assets/`)를 역할에 맞게 정리한다.
 5. 이후 `validator(형식 검증 스크립트)`로 검사한다.
 
+## Autofix Policy
+
+자동 정규화는 구조 보정만 허용한다.
+의미를 해석하거나 새 문장을 창작하는 수정은 자동화 대상이 아니다.
+
+자동 수정 가능한 항목:
+
+- `SKILL.md`의 top-level `version`을 `metadata.version`으로 이동
+- 누락된 `README.md`, `CHANGELOG.md` 생성
+- README의 `version:` 표기 동기화
+- README의 `Quick Start`, `Structure`, `Test` 섹션 보강
+- CHANGELOG 최신 버전 헤더 생성 또는 동기화
+
+자동 수정하지 않는 항목:
+
+- `name`
+- `license`
+- `description`
+- README 소개 문장의 의미
+- 스킬 트리거와 동작 의미
+
+운영 원칙:
+
+- `validator`는 실패를 판정한다.
+- `normalizer`는 자동 수정 가능한 구조만 보정한다.
+- 수동 판단이 필요한 오류는 CI가 실패로 남기고 사람이 직접 수정한다.
+- 자동 수정은 PR에서만 동작하며, 별도 normalize PR로 제안한다.
+
 ## 표준화하지 않는 것
 
 아래는 강제하지 않는다.
