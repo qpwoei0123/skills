@@ -1,6 +1,6 @@
 # Agent Playbook
 
-`repo-orbit`의 view 에이전트와 Orchestrator가 공통으로 따를 상세 지침이다.
+`orbit`의 view 에이전트와 Orchestrator가 공통으로 따를 상세 지침이다.
 각 view 문서는 이 문서를 전제로 하고, view 특화 조건만 추가한다.
 
 ## 공통 원칙

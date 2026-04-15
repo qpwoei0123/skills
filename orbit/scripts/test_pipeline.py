@@ -1,5 +1,5 @@
 """
-repo-orbit 파이프라인 로직 단위 테스트 (Step 1~5)
+orbit 파이프라인 로직 단위 테스트 (Step 1~5)
 publish_issue.py 와 분리된 순수 로직 검증.
 """
 import unittest

@@ -1,6 +1,6 @@
 # Orchestrator
 
-`repo-orbit`의 공통 제어 문서다.
+`orbit`의 공통 제어 문서다.
 Orchestrator는 이 파일을 기본으로 읽고, Step 3에서 **선택된 view 파일 하나만** 추가로 읽는다.
 
 ## 역할
@@ -15,7 +15,7 @@ Orchestrator는 이 파일을 기본으로 읽고, Step 3에서 **선택된 view
 ## 실행 순서
 
 1. 날짜와 옵션을 보고 실행 view를 정한다.
-2. `~/.repo-orbit/<group>/<project>/<VIEW>.json`을 읽어 `last_scan_commit`과 `explored_files`, `known_findings`를 가져온다. 파일이 없으면 최초 실행으로 처리한다. **나머지 6개 view 메모리 파일도 읽어** 전체 `status == "open"` finding의 `claim_summary`를 컨텍스트에 보관한다 (중복 발행 방지용). 파일이 없는 view는 건너뛴다.
+2. `~/.orbit/<group>/<project>/<VIEW>.json`을 읽어 `last_scan_commit`과 `explored_files`, `known_findings`를 가져온다. 파일이 없으면 최초 실행으로 처리한다. **나머지 6개 view 메모리 파일도 읽어** 전체 `status == "open"` finding의 `claim_summary`를 컨텍스트에 보관한다 (중복 발행 방지용). 파일이 없는 view는 건너뛴다.
 3. `git fetch` 후 파일 트리와 핵심 설정 파일을 확인한다. `git diff <last_scan_commit>..HEAD --name-only`로 `changed_files`를 구한다.
 4. 탐색 우선순위를 계산한다 (아래 "탐색 나침반" 절 참고). 변경도 없고 미탐색도 없으면 조기 종료.
 5. `agents/<VIEW>.md` 하나만 읽는다.

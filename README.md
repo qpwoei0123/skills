@@ -12,10 +12,10 @@ npx skills add qpwoei0123/skills
 
 ```text
 skills/
-├── repo-orbit/                      # 레포 점검/이슈 발행 워크플로 스킬
+├── orbit/                      # 레포 점검/이슈 발행 워크플로 스킬
 │   ├── SKILL.md                     # 스킬 메인 규칙과 실행 흐름
 │   ├── assets/                      # README용 시각 에셋
-│   │   └── repo-orbit.png           # repo-orbit 대표 이미지
+│   │   └── orbit.png           # orbit 대표 이미지
 │   ├── agents/                      # view별 에이전트와 Orchestrator 지침
 │   │   ├── orchestrator.md          # 공통 제어, 병합, triage, 발행 규칙
 │   │   ├── SAFE.md                  # 변경 안전성 view 지침
@@ -41,5 +41,5 @@ skills/
 
 ## Included Skills
 
-- `repo-orbit 🪐` : 레포를 요일별 관점으로 분석하고 finding을 이슈로 발행하는 실험적 워크플로 스킬
+- `orbit 🪐` : 레포를 요일별 관점으로 분석하고 finding을 이슈로 발행하는 실험적 워크플로 스킬
 - `welcome`: 최소 `SKILL.md` 구조 예시

@@ -4,7 +4,7 @@
 
 ### 메모리 & 탐색
 
-- **per-view 메모리 도입**: 단일 `coverage-log.json` 대신 view별 독립 파일 (`~/.repo-orbit/<group>/<project>/<VIEW>.json`)로 전환
+- **per-view 메모리 도입**: 단일 `coverage-log.json` 대신 view별 독립 파일 (`~/.orbit/<group>/<project>/<VIEW>.json`)로 전환
 - **diff 기반 분석**: `git diff last_scan_commit..HEAD`로 변경 파일을 파악해 full scan 반복 제거
 - **탐색 나침반**: `explored_files` + `changed_files`를 조합한 Priority 1/2/3/Skip 우선순위 시스템으로 매 실행마다 새 영역을 탐색
 - **조기 종료 조건**: 변경 없음 + 미탐색 파일 없음이면 에이전트 spawn 없이 즉시 종료. 조기 종료 시 `run_history` 기록 값과 `last_scan_commit` 미갱신 규칙 명시
@@ -34,7 +34,7 @@
 - 분석 히스토리 · 이슈화 근거를 `<details>` 접기 블록으로 전환 (기본 접힘)
 - 심각도 배지 추가: 🔴 CRITICAL / 🟠 HIGH / 🟡 MEDIUM (impact·urgency 기준)
 - 이슈 상단 첫 줄에 배지 + impact_surface 핵심 요약 한 줄 표시
-- `format_version` 을 `repo-orbit/v2.0.1` → `repo-orbit/v2.1`로 올림
+- `format_version` 을 `orbit/v2.0.1` → `orbit/v2.1`로 올림
 - footer 형식 변경: 두 줄 → `format_version · fingerprint` 한 줄
 - output-templates.md 마이그레이션 규칙 표 추가 (v2.0.1 이하 → 전체 재작성)
 

@@ -16,7 +16,7 @@ class PublishIssueTest(unittest.TestCase):
         return "\n".join([
             "본문",
             "",
-            "format_version: repo-orbit/v2",
+            "format_version: orbit/v2",
             f"fingerprint: {fingerprint}",
         ])
 
@@ -43,7 +43,7 @@ class PublishIssueTest(unittest.TestCase):
                     "body": "\n".join([
                         "본문",
                         "",
-                        "format_version: repo-orbit/v2",
+                        "format_version: orbit/v2",
                         "fingerprint: pipeline:owner/repo:SAFE:E0",
                     ]),
                 }],
@@ -55,7 +55,7 @@ class PublishIssueTest(unittest.TestCase):
                     "body": "\n".join([
                         "본문",
                         "",
-                        "format_version: repo-orbit/v2",
+                        "format_version: orbit/v2",
                         "fingerprint: pipeline:owner/repo:SAFE:E1",
                     ]),
                 }],
@@ -86,7 +86,7 @@ class PublishIssueTest(unittest.TestCase):
                     "body": "\n".join([
                         "본문",
                         "",
-                        "format_version: repo-orbit/v2",
+                        "format_version: orbit/v2",
                         "fingerprint: pipeline:owner/repo:SAFE:E10",
                     ]),
                 }],
@@ -98,7 +98,7 @@ class PublishIssueTest(unittest.TestCase):
                     "body": "\n".join([
                         "본문",
                         "",
-                        "format_version: repo-orbit/v2",
+                        "format_version: orbit/v2",
                         "fingerprint: pipeline:owner/repo:SAFE:E1",
                     ]),
                 }],

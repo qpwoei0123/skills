@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-repo-orbit issue publisher
+orbit issue publisher
 GitHub / GitLab 이슈 생성, 업데이트를 담당한다.
 닫힌 이슈는 reopen하지 않고 skipped_closed로 반환한다.
 """
@@ -32,7 +32,7 @@ MAX_TITLE_LENGTH = 50
 
 def load_auth(platform: str, base_url: str) -> tuple[str | None, str]:
     """토큰과 API base를 반환한다."""
-    auth_path = Path.home() / ".repo-orbit" / "auth.json"
+    auth_path = Path.home() / ".orbit" / "auth.json"
     auth_file: dict[str, str] = {}
 
     if auth_path.exists():
@@ -107,14 +107,14 @@ def has_exact_fingerprint(body: str | None, fingerprint: str) -> bool:
 
 
 def validate_issue_contract(title: str, body: str, fingerprint: str) -> str:
-    """repo-orbit 발행 계약을 검증한다."""
+    """orbit 발행 계약을 검증한다."""
     normalized_title = normalize_title(title)
 
     if not normalized_title.startswith("[view: "):
         raise PublishFallback("제목은 반드시 [view: <view_id>] 접두어로 시작해야 합니다.")
-    # prefix 체크: repo-orbit/v2.x 시리즈 전부 허용 (v2.1, v2.0.1 등)
-    if "format_version: repo-orbit/v2" not in body:
-        raise PublishFallback("본문 하단에 format_version: repo-orbit/v2.x 가 필요합니다.")
+    # prefix 체크: orbit/v2.x 시리즈 전부 허용 (v2.1, v2.0.1 등)
+    if "format_version: orbit/v2" not in body:
+        raise PublishFallback("본문 하단에 format_version: orbit/v2.x 가 필요합니다.")
     if not has_exact_fingerprint(body, fingerprint):
         raise PublishFallback("본문 하단 fingerprint 값이 요청 fingerprint와 일치해야 합니다.")
 
@@ -376,7 +376,7 @@ def publish_issue(
     fingerprint: str,
     labels: list[str],
 ) -> dict:
-    """repo-orbit finding 하나를 발행한다."""
+    """orbit finding 하나를 발행한다."""
     platform, base_url, project = detect_platform(repo_url)
     safe_title = normalize_title(title)
 
@@ -502,7 +502,7 @@ def publish_issue(
 
 def parse_args() -> argparse.Namespace:
     """CLI 인자를 파싱한다."""
-    parser = argparse.ArgumentParser(description="repo-orbit issue publisher")
+    parser = argparse.ArgumentParser(description="orbit issue publisher")
     parser.add_argument("--repo-url", required=True, help="레포 URL")
     parser.add_argument("--title", required=True, help="이슈 제목")
     parser.add_argument("--body", help="이슈 본문 문자열")

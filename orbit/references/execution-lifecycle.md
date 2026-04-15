@@ -1,6 +1,6 @@
 # Execution Lifecycle
 
-`repo-orbit`의 Step 3 ~ Step 4.5 상세 규칙을 모아 둔 문서다.
+`orbit`의 Step 3 ~ Step 4.5 상세 규칙을 모아 둔 문서다.
 일반 실행에서는 `SKILL.md` core만으로 충분하고, 아래 형식이나 예외가 필요할 때만 이 파일을 읽는다.
 
 ## 목차

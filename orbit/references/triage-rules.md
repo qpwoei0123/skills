@@ -33,7 +33,7 @@ override 사용 시 coverage-log에 `"triage_override": true`를 기록한다.
 - **findings_issued >= 4** 가 연속 3회: 동일 view에서 반복 발행되는 패턴인지 확인 후 `min_impact` 상향 검토
 
 재검토는 해당 view의 `run_history` 최근 **3개** entry를 기준으로 판단한다.
-전체 실행 횟수가 아니라 view별로 독립 집계한다 (view 파일 `~/.repo-orbit/<group>/<project>/<VIEW>.json`).
+전체 실행 횟수가 아니라 view별로 독립 집계한다 (view 파일 `~/.orbit/<group>/<project>/<VIEW>.json`).
 run_history가 3개 미만이면 트리거를 적용하지 않는다.
 기준 변경 시 run_history entry에 `"triage_calibration": "<방향>/<이유>"` 를 기록한다.
 

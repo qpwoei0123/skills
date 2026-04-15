@@ -1,4 +1,4 @@
-# repo-orbit 문서 인덱스
+# orbit 문서 인덱스
 
 처음 이 스킬을 접하는 경우 아래 순서로 읽는다.
 
@@ -58,4 +58,4 @@ python3 -m unittest scripts/test_pipeline.py -v
 - **closed 이슈**: 재오픈하지 않는다. `skipped_closed`로 기록.
 - **triage**: impact≥4, urgency≥3, confidence≠low, actionability≥3 모두 충족해야 발행.
 - **에이전트**: 사실 관찰만 반환. 점수는 Orchestrator만 부여.
-- **format_version**: 이슈 본문 포맷이 바뀔 때만 올린다. 현재: `repo-orbit/v2.1`
+- **format_version**: 이슈 본문 포맷이 바뀔 때만 올린다. 현재: `orbit/v2.1`

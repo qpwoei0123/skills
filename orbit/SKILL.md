@@ -1,5 +1,5 @@
 ---
-name: repo-orbit
+name: orbit
 license: Apache-2.0
 metadata:
   version: 1.7.0
@@ -7,12 +7,12 @@ description: >
   레포지터리를 7가지 관점(SAFE/ARCH/DEP/BUILD/DATA/OPS/DOC)으로 자동 분석하고
   기준을 통과한 기술 이슈만 GitHub/GitLab 이슈로 발행하는 코드베이스 점검 파이프라인.
   "레포 분석해줘", "코드베이스 점검", "기술 부채 찾아줘", "이슈 자동 등록",
-  "CI 빠졌는지 봐줘", "의존성 점검", "테스트 커버리지 확인", "$repo-orbit" 같은
+  "CI 빠졌는지 봐줘", "의존성 점검", "테스트 커버리지 확인", "$orbit" 같은
   요청이 오면 반드시 이 스킬을 사용한다.
   레포 URL 또는 로컬 경로가 있으면 바로 실행하고, 없으면 먼저 물어본다.
 ---
 
-# repo-orbit 🪐
+# orbit 🪐
 
 7개 관점(view)을 요일마다 하나씩 고정 배정해 레포를 분석하고, 기준을 통과한 finding만 이슈로 발행한다.
 각 view는 **3개의 서브 에이전트**를 병렬 실행하고, **Orchestrator**가 사실 관찰을 병합해 채점한다.
@@ -23,10 +23,10 @@ description: >
 ## 디렉터리 구조
 
 ```text
-repo-orbit/                          # 스킬 루트
+orbit/                          # 스킬 루트
 ├── SKILL.md                         # 스킬 메인 규칙과 실행 흐름
 ├── assets/                          # README용 시각 에셋
-│   └── repo-orbit.png               # repo-orbit 대표 이미지
+│   └── orbit.png               # orbit 대표 이미지
 ├── agents/                          # view별 에이전트와 Orchestrator 지침
 │   ├── orchestrator.md              # 공통 제어, 병합, triage, 발행 규칙
 │   ├── SAFE.md                      # 변경 안전성 view 지침
@@ -52,26 +52,26 @@ repo-orbit/                          # 스킬 루트
 
 ```text
 # 기본 실행 (오늘 요일에 맞는 view 자동 선택)
-$repo-orbit https://github.com/owner/repo
+$orbit https://github.com/owner/repo
 
 # 현재 디렉터리가 레포일 때
-$repo-orbit .
+$orbit .
 
 # 특정 view 강제 지정 (요일 무관)
-$repo-orbit https://github.com/owner/repo --view SAFE
+$orbit https://github.com/owner/repo --view SAFE
 
 # 분석만 하고 이슈는 발행하지 않음 (안전하게 결과 미리 보기)
-$repo-orbit https://github.com/owner/repo --dry-run
+$orbit https://github.com/owner/repo --dry-run
 
 # triage 기준 완화 (이슈가 너무 안 올라올 때)
-$repo-orbit https://github.com/owner/repo --triage-min-impact 3
+$orbit https://github.com/owner/repo --triage-min-impact 3
 
 # 특정 finding을 영구적으로 무시 ("알고 있음, 다시 보고하지 마")
-$repo-orbit https://github.com/owner/repo --suppress pipeline:owner/repo:BUILD:E1
+$orbit https://github.com/owner/repo --suppress pipeline:owner/repo:BUILD:E1
 ```
 
 `--suppress`는 해당 fingerprint의 `status`를 `suppressed`로 변경해 이후 실행에서 이슈화 대상에서 제외한다.
-수동으로 처리하려면 `~/.repo-orbit/<group>/<project>/<VIEW>.json`의 `known_findings[fingerprint].status`를 직접 `"suppressed"`로 수정해도 된다.
+수동으로 처리하려면 `~/.orbit/<group>/<project>/<VIEW>.json`의 `known_findings[fingerprint].status`를 직접 `"suppressed"`로 수정해도 된다.
 
 레포 URL을 제공하지 않으면 현재 작업 디렉터리가 git 레포인지 먼저 확인하고,
 그것도 아니면 사용자에게 URL을 요청한다.
@@ -95,7 +95,7 @@ $repo-orbit https://github.com/owner/repo --suppress pipeline:owner/repo:BUILD:E
 
 ## 파이프라인 핵심
 
-1. **View 결정 + 메모리 로드**: 오늘 날짜 기준으로 view를 선택하고, 해당 view의 메모리 파일(`~/.repo-orbit/.../VIEW.json`)을 읽어 `last_scan_commit`을 가져온다.
+1. **View 결정 + 메모리 로드**: 오늘 날짜 기준으로 view를 선택하고, 해당 view의 메모리 파일(`~/.orbit/.../VIEW.json`)을 읽어 `last_scan_commit`을 가져온다.
 2. **레포 구조 파악 + 탐색 우선순위**: 상위 트리와 설정 파일로 유형을 판정하고, diff(`last_scan_commit..HEAD`)를 계산해 탐색 우선순위(변경→미탐색→오래된 surface)를 에이전트에 전달한다. 변경도 없고 미탐색 파일도 없으면 조기 종료.
 3. **사실 관찰 수집**: 선택된 view의 서브 에이전트 3개를 병렬 실행해 사실 관찰만 받는다.
 4. **병합·채점**: 중복 관찰을 병합하고 Orchestrator가 impact/urgency/confidence/actionability를 부여한다.
@@ -113,7 +113,7 @@ $repo-orbit https://github.com/owner/repo --suppress pipeline:owner/repo:BUILD:E
 
 1. **URL 제공된 경우**: 임시 디렉터리에 shallow clone한다.
    ```bash
-   git clone --depth=1 <repo_url> /tmp/repo-orbit-<timestamp>
+   git clone --depth=1 <repo_url> /tmp/orbit-<timestamp>
    ```
 2. **`.` 또는 로컬 경로 제공된 경우**: `git fetch origin` 을 실행한다.
 3. **아무것도 없는 경우**: 현재 디렉터리에 `.git`이 있는지 확인하고,
@@ -145,12 +145,12 @@ view가 결정되면 해당 view의 메모리 파일을 읽는다.
 
 ```bash
 # group = repo URL에서 추출한 owner, project = repo 이름
-~/.repo-orbit/<group>/<project>/<VIEW>.json
+~/.orbit/<group>/<project>/<VIEW>.json
 ```
 
 - 파일이 없으면 **최초 실행**으로 간주한다. `last_scan_commit` = null, `explored_files` = [], `known_findings` = {}.
 - 파일이 있으면 `last_scan_commit`을 diff 기준으로 사용한다.
-- 환경변수 `REPO_ORBIT_HOME`이 설정되어 있으면 `~/.repo-orbit` 대신 그 경로를 사용한다.
+- 환경변수 `REPO_ORBIT_HOME`이 설정되어 있으면 `~/.orbit` 대신 그 경로를 사용한다.
 
 메모리 스키마 상세는 [`references/coverage-log-schema.md`](references/coverage-log-schema.md)를 읽는다.
 
@@ -471,7 +471,7 @@ override 옵션, 재검토 트리거, 상세 예시는 [`references/triage-rules
 python3 scripts/publish_issue.py \
   --repo-url  https://github.com/owner/repo \
   --title     "[view: SAFE] ..." \
-  --body-file /tmp/repo-orbit-issue.md \
+  --body-file /tmp/orbit-issue.md \
   --fingerprint "pipeline:owner/repo:SAFE:E1" \
   --labels    automation \
   --dry-run
@@ -488,11 +488,11 @@ dry-run이 아닌 경우 triage 통과 finding마다 `python3 scripts/publish_is
 | `--dry-run` 옵션 | 프롬프트 확인 | 없으면 실제 발행 진행 |
 | `scripts/publish_issue.py` | 파일 존재 여부 확인 | 실행 중단 + `[error] publish_issue.py 없음` |
 | Python 3.10+ | `python3 --version` | 실행 중단 + `[error] Python 3.10 이상 필요` |
-| 인증 토큰 | 환경변수 → `~/.repo-orbit/auth.json` 순으로 탐색 | 사용자에게 입력 요청. 없으면 manual payload로 종료 가능. dry-run이면 토큰 불필요 |
+| 인증 토큰 | 환경변수 → `~/.orbit/auth.json` 순으로 탐색 | 사용자에게 입력 요청. 없으면 manual payload로 종료 가능. dry-run이면 토큰 불필요 |
 
 ### 토큰 로드
 
-`~/.repo-orbit/auth.json`을 읽은 뒤 해당 플랫폼 토큰을 추출한다.
+`~/.orbit/auth.json`을 읽은 뒤 해당 플랫폼 토큰을 추출한다.
 환경변수 `GITHUB_TOKEN` / `GITLAB_TOKEN`이 있으면 우선 사용한다.
 토큰이 없으면 사용자에게 직접 요청하고, 응답이 없으면 스크립트의 manual payload를 그대로 출력한다.
 
@@ -523,7 +523,7 @@ Orchestrator는 중복 체크용 임시 `grep` 로직을 만들지 않는다.
 python3 scripts/publish_issue.py \
   --repo-url  https://github.com/owner/repo \
   --title     "[view: BUILD] 로컬과 CI 빌드 경로 일치" \
-  --body-file /tmp/repo-orbit-issue.md \
+  --body-file /tmp/orbit-issue.md \
   --fingerprint "pipeline:owner/repo:BUILD:E1" \
   --labels    automation
 ```
@@ -531,7 +531,7 @@ python3 scripts/publish_issue.py \
 ### 핵심 규칙
 
 - 제목은 50자 이내로 자른다.
-- 이슈 본문 하단에 `format_version: repo-orbit/v2.1`와 `fingerprint`를 반드시 포함한다.
+- 이슈 본문 하단에 `format_version: orbit/v2.1`와 `fingerprint`를 반드시 포함한다.
 - 동일 fingerprint open 이슈 → 제목·본문·label을 현재 포맷으로 update.
 - 동일 fingerprint closed 이슈 → reopen하지 않는다. 최종 보고에 "이미 닫힌 이슈" 항목으로 기록하고, 사용자가 원하면 새 이슈를 열 수 있음을 안내한다.
 - update 성공만 발행 성공 건수에 포함한다. `skipped_closed`는 별도 항목으로 집계한다.
@@ -555,7 +555,7 @@ python3 scripts/publish_issue.py \
 - 발행 성공/실패 수
 - 내일 view
 
-실행 완료 후 view 메모리 파일(`~/.repo-orbit/<group>/<project>/<VIEW>.json`)을 갱신한다.
+실행 완료 후 view 메모리 파일(`~/.orbit/<group>/<project>/<VIEW>.json`)을 갱신한다.
 
 - `last_scan_commit` → 현재 HEAD 커밋 해시로 업데이트
 - `explored_files` → 이번에 분석한 파일 추가/갱신 (depth, last_explored 포함)

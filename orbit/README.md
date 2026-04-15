@@ -10,7 +10,7 @@
 ╚══════════════════════════════════════════════════════════
 ```
 
-# repo orbit 🪐
+# orbit 🪐
 
 `version: 1.7.0`
 
@@ -19,10 +19,10 @@
 ## 포함 파일
 
 ```text
-repo-orbit/                          # 스킬 루트
+orbit/                          # 스킬 루트
 ├── SKILL.md                         # 스킬 메인 규칙과 실행 흐름
 ├── assets/                          # README용 시각 에셋
-│   └── repo-orbit.png               # repo-orbit 대표 이미지
+│   └── orbit.png               # orbit 대표 이미지
 ├── agents/                          # view별 에이전트와 Orchestrator 지침
 │   ├── orchestrator.md              # 공통 제어, 병합, triage, 발행 규칙
 │   ├── SAFE.md                      # 변경 안전성 view 지침
@@ -53,7 +53,7 @@ repo-orbit/                          # 스킬 루트
 자동 발행을 쓰려면 아래 둘 중 하나가 필요합니다.
 
 - `GITHUB_TOKEN` 또는 `GITLAB_TOKEN`
-- `~/.repo-orbit/auth.json`
+- `~/.orbit/auth.json`
 
 ## auth.json 예시
 
@@ -69,13 +69,13 @@ repo-orbit/                          # 스킬 루트
 
 ```text
 # 기본 실행
-$repo-orbit https://github.com/owner/repo
+$orbit https://github.com/owner/repo
 
 # 특정 view 강제 지정
-$repo-orbit https://github.com/owner/repo --view SAFE
+$orbit https://github.com/owner/repo --view SAFE
 
 # 분석만 하고 이슈 발행은 건너뜀
-$repo-orbit https://github.com/owner/repo --dry-run
+$orbit https://github.com/owner/repo --dry-run
 ```
 
 발행 스크립트를 직접 실행할 때:
@@ -84,7 +84,7 @@ $repo-orbit https://github.com/owner/repo --dry-run
 python3 scripts/publish_issue.py \
   --repo-url https://github.com/owner/repo \
   --title "[view: BUILD] 로컬과 CI 빌드 경로가 다릅니다" \
-  --body-file /tmp/repo-orbit-issue.md \
+  --body-file /tmp/orbit-issue.md \
   --fingerprint "pipeline:owner/repo:BUILD:E1" \
   --labels automation
 
@@ -92,7 +92,7 @@ python3 scripts/publish_issue.py \
 python3 scripts/publish_issue.py \
   --repo-url https://github.com/owner/repo \
   --title "[view: BUILD] ..." \
-  --body-file /tmp/repo-orbit-issue.md \
+  --body-file /tmp/orbit-issue.md \
   --fingerprint "pipeline:owner/repo:BUILD:E1" \
   --labels automation \
   --dry-run
