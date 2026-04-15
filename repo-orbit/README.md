@@ -12,7 +12,7 @@
 
 # repo orbit 🪐
 
-`version: 1.0`
+`version: 1.7.0`
 
 요일별 고정 view로 레포를 분석하고, triage를 통과한 finding만 이슈로 발행하는 스킬입니다.
 
@@ -40,13 +40,13 @@ repo-orbit/                          # 스킬 루트
 │   ├── coverage-log-schema.md       # coverage-log/result 저장 스키마
 │   └── view-playbooks.md            # 과거 플레이북 호환 안내
 └── scripts/                         # 자동 발행과 테스트 스크립트
-    ├── publish_issue.py             # GitHub/GitLab 이슈 create/update/reopen
+    ├── publish_issue.py             # GitHub/GitLab 이슈 create/update (closed 이슈는 재오픈하지 않음)
     └── test_publish_issue.py        # 발행 스크립트 회귀 테스트
 ```
 
 ## 요구사항
 
-- Python 3
+- Python 3.10+
 - Git 접근 권한
 - 이슈를 올릴 대상 레포 URL
 

@@ -32,8 +32,10 @@ override 사용 시 coverage-log에 `"triage_override": true`를 기록한다.
 - **triage 스킵 없이 전량 통과** 가 연속 3회: `min_impact`를 높이거나 `min_urgency`를 높이는 것을 검토
 - **findings_issued >= 4** 가 연속 3회: 동일 view에서 반복 발행되는 패턴인지 확인 후 `min_impact` 상향 검토
 
-재검토는 coverage-log.json의 최근 실행 기록을 기준으로 판단한다.
-기준 변경 시 coverage-log에 `"triage_calibration": "<방향>/<이유>"` 를 기록한다.
+재검토는 해당 view의 `run_history` 최근 **3개** entry를 기준으로 판단한다.
+전체 실행 횟수가 아니라 view별로 독립 집계한다 (view 파일 `~/.repo-orbit/<group>/<project>/<VIEW>.json`).
+run_history가 3개 미만이면 트리거를 적용하지 않는다.
+기준 변경 시 run_history entry에 `"triage_calibration": "<방향>/<이유>"` 를 기록한다.
 
 ---
 
@@ -42,7 +44,7 @@ override 사용 시 coverage-log에 `"triage_override": true`를 기록한다.
 ### fingerprint update
 - open 이슈의 fingerprint가 일치해도 triage 스킵하지 않는다.
 - Step 6에서 제목/본문/automation label을 최신 `format_version`으로 update한다.
-- closed 이슈도 reopen + update한다.
+- closed 이슈는 재오픈하지 않는다. `skipped_closed`로 기록하고 이슈화하지 않는다.
 - 같은 `format_version`이어도 claim, evidence, next_step이 달라졌으면 최신 본문으로 갱신한다.
 
 ### low_confidence

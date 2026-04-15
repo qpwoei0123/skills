@@ -133,32 +133,26 @@ class PublishIssueTest(unittest.TestCase):
         self.assertEqual(result["action"], "manual_required")
         self.assertIn("format_version", result["reason"])
 
-    def test_gitlab_closed_issue_reopens_on_update(self):
+    def test_gitlab_closed_issue_returns_skipped_closed(self):
+        """닫힌 이슈는 사람이 의도적으로 닫은 것이므로 재오픈하지 않는다."""
         fingerprint = "pipeline:owner/repo:BUILD:E1"
         with patch.object(MODULE, "load_auth", return_value=("token", "https://gitlab.example.com")):
             with patch.object(MODULE, "gitlab_ensure_labels"):
                 with patch.object(
                     MODULE,
                     "find_existing_issue",
-                    return_value={"iid": 9, "state": "closed"},
+                    return_value={"iid": 9, "state": "closed", "web_url": "https://gitlab.example.com/owner/repo/-/issues/9"},
                 ):
-                    with patch.object(
-                        MODULE,
-                        "gitlab_update",
-                        return_value={"iid": 9, "web_url": "https://gitlab.example.com/owner/repo/-/issues/9"},
-                    ) as update_mock:
-                        result = MODULE.publish_issue(
-                            "https://gitlab.example.com/owner/repo",
-                            "[view: BUILD] 테스트",
-                            self.make_body(fingerprint),
-                            fingerprint,
-                            ["automation"],
-                        )
+                    result = MODULE.publish_issue(
+                        "https://gitlab.example.com/owner/repo",
+                        "[view: BUILD] 테스트",
+                        self.make_body(fingerprint),
+                        fingerprint,
+                        ["automation"],
+                    )
 
-        self.assertEqual(result["action"], "reopened")
+        self.assertEqual(result["action"], "skipped_closed")
         self.assertEqual(result["issue_id"], 9)
-        self.assertEqual(update_mock.call_args.args[-2], ["automation"])
-        self.assertEqual(update_mock.call_args.args[-1], "reopen")
 
     def test_title_is_trimmed_before_create(self):
         fingerprint = "pipeline:owner/repo:SAFE:E9"
@@ -208,7 +202,7 @@ class PublishIssueTest(unittest.TestCase):
 
         self.assertEqual(result["action"], "updated")
         self.assertEqual(update_mock.call_args.args[-2], ["automation"])
-        self.assertEqual(update_mock.call_args.args[-1], "open")
+        self.assertIsNone(update_mock.call_args.args[-1])  # state=None (open 이슈는 상태 변경 없음)
 
 
 if __name__ == "__main__":

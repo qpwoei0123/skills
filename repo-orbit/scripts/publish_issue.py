@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """
 repo-orbit issue publisher
-GitHub / GitLab 이슈 생성, 업데이트, reopen을 담당한다.
+GitHub / GitLab 이슈 생성, 업데이트를 담당한다.
+닫힌 이슈는 reopen하지 않고 skipped_closed로 반환한다.
 """
 
 from __future__ import annotations
@@ -111,8 +112,9 @@ def validate_issue_contract(title: str, body: str, fingerprint: str) -> str:
 
     if not normalized_title.startswith("[view: "):
         raise PublishFallback("제목은 반드시 [view: <view_id>] 접두어로 시작해야 합니다.")
+    # prefix 체크: repo-orbit/v2.x 시리즈 전부 허용 (v2.1, v2.0.1 등)
     if "format_version: repo-orbit/v2" not in body:
-        raise PublishFallback("본문 하단에 format_version: repo-orbit/v2 가 필요합니다.")
+        raise PublishFallback("본문 하단에 format_version: repo-orbit/v2.x 가 필요합니다.")
     if not has_exact_fingerprint(body, fingerprint):
         raise PublishFallback("본문 하단 fingerprint 값이 요청 fingerprint와 일치해야 합니다.")
 

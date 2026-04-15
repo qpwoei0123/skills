@@ -2,7 +2,7 @@
 name: repo-orbit
 license: Apache-2.0
 metadata:
-  version: 1.5.0
+  version: 1.7.0
 description: >
   레포지터리를 7가지 관점(SAFE/ARCH/DEP/BUILD/DATA/OPS/DOC)으로 자동 분석하고
   기준을 통과한 기술 이슈만 GitHub/GitLab 이슈로 발행하는 코드베이스 점검 파이프라인.
@@ -44,7 +44,7 @@ repo-orbit/                          # 스킬 루트
 │   ├── coverage-log-schema.md       # coverage-log/result 저장 스키마
 │   └── view-playbooks.md            # 과거 플레이북 호환 안내
 └── scripts/                         # 자동 발행과 테스트 스크립트
-    ├── publish_issue.py             # GitHub/GitLab 이슈 create/update/reopen
+    ├── publish_issue.py             # GitHub/GitLab 이슈 create/update (closed 이슈는 skipped_closed 반환)
     └── test_publish_issue.py        # 발행 스크립트 회귀 테스트
 ```
 
@@ -65,7 +65,13 @@ $repo-orbit https://github.com/owner/repo --dry-run
 
 # triage 기준 완화 (이슈가 너무 안 올라올 때)
 $repo-orbit https://github.com/owner/repo --triage-min-impact 3
+
+# 특정 finding을 영구적으로 무시 ("알고 있음, 다시 보고하지 마")
+$repo-orbit https://github.com/owner/repo --suppress pipeline:owner/repo:BUILD:E1
 ```
+
+`--suppress`는 해당 fingerprint의 `status`를 `suppressed`로 변경해 이후 실행에서 이슈화 대상에서 제외한다.
+수동으로 처리하려면 `~/.repo-orbit/<group>/<project>/<VIEW>.json`의 `known_findings[fingerprint].status`를 직접 `"suppressed"`로 수정해도 된다.
 
 레포 URL을 제공하지 않으면 현재 작업 디렉터리가 git 레포인지 먼저 확인하고,
 그것도 아니면 사용자에게 URL을 요청한다.
@@ -89,17 +95,17 @@ $repo-orbit https://github.com/owner/repo --triage-min-impact 3
 
 ## 파이프라인 핵심
 
-1. **View 결정**: 오늘 날짜 기준으로 기본 view를 선택한다.
-2. **레포 구조 파악**: 상위 트리와 설정 파일을 확인해 스킵 조건을 판정한다.
+1. **View 결정 + 메모리 로드**: 오늘 날짜 기준으로 view를 선택하고, 해당 view의 메모리 파일(`~/.repo-orbit/.../VIEW.json`)을 읽어 `last_scan_commit`을 가져온다.
+2. **레포 구조 파악 + 탐색 우선순위**: 상위 트리와 설정 파일로 유형을 판정하고, diff(`last_scan_commit..HEAD`)를 계산해 탐색 우선순위(변경→미탐색→오래된 surface)를 에이전트에 전달한다. 변경도 없고 미탐색 파일도 없으면 조기 종료.
 3. **사실 관찰 수집**: 선택된 view의 서브 에이전트 3개를 병렬 실행해 사실 관찰만 받는다.
 4. **병합·채점**: 중복 관찰을 병합하고 Orchestrator가 impact/urgency/confidence/actionability를 부여한다.
-5. **Triage**: 통과 조건을 만족하는 finding만 이슈화 대상으로 고른다.
-6. **발행**: triage 통과 finding마다 `scripts/publish_issue.py`를 호출해 이슈를 생성·업데이트한다.
+5. **Triage**: 통과 조건을 만족하는 finding만 이슈화 대상으로 고른다. Step 2에서 로드한 전체 view의 기존 open claim과 실질적으로 같은 문제이면 발행하지 않고 `[이미 추적 중]`으로 표시한다.
+6. **발행 + 메모리 갱신**: triage 통과 finding마다 `scripts/publish_issue.py`를 호출해 이슈를 생성·업데이트하고, 실행 완료 후 view 메모리 파일을 갱신한다.
 
 `Step 4.5` 재조사는 **초기 채점 뒤, triage 전에** 선택적으로 발생한다.
 정확한 흐름은 [`references/execution-lifecycle.md`](references/execution-lifecycle.md)를 읽는다.
 
-## Step 1 — 레포 접근 + View 결정
+## Step 1 — 레포 접근 + View 결정 + 메모리 로드
 
 ### 레포 접근
 
@@ -132,20 +138,37 @@ $repo-orbit https://github.com/owner/repo --triage-min-impact 3
 
 - `--dry-run` 옵션이 있으면 Step 6 발행 단계를 건너뛰고 이슈 payload를 출력만 한다.
 - 날짜·요일은 항상 확인하되, 요일과 view가 달라도 오류가 아니다.
-- Step 1 완료 후 최소한 아래를 보고한다.
+
+### View 메모리 로드
+
+view가 결정되면 해당 view의 메모리 파일을 읽는다.
+
+```bash
+# group = repo URL에서 추출한 owner, project = repo 이름
+~/.repo-orbit/<group>/<project>/<VIEW>.json
+```
+
+- 파일이 없으면 **최초 실행**으로 간주한다. `last_scan_commit` = null, `explored_files` = [], `known_findings` = {}.
+- 파일이 있으면 `last_scan_commit`을 diff 기준으로 사용한다.
+- 환경변수 `REPO_ORBIT_HOME`이 설정되어 있으면 `~/.repo-orbit` 대신 그 경로를 사용한다.
+
+메모리 스키마 상세는 [`references/coverage-log-schema.md`](references/coverage-log-schema.md)를 읽는다.
+
+### Step 1 완료 보고
 
 ```text
 날짜 : YYYY-MM-DD (요일)
 view : DATA — 데이터 구조 & 흐름
 레포 : owner/repo
 유형 : Node Backend          ← Step 2에서 판정 후 기입
+메모리 : last_scan_commit=abc1234f (또는 최초 실행)
 옵션 : --dry-run (있을 때만)
 ```
 
-## Step 2 — 레포 구조 파악 + 유형 판정
+## Step 2 — 레포 구조 파악 + 유형 판정 + 탐색 우선순위 계산
 
 Orchestrator가 직접 아래를 확인한다.
-목적은 **레포 유형 판정**과 **서브태스크 스킵 조건 판단**이다.
+목적은 **레포 유형 판정**, **서브태스크 스킵 조건 판단**, **탐색 우선순위 계산**이다.
 
 레포 유형(FSD Frontend / Generic Frontend / Node Backend / Python Backend / Go·Rust·Java / Monorepo / Microservices / Library / CLI / Static Site)에 따라 각 view 에이전트의 조사 경로가 달라진다.
 유형 판정 기준과 view별 적용 가이드는 [`references/repo-types.md`](references/repo-types.md)를 읽는다.
@@ -167,6 +190,58 @@ Orchestrator가 직접 아래를 확인한다.
 - 파일 트리 확인 자체가 불가능하면 실행을 중단하고 `[error] 레포 접근 실패: <사유>`를 남긴다.
 - 일부 설정 파일만 없는 경우는 있는 것만 읽고 계속 진행한다.
 - 선택된 view에 해당하는 파일이 없어 모든 서브태스크가 스킵되면 findings `0`으로 정상 종료한다.
+
+### diff 계산
+
+```bash
+# last_scan_commit이 있을 때
+git diff <last_scan_commit>..HEAD --name-only
+
+# 최초 실행 (last_scan_commit = null)
+# diff 없음. changed_files = [] 로 처리.
+```
+
+- shallow clone에서 `last_scan_commit`이 존재하지 않으면 `git fetch --unshallow` 후 재시도한다.
+- diff 결과를 `changed_files` 목록으로 저장한다.
+
+### 조기 종료 조건
+
+아래 **두 조건을 모두** 만족하면 이번 실행을 변경사항 없음으로 간주하고 조기 종료한다.
+
+```
+changed_files = []
+AND
+이 view의 explored_files에서 unexplored(미탐색) 파일 없음
+```
+
+조기 종료 시 아래를 출력하고 메모리 파일의 `run_history`에 항목을 추가한 뒤 종료한다.
+
+```text
+[skip] 변경사항 없음 — 새로 탐색할 파일도 없습니다.
+  last_scan_commit : abc1234f
+  다음 실행 예상 view : <내일 view>
+```
+
+### 탐색 우선순위 계산
+
+조기 종료가 발생하지 않으면 아래 우선순위로 탐색 목록을 만들어 에이전트에 전달한다.
+
+```
+Priority 1 — 변경된 파일 (changed_files에 있는 것)
+  → 이 view에 관련된 파일 중 diff에서 감지된 것. 반드시 분석.
+
+Priority 2 — 미탐색 파일 (explored_files에 없는 것)
+  → 이 view에 관련된 파일 중 한 번도 분석하지 않은 것.
+
+Priority 3 — 오래된 surface 탐색 파일
+  → explored_files에 있고 depth=surface이며 last_explored가 오래된 것.
+
+Skip — 최근 thorough + 변경 없음
+  → explored_files에 있고 depth=thorough이며 changed_files에 없는 것.
+```
+
+이 우선순위 목록을 에이전트 지시에 포함한다. 에이전트는 Priority 1 → 2 → 3 순서로 탐색하며,
+시간이 허락하는 한 Skip 파일을 건드리지 않는다.
 
 ## Step 3 — 사실 관찰 수집
 
@@ -412,7 +487,7 @@ dry-run이 아닌 경우 triage 통과 finding마다 `python3 scripts/publish_is
 | 레포 URL | Step 1에서 이미 확인 | Step 1에서 처리 완료 |
 | `--dry-run` 옵션 | 프롬프트 확인 | 없으면 실제 발행 진행 |
 | `scripts/publish_issue.py` | 파일 존재 여부 확인 | 실행 중단 + `[error] publish_issue.py 없음` |
-| Python 3 | `python3 --version` | 실행 중단 + `[error] Python 3 필요` |
+| Python 3.10+ | `python3 --version` | 실행 중단 + `[error] Python 3.10 이상 필요` |
 | 인증 토큰 | 환경변수 → `~/.repo-orbit/auth.json` 순으로 탐색 | 사용자에게 입력 요청. 없으면 manual payload로 종료 가능. dry-run이면 토큰 불필요 |
 
 ### 토큰 로드
@@ -456,7 +531,7 @@ python3 scripts/publish_issue.py \
 ### 핵심 규칙
 
 - 제목은 50자 이내로 자른다.
-- 이슈 본문 하단에 `format_version: repo-orbit/v2.0.1`와 `fingerprint`를 반드시 포함한다.
+- 이슈 본문 하단에 `format_version: repo-orbit/v2.1`와 `fingerprint`를 반드시 포함한다.
 - 동일 fingerprint open 이슈 → 제목·본문·label을 현재 포맷으로 update.
 - 동일 fingerprint closed 이슈 → reopen하지 않는다. 최종 보고에 "이미 닫힌 이슈" 항목으로 기록하고, 사용자가 원하면 새 이슈를 열 수 있음을 안내한다.
 - update 성공만 발행 성공 건수에 포함한다. `skipped_closed`는 별도 항목으로 집계한다.
@@ -480,7 +555,15 @@ python3 scripts/publish_issue.py \
 - 발행 성공/실패 수
 - 내일 view
 
+실행 완료 후 view 메모리 파일(`~/.repo-orbit/<group>/<project>/<VIEW>.json`)을 갱신한다.
+
+- `last_scan_commit` → 현재 HEAD 커밋 해시로 업데이트
+- `explored_files` → 이번에 분석한 파일 추가/갱신 (depth, last_explored 포함)
+- `known_findings` → 새 finding 추가, 관련 코드 변경 영역의 closed finding 상태 재검토
+- `run_history` → 새 entry prepend, 11번째 이상 제거
+
 정확한 포맷은 [`references/output-templates.md`](references/output-templates.md)를 읽는다.
+메모리 갱신 규칙 상세는 [`references/coverage-log-schema.md`](references/coverage-log-schema.md)를 읽는다.
 
 ## Guide
 
