@@ -83,14 +83,7 @@ jobs:
                 --validate-json validate-report.json \
                 --changed-files-json "$CHANGED_FILES_JSON" \
                 --source-branch "$HEAD_REF")
-              include_count=$(python3 - <<'PY' "$matrix"
-import json
-import sys
-
-payload = json.loads(sys.argv[1])
-print(len(payload.get("include", [])))
-PY
-)
+              include_count=$(python3 -c 'import json, sys; payload = json.loads(sys.argv[1]); print(len(payload.get("include", [])))' "$matrix")
               if [ "$include_count" -gt 0 ]; then
                 has_targets=true
               fi
@@ -109,36 +102,9 @@ PY
         env:
           CHANGED_FILES_JSON: ${{ steps.pr-files.outputs.files || '[]' }}
         run: |
-          python3 - <<'PY'
-          import json
-          import os
-          from pathlib import Path
-
-          changed_files = json.loads(os.environ.get("CHANGED_FILES_JSON", "[]"))
-          validate_payload = json.loads(Path("validate-report.json").read_text(encoding="utf-8"))
-          changed_skills = sorted({path.split("/", 1)[0] for path in changed_files if "/" in path})
-
-          lines = ["## Skill Validation Summary", ""]
-          if changed_skills:
-              lines.append(f"- Changed top-level paths: {', '.join(changed_skills)}")
-          else:
-              lines.append("- Changed top-level paths: none")
-
-          skill_reports = {skill["name"]: skill for skill in validate_payload.get("skills", [])}
-          for skill_name in changed_skills:
-              report = skill_reports.get(skill_name)
-              if not report or not report.get("errors"):
-                  continue
-              manual_errors = [error for error in report["errors"] if not error.get("autofixable")]
-              if not manual_errors:
-                  continue
-              lines.append("")
-              lines.append(f"### {skill_name}")
-              for error in manual_errors:
-                  lines.append(f"- manual: [{error['code']}] {error['message']}")
-
-          Path(os.environ["GITHUB_STEP_SUMMARY"]).write_text("\n".join(lines) + "\n", encoding="utf-8")
-          PY
+          python3 scripts/write_validation_summary.py \
+            --validate-json validate-report.json \
+            --changed-files-json "$CHANGED_FILES_JSON"
 
       - name: Fail if validation has errors
         if: steps.validate-json.outputs.exit_code != '0'
