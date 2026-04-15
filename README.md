@@ -1,6 +1,13 @@
 # skills
 
-개인 에이전트 스킬 저장소입니다.
+**주인장의 스킬을 표준화하고 운영하는 저장소**입니다.
+
+이 레포의 기본 원칙은 간단합니다.
+
+- 창작은 자유롭게 한다.
+- 편입은 엄격하게 한다.
+- 정식 스킬은 공통 형식을 맞춘다.
+- 형식 검사는 사람이 아니라 레포가 수행한다.
 
 ## Install
 
@@ -8,53 +15,86 @@
 npx skills add qpwoei0123/skills
 ```
 
-## Standard
+## How This Repo Works
 
-- [docs/SKILL-STANDARD.md](/Users/han-won-yeong/Documents/project/skills/docs/SKILL-STANDARD.md): 이 저장소의 스킬 최소 형식과 편입 규칙
+이 저장소에 들어오는 정식 스킬은 아래 기준을 따릅니다.
 
-## Structure
+- `SKILL.md`는 실행 계약의 기준 문서
+- `README.md`는 사람용 사용 설명서
+- `CHANGELOG.md`는 버전별 변경 이력
+- 버전의 `SSOT(단일 기준 원천)`는 `SKILL.md.metadata.version`
+
+표준 문서:
+
+- [docs/SKILL-STANDARD.md](/Users/han-won-yeong/Documents/project/skills/docs/SKILL-STANDARD.md)
+
+## Admission Rule
+
+보통 스킬은 밖에서 초안으로 만들고, 마음에 들면 이 저장소로 가져옵니다.
+이 저장소에 편입되는 순간부터는 `accepted(정식 편입 상태)`로 보고 표준을 충족해야 합니다.
+
+최소 필수 파일:
+
+```text
+skill-name/
+├── SKILL.md
+├── README.md
+└── CHANGELOG.md
+```
+
+선택 구조:
+
+- `agents/`
+- `references/`
+- `scripts/`
+- `assets/`
+- `INDEX.md`
+
+## Validate
+
+정식 스킬은 아래 스크립트로 검사합니다.
+
+```bash
+python3 scripts/validate_skills.py
+```
+
+특정 스킬만 검사할 수도 있습니다.
+
+```bash
+python3 scripts/validate_skills.py --skill orbit
+python3 scripts/validate_skills.py --skill ghostwriter
+```
+
+자동 검증:
+
+- [scripts/validate_skills.py](/Users/han-won-yeong/Documents/project/skills/scripts/validate_skills.py)
+- [.github/workflows/validate-skills.yml](/Users/han-won-yeong/Documents/project/skills/.github/workflows/validate-skills.yml)
+
+## Repository Structure
 
 ```text
 skills/
 ├── docs/
-│   └── SKILL-STANDARD.md           # 저장소 공통 스킬 최소 형식
+│   └── SKILL-STANDARD.md           # 저장소 공통 스킬 표준
 ├── scripts/
 │   └── validate_skills.py          # accepted 스킬 형식 검증 스크립트
 ├── .github/
 │   └── workflows/
 │       └── validate-skills.yml     # 스킬 형식 자동 검증 CI
-├── orbit/                      # 레포 점검/이슈 발행 워크플로 스킬
-│   ├── SKILL.md                     # 스킬 메인 규칙과 실행 흐름
-│   ├── assets/                      # README용 시각 에셋
-│   │   └── orbit.png           # orbit 대표 이미지
-│   ├── agents/                      # view별 에이전트와 Orchestrator 지침
-│   │   ├── orchestrator.md          # 공통 제어, 병합, triage, 발행 규칙
-│   │   ├── SAFE.md                  # 변경 안전성 view 지침
-│   │   ├── ARCH.md                  # 경계 건강도 view 지침
-│   │   ├── DEP.md                   # 의존성/설정 안정성 view 지침
-│   │   ├── BUILD.md                 # 빌드/배포 재현성 view 지침
-│   │   ├── DATA.md                  # 데이터 구조 & 흐름 view 지침
-│   │   ├── OPS.md                   # 운영 관측성 view 지침
-│   │   └── DOC.md                   # 지식 내구성 view 지침
-│   ├── references/                  # 공통 참조 문서와 출력 계약
-│   │   ├── agent-playbook.md        # 에이전트 공통 조사 원칙과 승격 조건
-│   │   ├── execution-lifecycle.md   # Step 3~4.5 실행 세부 규칙
-│   │   ├── triage-rules.md          # triage override와 재검토 기준
-│   │   ├── output-templates.md      # 이슈 본문과 최종 보고 템플릿
-│   │   ├── coverage-log-schema.md   # coverage-log/result 저장 스키마
-│   │   └── view-playbooks.md        # 과거 플레이북 호환 안내
-│   └── scripts/                     # 자동 발행과 테스트 스크립트
-│       ├── publish_issue.py         # GitHub/GitLab 이슈 create/update/reopen
-│       └── test_publish_issue.py    # 발행 스크립트 회귀 테스트
-├── ghostwriter/                     # 사용자 문체 기반 글쓰기 스킬
-│   ├── SKILL.md                     # 스킬 메인 규칙과 작성 플로우
-│   ├── README.md                    # 빠른 시작과 검증 방법
-│   ├── CHANGELOG.md                 # 변경 이력
-│   └── references/
-│       └── profile-template.md      # 글쓴이 프로필 템플릿
+├── orbit/                          # 레포 점검/이슈 발행 워크플로 스킬
+└── ghostwriter/                    # 사용자 문체 기반 글쓰기 스킬
 ```
 
-## Included Skills
+## Accepted Skills
 
-- `orbit 🪐` : 레포를 요일별 관점으로 분석하고 finding을 이슈로 발행하는 실험적 워크플로 스킬
-- `ghostwriter`: 사용자 문체를 분석해 그 사람처럼 글을 써주는 글쓰기 스킬
+- `orbit 🪐`: 레포를 요일별 관점으로 분석하고 finding을 이슈로 발행하는 워크플로 스킬
+- `ghostwriter 👻`: 사용자 문체를 분석해 그 사람처럼 글을 써주는 글쓰기 스킬
+
+## Next Step
+
+이 레포에서 다음으로 이어질 작업은 보통 아래 순서입니다.
+
+1. 새 스킬 초안을 밖에서 만든다.
+2. 이 저장소로 가져와 표준 형식에 맞춘다.
+3. `validate_skills.py`를 통과시킨다.
+4. changelog를 갱신하고 커밋한다.
