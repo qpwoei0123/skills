@@ -78,6 +78,13 @@ python3 scripts/normalize_skill.py --skill ghostwriter --check
 python3 scripts/normalize_skill.py --skill ghostwriter --write
 ```
 
+기본 운영 흐름은 `main` push 기준입니다.
+
+- 사람이 스킬을 `main`에 푸시한다.
+- CI가 형식을 검사한다.
+- 자동 수정 가능한 오류만 있으면 스킬 이름 기준 normalize 브랜치를 만들고 PR을 올린다.
+- 사용자는 normalize PR만 머지하면 된다.
+
 ## Repository Structure
 
 ```text
@@ -104,7 +111,7 @@ skills/
 
 1. 새 스킬 초안을 밖에서 만든다.
 2. 이 저장소로 가져와 표준 형식에 맞춘다.
-3. PR을 연다.
+3. `main`에 푸시한다.
 4. CI가 실패하면 자동 normalize PR이 생성될 수 있다.
-5. normalize PR을 머지하고 원래 PR을 다시 검증한다.
-6. `validate_skills.py`를 통과시키고 changelog를 갱신한 뒤 머지한다.
+5. normalize PR을 머지한다.
+6. `validate_skills.py`가 다시 통과하는지 확인한다.

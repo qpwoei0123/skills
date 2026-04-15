@@ -266,7 +266,7 @@ orbit/
 - `validator`는 실패를 판정한다.
 - `normalizer`는 자동 수정 가능한 구조만 보정한다.
 - 수동 판단이 필요한 오류는 CI가 실패로 남기고 사람이 직접 수정한다.
-- 자동 수정은 PR에서만 동작하며, 별도 normalize PR로 제안한다.
+- 자동 수정은 `main` push 뒤 별도 normalize PR로 제안한다.
 
 ## 표준화하지 않는 것
 

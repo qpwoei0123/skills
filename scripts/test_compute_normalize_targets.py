@@ -46,17 +46,15 @@ class ComputeNormalizeTargetsTest(unittest.TestCase):
         result = build_targets(
             validate_payload=payload,
             changed_files=["ghostwriter/SKILL.md", "orbit/SKILL.md", "README.md"],
-            source_branch="feature/wild-skill",
+            base_branch="main",
+            trigger_sha="abcdef1234567890",
             repo_root=self.repo_root,
         )
 
         self.assertEqual(len(result["include"]), 1)
         target = result["include"][0]
         self.assertEqual(target["skill"], "ghostwriter")
-        self.assertEqual(
-            target["branch"],
-            "codex/normalize-ghostwriter-for-feature-wild-skill",
-        )
+        self.assertEqual(target["branch"], "codex/normalize-ghostwriter")
 
 
 if __name__ == "__main__":

@@ -15,7 +15,7 @@ jobs:
       matrix: ${{ steps.compute-targets.outputs.matrix }}
       has_targets: ${{ steps.compute-targets.outputs.has_targets }}
       should_open_prs: ${{ steps.compute-targets.outputs.should_open_prs }}
-      source_branch: ${{ steps.compute-targets.outputs.source_branch }}
+      base_branch: ${{ steps.compute-targets.outputs.base_branch }}
 
     steps:
       - name: Check out repository
@@ -44,63 +44,61 @@ jobs:
           name: validate-report
           path: validate-report.json
 
-      - name: Collect PR files
-        id: pr-files
-        if: github.event_name == 'pull_request'
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const files = await github.paginate(
-              github.rest.pulls.listFiles,
-              {
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                pull_number: context.issue.number,
-                per_page: 100,
-              }
-            );
-            core.setOutput("files", JSON.stringify(files.map((file) => file.filename)));
+      - name: Collect changed files for push
+        id: push-files
+        if: github.event_name == 'push'
+        env:
+          BEFORE_SHA: ${{ github.event.before }}
+          CURRENT_SHA: ${{ github.sha }}
+        run: |
+          zero_sha="0000000000000000000000000000000000000000"
+          if [ -n "$BEFORE_SHA" ] && [ "$BEFORE_SHA" != "$zero_sha" ] && git cat-file -e "$BEFORE_SHA^{commit}" 2>/dev/null; then
+            git diff --name-only "$BEFORE_SHA" "$CURRENT_SHA" > changed-files.txt
+          else
+            git ls-tree -r --name-only "$CURRENT_SHA" > changed-files.txt
+          fi
+
+          files_json=$(python3 -c 'import json, sys; print(json.dumps([line.strip() for line in sys.stdin if line.strip()]))' < changed-files.txt)
+          echo "files=$files_json" >> "$GITHUB_OUTPUT"
 
       - name: Compute normalize targets
         id: compute-targets
         env:
           EVENT_NAME: ${{ github.event_name }}
-          REPOSITORY: ${{ github.repository }}
-          HEAD_REPO: ${{ github.event.pull_request.head.repo.full_name || '' }}
-          HEAD_REF: ${{ github.head_ref }}
-          CHANGED_FILES_JSON: ${{ steps.pr-files.outputs.files || '[]' }}
+          BRANCH_NAME: ${{ github.ref_name }}
+          CURRENT_SHA: ${{ github.sha }}
+          CHANGED_FILES_JSON: ${{ steps.push-files.outputs.files || '[]' }}
         run: |
           should_open_prs=false
           has_targets=false
           matrix='{"include":[]}'
-          source_branch=""
+          base_branch=""
 
-          if [ "$EVENT_NAME" = "pull_request" ]; then
-            source_branch="$HEAD_REF"
-            if [ "$HEAD_REPO" = "$REPOSITORY" ] && [[ "$HEAD_REF" != codex/normalize-* ]]; then
-              should_open_prs=true
-              matrix=$(python3 scripts/compute_normalize_targets.py \
-                --validate-json validate-report.json \
-                --changed-files-json "$CHANGED_FILES_JSON" \
-                --source-branch "$HEAD_REF")
-              include_count=$(python3 -c 'import json, sys; payload = json.loads(sys.argv[1]); print(len(payload.get("include", [])))' "$matrix")
-              if [ "$include_count" -gt 0 ]; then
-                has_targets=true
-              fi
+          if [ "$EVENT_NAME" = "push" ] && [ "$BRANCH_NAME" = "main" ]; then
+            base_branch="$BRANCH_NAME"
+            should_open_prs=true
+            matrix=$(python3 scripts/compute_normalize_targets.py \
+              --validate-json validate-report.json \
+              --changed-files-json "$CHANGED_FILES_JSON" \
+              --base-branch "$BRANCH_NAME" \
+              --trigger-sha "$CURRENT_SHA")
+            include_count=$(python3 -c 'import json, sys; payload = json.loads(sys.argv[1]); print(len(payload.get("include", [])))' "$matrix")
+            if [ "$include_count" -gt 0 ]; then
+              has_targets=true
             fi
           fi
 
           {
             echo "should_open_prs=$should_open_prs"
             echo "has_targets=$has_targets"
-            echo "source_branch=$source_branch"
+            echo "base_branch=$base_branch"
             echo "matrix=$matrix"
           } >> "$GITHUB_OUTPUT"
 
       - name: Write validation summary
         if: always()
         env:
-          CHANGED_FILES_JSON: ${{ steps.pr-files.outputs.files || '[]' }}
+          CHANGED_FILES_JSON: ${{ steps.push-files.outputs.files || '[]' }}
         run: |
           python3 scripts/write_validation_summary.py \
             --validate-json validate-report.json \
@@ -112,7 +110,7 @@ jobs:
 
   open-normalize-prs:
     needs: validate-skills
-    if: ${{ always() && needs.validate-skills.outputs.should_open_prs == 'true' && needs.validate-skills.outputs.has_targets == 'true' }}
+    if: ${{ always() && github.event_name == 'push' && needs.validate-skills.outputs.should_open_prs == 'true' && needs.validate-skills.outputs.has_targets == 'true' }}
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -122,11 +120,11 @@ jobs:
       matrix: ${{ fromJson(needs.validate-skills.outputs.matrix) }}
 
     steps:
-      - name: Check out source branch
+      - name: Check out base branch
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          ref: ${{ needs.validate-skills.outputs.source_branch }}
+          ref: ${{ needs.validate-skills.outputs.base_branch }}
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -145,7 +143,7 @@ jobs:
           token: ${{ github.token }}
           commit-message: Normalize ${{ matrix.skill }} to repository skill standard
           branch: ${{ matrix.branch }}
-          base: ${{ needs.validate-skills.outputs.source_branch }}
+          base: ${{ needs.validate-skills.outputs.base_branch }}
           title: ${{ matrix.title }}
           body: ${{ matrix.body }}
           add-paths: |
