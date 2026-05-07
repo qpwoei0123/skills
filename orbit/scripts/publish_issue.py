@@ -23,8 +23,13 @@ from pathlib import Path
 _RETRY_STATUS = {429, 500, 502, 503, 504}
 _MAX_RETRIES = 3
 _BASE_DELAY = 1.0  # seconds
-_LEGACY_FINGERPRINT_TOKEN_TEMPLATE = (
-    r"(?<![-A-Za-z0-9_])fingerprint:\s*{fingerprint}(?![A-Za-z0-9_./:-])"
+_LEGACY_INLINE_FOOTER_TEMPLATE = (
+    r"^`?format_version:\s*orbit/v2(?:\.[0-9]+)*`?\s*[·|]\s*"
+    r"`?fingerprint:\s*{fingerprint}`?$"
+)
+_LEGACY_FINGERPRINT_LINE_TEMPLATE = r"^`?fingerprint:\s*{fingerprint}`?$"
+_LEGACY_FORMAT_VERSION_LINE_RE = re.compile(
+    r"^`?format_version:\s*orbit/v2(?:\.[0-9]+)*`?$"
 )
 _CURRENT_FINGERPRINT_RE = re.compile(r"^pipeline:[^:]+:[A-Z]+:f-[0-9a-f]{8}$")
 _WHITESPACE_RE = re.compile(r"\s+")
@@ -194,10 +199,30 @@ def has_legacy_fingerprint(body: str | None, fingerprint: str) -> bool:
     """기존 이슈 마이그레이션을 위해 예전 fingerprint footer를 확인한다."""
     if not body:
         return False
-    pattern = re.compile(
-        _LEGACY_FINGERPRINT_TOKEN_TEMPLATE.format(fingerprint=re.escape(fingerprint))
+    escaped_fingerprint = re.escape(fingerprint)
+    inline_footer_pattern = re.compile(
+        _LEGACY_INLINE_FOOTER_TEMPLATE.format(fingerprint=escaped_fingerprint)
     )
-    return any(pattern.search(line.strip()) for line in body.splitlines())
+    fingerprint_line_pattern = re.compile(
+        _LEGACY_FINGERPRINT_LINE_TEMPLATE.format(fingerprint=escaped_fingerprint)
+    )
+    lines = [line.strip() for line in body.splitlines()]
+
+    for index, line in enumerate(lines):
+        if inline_footer_pattern.match(line):
+            return True
+        if not fingerprint_line_pattern.match(line):
+            continue
+
+        previous_line = ""
+        for previous in range(index - 1, -1, -1):
+            if lines[previous]:
+                previous_line = lines[previous]
+                break
+        if _LEGACY_FORMAT_VERSION_LINE_RE.match(previous_line):
+            return True
+
+    return False
 
 
 def has_matching_fingerprint(

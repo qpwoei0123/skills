@@ -173,6 +173,28 @@ class PublishIssueTest(unittest.TestCase):
         self.assertEqual(issue["number"], 3)
         self.assertEqual(len(responses), 0)
 
+    def test_find_existing_issue_accepts_legacy_two_line_footer_for_migration(self):
+        fingerprint = "pipeline:owner/repo:SAFE:f-34343434"
+        body = "\n".join([
+            "본문",
+            "",
+            "format_version: orbit/v2",
+            f"fingerprint: {fingerprint}",
+        ])
+
+        self.assertTrue(MODULE.has_matching_fingerprint(body, fingerprint))
+
+    def test_legacy_fingerprint_mention_in_body_text_does_not_match(self):
+        fingerprint = "pipeline:owner/repo:BUILD:E1"
+        body = "\n".join([
+            "본문",
+            "",
+            f"duplicate of fingerprint: {fingerprint}",
+            "관련 이슈 설명일 뿐 orbit footer가 아니다.",
+        ])
+
+        self.assertFalse(MODULE.has_matching_fingerprint(body, fingerprint))
+
     def test_find_existing_issue_accepts_legacy_alias_for_id_migration(self):
         new_fingerprint = "pipeline:owner/repo:BUILD:f-12345678"
         legacy_fingerprint = "pipeline:owner/repo:BUILD:E1"
