@@ -1,6 +1,6 @@
 # coverage-log 스키마
 
-매 실행마다 Orchestrator가 view별 메모리 파일에 기록한다.
+매 실행마다 리드 리뷰어가 view별 메모리 파일에 기록한다.
 triage-rules.md의 재검토 트리거와 탐색 나침반이 이 파일을 기준으로 작동한다.
 
 **저장 위치:**
@@ -53,13 +53,13 @@ triage-rules.md의 재검토 트리거와 탐색 나침반이 이 파일을 기�
     }
   ],
   "known_findings": {
-    "pipeline:fe1/repo:BUILD:E1": {
+    "pipeline:fe1/repo:BUILD:f-12345678": {
       "status": "open",
       "first_seen": "2026-04-01",
       "last_seen": "2026-04-07",
       "claim_summary": "CI Node.js 버전 불일치"
     },
-    "pipeline:fe1/repo:BUILD:E2": {
+    "pipeline:fe1/repo:BUILD:f-87654321": {
       "status": "closed",
       "first_seen": "2026-03-25",
       "last_seen": "2026-03-25",
@@ -131,7 +131,7 @@ triage-rules.md의 재검토 트리거와 탐색 나침반이 이 파일을 기�
 
 ## 탐색 나침반 작동 원리
 
-Orchestrator는 Step 2에서 이 파일을 읽어 에이전트에게 탐색 우선순위를 전달한다.
+리드 리뷰어는 Step 2에서 이 파일을 읽어 리뷰어에게 탐색 우선순위를 전달한다.
 
 ```
 Priority 1 — 변경된 파일 (diff에서 감지)
@@ -153,7 +153,7 @@ Skip — 최근 thorough 탐색 완료 + 변경 없음
 
 ## 메모리 업데이트 규칙
 
-실행 완료 후 Orchestrator가 view 파일을 갱신한다.
+실행 완료 후 리드 리뷰어가 view 파일을 갱신한다.
 
 1. `last_scan_commit` → 현재 HEAD로 업데이트
 2. `explored_files` → 이번에 분석한 파일 추가/갱신
@@ -175,10 +175,10 @@ triage-rules.md의 재검토 트리거는 `run_history` 최근 N개 entry로 판
 
 ---
 
-## 에이전트 실패 기록
+## 리뷰어 실패 기록
 
 **`agents_skipped`와 `agent_errors`의 구분:**
-- `agents_skipped`: Step 2에서 스킵 조건에 의해 애초에 spawn하지 않은 에이전트. 정상 흐름.
+- `agents_skipped`: Step 2에서 스킵 조건에 의해 애초에 spawn하지 않은 리뷰어. 정상 흐름.
 - `agent_errors`: spawn됐으나 timeout 또는 오류로 결과를 반환하지 못한 경우. result.json에 기록.
 
 ```json
@@ -192,5 +192,5 @@ triage-rules.md의 재검토 트리거는 `run_history` 최근 N개 entry로 판
 ```
 
 `fallback` 값:
-- `partial_results_used` — 나머지 에이전트 결과로 계속 진행
+- `partial_results_used` — 나머지 리뷰어 결과로 계속 진행
 - `step_aborted` — 해당 실행 중단

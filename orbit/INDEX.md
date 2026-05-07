@@ -7,11 +7,11 @@
 1. **[SKILL.md](SKILL.md)** — 파이프라인 전체 흐름 (Step 1~6), triage 기준, 발행 규칙
 2. **[README.md](README.md)** — 설치 요건, 인증 설정, Quick Start 예시
 
-## 에이전트 지침
+## 리뷰어 지침
 
 | 파일 | 역할 |
 |------|------|
-| [agents/orchestrator.md](agents/orchestrator.md) | 병합·채점·발행 공통 제어 |
+| [agents/orchestrator.md](agents/orchestrator.md) | 리드 리뷰어: 병합·채점·발행 공통 제어 |
 | [agents/SAFE.md](agents/SAFE.md) | 변경 안전성 (월) |
 | [agents/ARCH.md](agents/ARCH.md) | 경계 건강도 (화) |
 | [agents/DEP.md](agents/DEP.md) | 의존성/설정 안정성 (수) |
@@ -28,7 +28,7 @@
 | [references/output-templates.md](references/output-templates.md) | 이슈 본문 템플릿, v2 포맷, 이의 제기 렌더링 |
 | [references/triage-rules.md](references/triage-rules.md) | override 옵션, 기준 재검토 트리거 |
 | [references/repo-types.md](references/repo-types.md) | 레포 유형 판정, FSD/백엔드/모노레포별 view 적용 |
-| [references/agent-playbook.md](references/agent-playbook.md) | 에이전트 공통 조사 원칙, finding 승격 조건 |
+| [references/agent-playbook.md](references/agent-playbook.md) | 리뷰어 공통 조사 원칙, finding 승격 조건 |
 | [references/coverage-log-schema.md](references/coverage-log-schema.md) | per-view 메모리 스키마, 탐색 나침반, 실행 이력 |
 
 ## 스크립트
@@ -36,6 +36,7 @@
 | 파일 | 역할 |
 |------|------|
 | [scripts/publish_issue.py](scripts/publish_issue.py) | GitHub/GitLab 이슈 create/update, fingerprint 중복 체크 |
+| [scripts/test_contracts.py](scripts/test_contracts.py) | 문서/발행 계약 정합성 테스트 |
 | [scripts/test_publish_issue.py](scripts/test_publish_issue.py) | publish_issue.py 회귀 테스트 |
 | [scripts/test_pipeline.py](scripts/test_pipeline.py) | Step 1~5 파이프라인 로직 단위 테스트 |
 
@@ -47,6 +48,9 @@ python3 -m unittest scripts/test_publish_issue.py -v
 
 # 파이프라인 로직 테스트
 python3 -m unittest scripts/test_pipeline.py -v
+
+# 문서/발행 계약 정합성 테스트
+python3 -m unittest scripts/test_contracts.py -v
 ```
 
 ## 버전 히스토리
@@ -57,5 +61,5 @@ python3 -m unittest scripts/test_pipeline.py -v
 
 - **closed 이슈**: 재오픈하지 않는다. `skipped_closed`로 기록.
 - **triage**: impact≥4, urgency≥3, confidence≠low, actionability≥3 모두 충족해야 발행.
-- **에이전트**: 사실 관찰만 반환. 점수는 Orchestrator만 부여.
+- **리뷰어**: 사실 관찰만 반환. 점수는 리드 리뷰어만 부여.
 - **format_version**: 이슈 본문 포맷이 바뀔 때만 올린다. 현재: `orbit/v2.1`
