@@ -8,8 +8,10 @@ GitHub / GitLab 이슈 생성, 업데이트를 담당한다.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
+import re
 import time
 import urllib.error
 import urllib.parse
@@ -21,6 +23,11 @@ from pathlib import Path
 _RETRY_STATUS = {429, 500, 502, 503, 504}
 _MAX_RETRIES = 3
 _BASE_DELAY = 1.0  # seconds
+_LEGACY_FINGERPRINT_TOKEN_TEMPLATE = (
+    r"(?<![-A-Za-z0-9_])fingerprint:\s*{fingerprint}(?![A-Za-z0-9_./:-])"
+)
+_CURRENT_FINGERPRINT_RE = re.compile(r"^pipeline:[^:]+:[A-Z]+:f-[0-9a-f]{8}$")
+_WHITESPACE_RE = re.compile(r"\s+")
 
 
 class PublishFallback(Exception):
@@ -98,12 +105,114 @@ def normalize_title(title: str) -> str:
     return title[:MAX_TITLE_LENGTH]
 
 
-def has_exact_fingerprint(body: str | None, fingerprint: str) -> bool:
-    """본문 footer에 exact fingerprint가 있는지 확인한다."""
+def format_fingerprint_footer(fingerprint: str) -> str:
+    """현재 이슈 본문 계약의 fingerprint footer를 만든다."""
+    return f"<!-- orbit-fingerprint: {fingerprint} -->"
+
+
+def is_current_fingerprint(fingerprint: str) -> bool:
+    """현재 finding ID 계약을 따르는 fingerprint인지 확인한다."""
+    return bool(_CURRENT_FINGERPRINT_RE.match(fingerprint))
+
+
+def fingerprint_scope(fingerprint: str) -> tuple[str, str] | None:
+    """fingerprint에서 repo와 view 범위를 추출한다."""
+    parts = fingerprint.strip().split(":")
+    if len(parts) != 4 or parts[0] != "pipeline":
+        return None
+    return parts[1], parts[2]
+
+
+def same_fingerprint_scope(current: str, candidate: str) -> bool:
+    """legacy alias는 같은 repo/view 안의 ID 변경일 때만 유효하다."""
+    current_scope = fingerprint_scope(current)
+    candidate_scope = fingerprint_scope(candidate)
+    return current_scope is not None and current_scope == candidate_scope
+
+
+def normalize_finding_part(value: str) -> str:
+    """finding_id 해시에 들어갈 텍스트를 정규화한다."""
+    return _WHITESPACE_RE.sub(" ", value.lower().strip())
+
+
+def build_finding_id(claim: str, impact_surface: str) -> str:
+    """claim과 impact_surface만으로 안정적인 finding_id를 만든다."""
+    payload = f"{normalize_finding_part(claim)}\n{normalize_finding_part(impact_surface)}"
+    digest = hashlib.sha1(payload.encode("utf-8")).hexdigest()[:8]
+    return f"f-{digest}"
+
+
+def fingerprint_candidates(
+    fingerprint: str,
+    legacy_fingerprints: list[str] | None = None,
+) -> list[str]:
+    """현재 fingerprint와 명시적으로 전달된 과거 alias를 중복 없이 반환한다."""
+    candidates = [fingerprint, *(legacy_fingerprints or [])]
+    seen: set[str] = set()
+    result = []
+    for candidate in candidates:
+        normalized = candidate.strip()
+        if normalized != fingerprint.strip() and fingerprint:
+            if not same_fingerprint_scope(fingerprint, normalized):
+                continue
+        if normalized and normalized not in seen:
+            result.append(normalized)
+            seen.add(normalized)
+    return result
+
+
+def invalid_legacy_fingerprints(
+    fingerprint: str,
+    legacy_fingerprints: list[str] | None,
+) -> list[str]:
+    """같은 repo/view 범위를 벗어난 legacy alias를 찾는다."""
+    invalid = []
+    for candidate in legacy_fingerprints or []:
+        normalized = candidate.strip()
+        if normalized and not same_fingerprint_scope(fingerprint, normalized):
+            invalid.append(normalized)
+    return invalid
+
+
+def legacy_fingerprint_aliases(
+    fingerprint: str,
+    legacy_fingerprints: list[str] | None,
+) -> list[str]:
+    """현재 fingerprint를 제외한 유효한 legacy alias만 반환한다."""
+    return fingerprint_candidates(fingerprint, legacy_fingerprints)[1:]
+
+
+def has_current_fingerprint_footer(body: str | None, fingerprint: str) -> bool:
+    """본문 footer에 현재 HTML comment fingerprint가 있는지 확인한다."""
     if not body:
         return False
-    expected = f"fingerprint: {fingerprint}"
+    expected = format_fingerprint_footer(fingerprint)
     return any(line.strip() == expected for line in body.splitlines())
+
+
+def has_legacy_fingerprint(body: str | None, fingerprint: str) -> bool:
+    """기존 이슈 마이그레이션을 위해 예전 fingerprint footer를 확인한다."""
+    if not body:
+        return False
+    pattern = re.compile(
+        _LEGACY_FINGERPRINT_TOKEN_TEMPLATE.format(fingerprint=re.escape(fingerprint))
+    )
+    return any(pattern.search(line.strip()) for line in body.splitlines())
+
+
+def has_matching_fingerprint(
+    body: str | None,
+    fingerprint: str,
+    legacy_fingerprints: list[str] | None = None,
+) -> bool:
+    """중복 조회용으로 현재 fingerprint와 명시적 legacy alias를 모두 확인한다."""
+    for candidate in fingerprint_candidates(fingerprint, legacy_fingerprints):
+        if has_current_fingerprint_footer(body, candidate) or has_legacy_fingerprint(
+            body,
+            candidate,
+        ):
+            return True
+    return False
 
 
 def validate_issue_contract(title: str, body: str, fingerprint: str) -> str:
@@ -112,11 +221,13 @@ def validate_issue_contract(title: str, body: str, fingerprint: str) -> str:
 
     if not normalized_title.startswith("[view: "):
         raise PublishFallback("제목은 반드시 [view: <view_id>] 접두어로 시작해야 합니다.")
+    if not is_current_fingerprint(fingerprint):
+        raise PublishFallback("fingerprint 형식은 pipeline:<repo>:<VIEW>:f-xxxxxxxx 이어야 합니다.")
     # prefix 체크: orbit/v2.x 시리즈 전부 허용 (v2.1, v2.0.1 등)
     if "format_version: orbit/v2" not in body:
         raise PublishFallback("본문 하단에 format_version: orbit/v2.x 가 필요합니다.")
-    if not has_exact_fingerprint(body, fingerprint):
-        raise PublishFallback("본문 하단 fingerprint 값이 요청 fingerprint와 일치해야 합니다.")
+    if not has_current_fingerprint_footer(body, fingerprint):
+        raise PublishFallback("본문 하단 HTML comment fingerprint 값이 요청 fingerprint와 일치해야 합니다.")
 
     return normalized_title
 
@@ -186,9 +297,24 @@ def build_manual_payload(
     body: str,
     fingerprint: str,
     labels: list[str],
+    legacy_fingerprints: list[str] | None = None,
 ) -> dict:
     """자동 발행이 불가능할 때 수동 발행용 payload를 만든다."""
     label_text = ", ".join(labels) if labels else "(없음)"
+    legacy_fingerprints = fingerprint_candidates("", legacy_fingerprints)
+    legacy_text = ", ".join(legacy_fingerprints)
+    copy_paste_lines = [
+        "[manual issue publish]",
+        f"title: {title}",
+        f"labels: {label_text}",
+    ]
+    if legacy_text:
+        copy_paste_lines.append(f"legacy_fingerprints: {legacy_text}")
+    copy_paste_lines.extend([
+        format_fingerprint_footer(fingerprint),
+        "",
+        body,
+    ])
     return {
         "action": "manual_required",
         "reason": reason,
@@ -198,15 +324,9 @@ def build_manual_payload(
         "title": title,
         "body": body,
         "fingerprint": fingerprint,
+        "legacy_fingerprints": legacy_fingerprints,
         "labels": labels,
-        "copy_paste_text": "\n".join([
-            "[manual issue publish]",
-            f"title: {title}",
-            f"labels: {label_text}",
-            f"fingerprint: {fingerprint}",
-            "",
-            body,
-        ]),
+        "copy_paste_text": "\n".join(copy_paste_lines),
     }
 
 
@@ -247,6 +367,7 @@ def find_existing_issue(
     project: str,
     token: str,
     fingerprint: str,
+    legacy_fingerprints: list[str] | None = None,
 ) -> dict | None:
     """동일 fingerprint 이슈를 찾아 반환한다."""
     iterator = (
@@ -257,7 +378,7 @@ def find_existing_issue(
 
     for issue in iterator:
         body = issue.get("body") if platform == "github" else issue.get("description")
-        if has_exact_fingerprint(body, fingerprint):
+        if has_matching_fingerprint(body, fingerprint, legacy_fingerprints):
             return issue
     return None
 
@@ -375,10 +496,12 @@ def publish_issue(
     body: str,
     fingerprint: str,
     labels: list[str],
+    legacy_fingerprints: list[str] | None = None,
 ) -> dict:
     """orbit finding 하나를 발행한다."""
     platform, base_url, project = detect_platform(repo_url)
     safe_title = normalize_title(title)
+    legacy_fingerprints = fingerprint_candidates("", legacy_fingerprints)
 
     try:
         title = validate_issue_contract(title, body, fingerprint)
@@ -392,7 +515,25 @@ def publish_issue(
             body,
             fingerprint,
             labels,
+            legacy_fingerprints,
         )
+
+    invalid_aliases = invalid_legacy_fingerprints(fingerprint, legacy_fingerprints)
+    if invalid_aliases:
+        return build_manual_payload(
+            "legacy_fingerprint는 같은 repo/view 안의 ID 마이그레이션 alias만 허용합니다: "
+            + ", ".join(invalid_aliases),
+            repo_url,
+            platform,
+            project,
+            title,
+            body,
+            fingerprint,
+            labels,
+            legacy_fingerprints,
+        )
+
+    legacy_fingerprints = legacy_fingerprint_aliases(fingerprint, legacy_fingerprints)
 
     token, api_base = load_auth(platform, base_url)
 
@@ -406,6 +547,7 @@ def publish_issue(
             body,
             fingerprint,
             labels,
+            legacy_fingerprints,
         )
 
     try:
@@ -414,7 +556,14 @@ def publish_issue(
         else:
             gitlab_ensure_labels(api_base, project, token, labels)
 
-        existing = find_existing_issue(platform, api_base, project, token, fingerprint)
+        existing = find_existing_issue(
+            platform,
+            api_base,
+            project,
+            token,
+            fingerprint,
+            legacy_fingerprints,
+        )
 
         if existing is None:
             if platform == "github":
@@ -497,6 +646,7 @@ def publish_issue(
             body,
             fingerprint,
             labels,
+            legacy_fingerprints,
         )
 
 
@@ -508,6 +658,12 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--body", help="이슈 본문 문자열")
     parser.add_argument("--body-file", help="이슈 본문 파일 경로")
     parser.add_argument("--fingerprint", required=True, help="중복 체크용 fingerprint")
+    parser.add_argument(
+        "--legacy-fingerprint",
+        action="append",
+        default=[],
+        help="ID 알고리즘 변경 전 같은 finding을 가리키던 fingerprint alias",
+    )
     parser.add_argument("--labels", default="automation", help="쉼표 구분 라벨 목록")
     parser.add_argument(
         "--dry-run",
@@ -536,26 +692,42 @@ def main() -> None:
         platform, _, project = detect_platform(args.repo_url)
         safe_title = normalize_title(args.title)
         label_text = ", ".join(labels) if labels else "(없음)"
+        legacy_fingerprints = fingerprint_candidates("", args.legacy_fingerprint)
+        copy_paste_lines = [
+            "[dry-run — 실제 발행 없음]",
+            f"title: {safe_title}",
+            f"labels: {label_text}",
+        ]
+        if legacy_fingerprints:
+            copy_paste_lines.append(
+                f"legacy_fingerprints: {', '.join(legacy_fingerprints)}"
+            )
+        copy_paste_lines.extend([
+            format_fingerprint_footer(args.fingerprint),
+            "",
+            body,
+        ])
         result = {
             "action": "dry_run",
             "platform": platform,
             "project": project,
             "title": safe_title,
             "fingerprint": args.fingerprint,
+            "legacy_fingerprints": legacy_fingerprints,
             "labels": labels,
-            "copy_paste_text": "\n".join([
-                "[dry-run — 실제 발행 없음]",
-                f"title: {safe_title}",
-                f"labels: {label_text}",
-                f"fingerprint: {args.fingerprint}",
-                "",
-                body,
-            ]),
+            "copy_paste_text": "\n".join(copy_paste_lines),
         }
         print(json.dumps(result, ensure_ascii=False, indent=2))
         return
 
-    result = publish_issue(args.repo_url, args.title, body, args.fingerprint, labels)
+    result = publish_issue(
+        args.repo_url,
+        args.title,
+        body,
+        args.fingerprint,
+        labels,
+        args.legacy_fingerprint,
+    )
     print(json.dumps(result, ensure_ascii=False, indent=2))
 
 
