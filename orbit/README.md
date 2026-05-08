@@ -12,9 +12,10 @@
 
 # orbit 🪐
 
-`version: 1.7.0`
+`version: 1.8.0`
 
 요일별 고정 view로 레포를 분석하고, triage를 통과한 finding만 이슈로 발행하는 스킬입니다.
+사용자에게 보이는 실행 보고에서는 `리드 리뷰어`, `변경 리뷰어`, `커버리지 리뷰어`, `위험 리뷰어`라는 역할 이름을 씁니다. 내부 JSON 키와 파일명은 호환성을 위해 영어 이름을 유지합니다.
 
 ## 포함 파일
 
@@ -23,8 +24,8 @@ orbit/                          # 스킬 루트
 ├── SKILL.md                         # 스킬 메인 규칙과 실행 흐름
 ├── assets/                          # README용 시각 에셋
 │   └── orbit.png               # orbit 대표 이미지
-├── agents/                          # view별 에이전트와 Orchestrator 지침
-│   ├── orchestrator.md              # 공통 제어, 병합, triage, 발행 규칙
+├── agents/                          # view별 리뷰어와 리드 리뷰어 지침
+│   ├── orchestrator.md              # 리드 리뷰어 공통 제어, 병합, triage, 발행 규칙
 │   ├── SAFE.md                      # 변경 안전성 view 지침
 │   ├── ARCH.md                      # 경계 건강도 view 지침
 │   ├── DEP.md                       # 의존성/설정 안정성 view 지침
@@ -33,7 +34,7 @@ orbit/                          # 스킬 루트
 │   ├── OPS.md                       # 운영 관측성 view 지침
 │   └── DOC.md                       # 지식 내구성 view 지침
 ├── references/                      # 공통 참조 문서와 출력 계약
-│   ├── agent-playbook.md            # 에이전트 공통 조사 원칙과 승격 조건
+│   ├── agent-playbook.md            # 리뷰어 공통 조사 원칙과 승격 조건
 │   ├── execution-lifecycle.md       # Step 3~4.5 실행 세부 규칙
 │   ├── triage-rules.md              # triage override와 재검토 기준
 │   ├── output-templates.md          # 이슈 본문과 최종 보고 템플릿
@@ -41,6 +42,8 @@ orbit/                          # 스킬 루트
 │   └── view-playbooks.md            # 과거 플레이북 호환 안내
 └── scripts/                         # 자동 발행과 테스트 스크립트
     ├── publish_issue.py             # GitHub/GitLab 이슈 create/update (closed 이슈는 재오픈하지 않음)
+    ├── test_contracts.py            # 문서/발행 계약 정합성 테스트
+    ├── test_pipeline.py             # Step 1~5 파이프라인 로직 테스트
     └── test_publish_issue.py        # 발행 스크립트 회귀 테스트
 ```
 
@@ -85,7 +88,8 @@ python3 scripts/publish_issue.py \
   --repo-url https://github.com/owner/repo \
   --title "[view: BUILD] 로컬과 CI 빌드 경로가 다릅니다" \
   --body-file /tmp/orbit-issue.md \
-  --fingerprint "pipeline:owner/repo:BUILD:E1" \
+  --fingerprint "pipeline:owner/repo:BUILD:f-12345678" \
+  --legacy-fingerprint "<old-fingerprint-from-known_findings>" \
   --labels automation
 
 # dry-run (API 호출 없이 payload만 출력)
@@ -93,7 +97,7 @@ python3 scripts/publish_issue.py \
   --repo-url https://github.com/owner/repo \
   --title "[view: BUILD] ..." \
   --body-file /tmp/orbit-issue.md \
-  --fingerprint "pipeline:owner/repo:BUILD:E1" \
+  --fingerprint "pipeline:owner/repo:BUILD:f-12345678" \
   --labels automation \
   --dry-run
 ```
@@ -122,5 +126,5 @@ python3 scripts/publish_issue.py \
 ## 테스트
 
 ```bash
-python3 scripts/test_publish_issue.py
+python3 -m unittest discover -s scripts -p 'test_*.py'
 ```

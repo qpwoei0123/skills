@@ -6,8 +6,8 @@
 
 현재: **`orbit/v2.1`**
 
-이슈 본문 footer에 `format_version: orbit/v2.1`가 찍힌다.
-기존 이슈를 업데이트할 때 footer의 `format_version`이 현재 버전과 다르면, 점수·판정은 유지한 채 **현재 포맷으로 본문을 재작성**한다.
+이슈 본문에는 `format_version: orbit/v2.1`가 찍히고, fingerprint footer는 HTML comment 한 줄로 남긴다.
+기존 이슈를 업데이트할 때 본문의 `format_version`이 현재 버전과 다르거나 fingerprint footer가 예전 `fingerprint:` 형식이면, 점수·판정은 유지한 채 **현재 포맷으로 본문을 재작성**한다.
 
 ### 마이그레이션 규칙
 
@@ -15,7 +15,8 @@
 |---------------------|------|
 | `orbit/v1` 또는 없음 | 전체 본문 재작성 |
 | `orbit/v2.0.1` 이하 | 전체 본문 재작성 |
-| `orbit/v2.1` | 점수 유지, 본문 재작성 생략 |
+| `orbit/v2.1` + 예전 `fingerprint:` footer | HTML comment footer로 본문 재작성 |
+| `orbit/v2.1` + `<!-- orbit-fingerprint: ... -->` footer | 점수 유지, 본문 재작성 생략 |
 
 ## 목차
 
@@ -83,24 +84,24 @@ GitHub과 GitLab 모두 `<details>` HTML 태그를 렌더링한다.
 
 **이 블록은 반박·재조사·이의 제기 중 하나라도 발생했을 때만 작성한다. 해당 사항 없으면 이 `<details>` 블록 전체를 생략한다.**
 
-#### 교차 반박 · Agent {Y} ({역할})
+#### 교차 반박 · 리뷰어 {Y} ({역할})
 
 {반박}
 
 > 근거: `{file:line}`
 
-#### 재조사 · Agent {X}
+#### 재조사 · 리뷰어 {X}
 
 > 근거: `{file:line}` · 결론: `claim_refined` / `claim_withdrawn` / `claim_upheld`
 
-#### 이의 제기 · Agent {X}
+#### 이의 제기 · 리뷰어 {X}
 
 {이의 근거와 새 evidence 설명}
 
 > 새 근거: `{file:line}`, `{file:line}`
 > 요청: {contested_field} {current_score} → {requested_score}
 
-#### 이의 판정 · Orchestrator
+#### 이의 판정 · 리드 리뷰어
 
 > 판정: `sustained` / `overruled` · 사유: {한 문장}
 
@@ -120,7 +121,8 @@ GitHub과 GitLab 모두 `<details>` HTML 태그를 렌더링한다.
 
 ---
 
-`format_version: orbit/v2.1` · `fingerprint: pipeline:{repo}:{view_id}:{finding_id}`
+`format_version: orbit/v2.1`
+<!-- orbit-fingerprint: pipeline:{repo}:{view_id}:{finding_id} -->
 ````
 
 작성 규칙:
@@ -130,7 +132,7 @@ GitHub과 GitLab 모두 `<details>` HTML 태그를 렌더링한다.
 - `diff` 블록은 문제 코드의 before/after를 보여줄 수 있을 때만 쓴다. 코드로 보여줄 수 없으면 생략하고 evidence 경로만 남긴다.
 - 분석 히스토리와 이슈화 근거는 `<details>` 안에 넣는다. 기본 접힘 상태로 발행한다.
 - GitLab은 `[!WARNING]` / `[!TIP]` 구문을 렌더링하지 않으므로 사용하지 않는다.
-- `format_version`과 `fingerprint`는 마지막 한 줄에 `·`로 이어 표시한다.
+- `format_version` 다음 줄에 fingerprint HTML comment footer를 정확히 표시한다.
 
 ## 출력 예시
 
@@ -165,13 +167,13 @@ CI `before_script`가 `npm install -g pnpm`으로 `pnpm`을 최신 전역 패키
 <details>
 <summary>분석 히스토리</summary>
 
-#### 1차 제출 · Agent A (패키지 버전 고정 + lockfile 상태 분석)
+#### 1차 제출 · 변경 리뷰어(A) (패키지 버전 고정 + lockfile 상태 분석)
 
 `package.json` 213번째 줄에 `pnpm@10.14.0`이 고정돼 있지만, `.gitlab-ci.yml` 161~163번째 줄은 매번 `npm install -g pnpm` 뒤에 `pnpm install --frozen-lockfile`을 실행한다.
 
 > 근거: `package.json:213`, `.gitlab-ci.yml:161`, `.gitlab-ci.yml:162`, `.gitlab-ci.yml:163`
 
-#### 판정 · Orchestrator
+#### 판정 · 리드 리뷰어
 
 CI 전 job의 의존성 설치 경로에 직접 영향을 주므로 impact 4, 다음 파이프라인부터 바로 재현 가능한 drift(버전 표류)라 urgency 4로 판정했다.
 
@@ -193,12 +195,13 @@ CI 전 job의 의존성 설치 경로에 직접 영향을 주므로 impact 4, �
 
 ---
 
-`format_version: orbit/v2.1` · `fingerprint: pipeline:owner/repo:DEP:E1`
+`format_version: orbit/v2.1`
+<!-- orbit-fingerprint: pipeline:owner/repo:DEP:f-12345678 -->
 ````
 
 ### 이의 제기 포함 예시
 
-아래는 에이전트 이의 제기가 인용(sustained)되어 triage를 통과한 경우의 이슈 본문 예시다.
+아래는 리뷰어 이의 제기가 인용(sustained)되어 triage를 통과한 경우의 이슈 본문 예시다.
 
 ````markdown
 🔴 CRITICAL · 관리자 API(`/api/admin/*`)가 인증 없이 접근 가능하다
@@ -229,26 +232,26 @@ CI 전 job의 의존성 설치 경로에 직접 영향을 주므로 impact 4, �
 <details>
 <summary>분석 히스토리</summary>
 
-#### 1차 제출 · Agent A (라우트 + 미들웨어 분석)
+#### 1차 제출 · 위험 리뷰어(C) (라우트 + 미들웨어 분석)
 
 `src/middleware/auth.ts` 12번째 줄의 경로 매칭 배열에 `/api/admin` 패턴이 빠져 있음을 확인했다.
 
 > 근거: `src/middleware/auth.ts:12`
 
-#### 판정 · Orchestrator
+#### 판정 · 리드 리뷰어
 
 인증 누락이지만 admin 경로 사용 빈도가 불명확하여 impact 3으로 판정. triage 기준 미달(impact < 4).
 
 > 점수: impact 3, urgency 4, confidence high, actionability 4
 
-#### 이의 제기 · Agent A
+#### 이의 제기 · 위험 리뷰어(C)
 
 admin API가 사용자 삭제와 시스템 설정 변경을 포함하고 있어 영향 범위가 impact 3보다 넓다.
 
 > 새 근거: `src/api/routes.ts:42`, `src/api/routes.ts:58`
 > 요청: impact 3 → 5
 
-#### 이의 판정 · Orchestrator
+#### 이의 판정 · 리드 리뷰어
 
 > 판정: `sustained` · 사유: admin API에 deleteUser, updateSystemConfig이 포함되어 핵심 보안 경로에 해당
 
@@ -268,18 +271,21 @@ admin API가 사용자 삭제와 시스템 설정 변경을 포함하고 있어 
 
 ---
 
-`format_version: orbit/v2.1` · `fingerprint: pipeline:owner/repo:SAFE:E3`
+`format_version: orbit/v2.1`
+<!-- orbit-fingerprint: pipeline:owner/repo:SAFE:f-87654321 -->
 ````
 
 ## 발행 필수 파라미터
 
 - fingerprint: `pipeline:<repo>:<view_id>:<finding_id}`
+- legacy_fingerprint: 같은 repo/view 안에서 같은 finding을 가리키던 과거 fingerprint alias가 있으면 `--legacy-fingerprint`로 전달
 - labels: `automation`
 - 제목 형식 준수 (50자 이내)
-- 본문 footer: `format_version: orbit/v2.1`
+- 본문 footer: `<!-- orbit-fingerprint: pipeline:owner/repo:VIEW:f-12345678 -->`
 
-동일 fingerprint open 이슈 → 최신 본문으로 update.
-동일 fingerprint closed 이슈 → reopen하지 않는다. 최종 보고에 "이미 닫힌 이슈" 항목으로 기록하고 사용자에게 안내한다.
+동일 fingerprint 또는 같은 repo/view의 legacy fingerprint alias의 open 이슈 → 최신 본문으로 update.
+동일 fingerprint 또는 같은 repo/view의 legacy fingerprint alias의 closed 이슈 → reopen하지 않는다. 최종 보고에 "이미 닫힌 이슈" 항목으로 기록하고 사용자에게 안내한다.
+다른 view의 동일 claim → update하지 않는다. 최종 보고에 "이미 추적 중" 또는 "이미 닫힌 이슈"로만 기록한다.
 발행 실패 항목은 별도 기록하고 나머지는 계속 진행한다.
 
 ## 최종 실행 보고
@@ -288,10 +294,10 @@ admin API가 사용자 삭제와 시스템 설정 변경을 포함하고 있어 
 날짜          : YYYY-MM-DD (요일)
 레포          : <group>/<project>
 view          : DATA — 데이터 구조 & 흐름
-서브 에이전트 : A·B·C 완료  또는  A·C 완료 (B 스킵: <이유>)
+리뷰어        : 변경·커버리지·위험 완료  또는  변경·위험 완료 (커버리지 스킵: <이유>)
 ────────────────────────────────────────
 탐색 나침반      : P1(변경) 3개 · P2(미탐색) 5개 · P3(재탐색) 2개 · Skip 8개
-관찰 수집        : N개 (에이전트별 raw 관찰 합계)
+관찰 수집        : N개 (리뷰어별 raw 관찰 합계)
 채점 후 findings : N개 (중복 병합 후)
 Triage 통과      : N개
 Triage 스킵      : N개
