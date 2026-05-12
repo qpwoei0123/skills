@@ -62,4 +62,4 @@ python3 -m unittest scripts/test_contracts.py -v
 - **closed 이슈**: 재오픈하지 않는다. `skipped_closed`로 기록.
 - **triage**: impact≥4, urgency≥3, confidence≠low, actionability≥3 모두 충족해야 발행.
 - **리뷰어**: 사실 관찰만 반환. 점수는 리드 리뷰어만 부여.
-- **format_version**: 이슈 본문 포맷이 바뀔 때만 올린다. 현재: `orbit/v2.1`
+- **format_version**: 이슈 본문 포맷이 바뀔 때만 올린다. 현재: `orbit/v2.3`

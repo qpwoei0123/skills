@@ -2,7 +2,7 @@
 name: orbit
 license: Apache-2.0
 metadata:
-  version: 1.8.0
+  version: 1.10.0
 description: >
   Codebase inspection pipeline for seven views (SAFE/ARCH/DEP/BUILD/DATA/OPS/DOC)
   that publishes only qualified technical findings to GitHub/GitLab issues.
@@ -547,7 +547,7 @@ python3 scripts/publish_issue.py \
 ### 핵심 규칙
 
 - 제목은 50자 이내로 자른다.
-- 이슈 본문에는 `format_version: orbit/v2.1`를, 하단에는 `<!-- orbit-fingerprint: pipeline:owner/repo:VIEW:f-12345678 -->`를 반드시 포함한다.
+- 이슈 본문에는 `format_version: orbit/v2.3`를, 하단에는 `<!-- orbit-fingerprint: pipeline:owner/repo:VIEW:f-12345678 -->`를 반드시 포함한다.
 - 동일 fingerprint 또는 같은 repo/view의 `--legacy-fingerprint` alias의 open 이슈 → 제목·본문·label을 현재 포맷으로 update.
 - 동일 fingerprint 또는 같은 repo/view의 `--legacy-fingerprint` alias의 closed 이슈 → reopen하지 않는다. 최종 보고에 "이미 닫힌 이슈" 항목으로 기록하고, 사용자가 원하면 새 이슈를 열 수 있음을 안내한다.
 - 다른 view의 동일 claim은 update alias가 아니다. 기존 이슈 소유 view를 유지하고 최종 보고의 "이미 추적 중" 또는 "이미 닫힌 이슈" 항목에만 표시한다.
