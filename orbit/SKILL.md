@@ -2,7 +2,7 @@
 name: orbit
 license: Apache-2.0
 metadata:
-  version: 1.10.0
+  version: 1.10.1
 description: >
   Codebase inspection pipeline for seven views (SAFE/ARCH/DEP/BUILD/DATA/OPS/DOC)
   that publishes only qualified technical findings to GitHub/GitLab issues.
