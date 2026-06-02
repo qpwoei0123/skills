@@ -3,9 +3,7 @@ name: commit
 license: Apache-2.0
 metadata:
   version: 0.1.0
-description: >
-  /commit으로 현재 변경분을 보고 커밋 계획을 세우거나 바로 커밋할 때 사용한다.
-  최근 로그 스타일을 참고해 한글 컨벤셔널 커밋 메시지를 만든다.
+description: 변경분을 커밋할 때 사용한다.
 ---
 
 # commit

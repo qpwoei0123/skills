@@ -3,9 +3,7 @@ name: mr
 license: Apache-2.0
 metadata:
   version: 0.1.0
-description: >
-  /mr로 현재 브랜치 변경을 드래프트 PR/MR로 만들 때 사용한다.
-  제목과 본문은 주변 리뷰 요청 스타일을 따른다.
+description: 드래프트 PR/MR 만들 때 사용한다.
 ---
 
 # mr

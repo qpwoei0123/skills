@@ -3,9 +3,7 @@ name: orbit
 license: Apache-2.0
 metadata:
   version: 1.10.2
-description: >
-  $orbit으로 레포를 7개 관점에서 점검하고 기준을 통과한 기술 발견 사항만
-  이슈로 발행할 때만 사용한다.
+description: 레포 점검 이슈 발행할 때 사용한다.
 ---
 
 # orbit 🪐
