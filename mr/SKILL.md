@@ -1,0 +1,213 @@
+---
+name: mr
+license: Apache-2.0
+metadata:
+  version: 0.1.0
+description: >
+  Use when the user types /mr, /mr --go, /mr -go, asks to create a GitHub Pull
+  Request or GitLab Merge Request from the current branch, or explicitly
+  requests the mr skill. 한국어: 현재 브랜치의 코드 리뷰 요청을 계획하거나
+  draft MR/PR로 생성하라는 요청에서만 사용한다.
+---
+
+# mr
+
+현재 브랜치의 커밋과 diff를 읽고 코드 리뷰 요청을 준비하거나 생성하는 스킬이다.
+이 스킬에서 `MR`은 코드 리뷰 요청 단위를 뜻한다. GitHub에서는 Pull Request, GitLab에서는 Merge Request로 생성한다.
+
+## 불변 규칙
+
+- MR/PR 생성은 항상 draft로 한다.
+- 일반 MR/PR 생성으로 fallback하지 않는다.
+- draft 생성이 보장되지 않으면 `--go`여도 생성하지 않고 중단한다.
+- 커밋은 만들지 않는다. dirty worktree가 있으면 `/commit`을 먼저 안내한다.
+- 제목은 Conventional Commits 형식을 유지한다.
+
+## 호출 형태
+
+```text
+/mr
+/mr --go
+/mr -go
+```
+
+- `/mr`: 현재 브랜치, base, 커밋, diff, 주변 MR/PR 스타일을 분석하고 계획만 제안한다. 승인 전에는 push나 MR/PR 생성을 하지 않는다.
+- `/mr --go`, `/mr -go`: 같은 분석을 수행하되 승인 질문 없이 push와 draft MR/PR 생성을 진행한다.
+
+## 분석 순서
+
+1. 현재 위치가 git repo인지 확인한다.
+2. 작업 트리 상태를 확인한다.
+   - `git status --short`
+   - 변경사항이 있으면 중단한다. staged 변경도 dirty로 본다.
+3. 현재 브랜치와 remote를 확인한다.
+   - `git branch --show-current`
+   - `git remote -v`
+   - 현재 브랜치가 `main`, `master`, remote default branch면 중단한다.
+4. base 브랜치를 추론한다.
+   - `branch.<current>.gh-merge-base`
+   - upstream 또는 tracking 정보
+   - remote default branch
+   - `main`
+   - `master`
+   - 애매하면 사용자에게 묻는다.
+5. 리뷰 범위를 확인한다.
+   - `git log --oneline <base>..HEAD`
+   - `git diff --stat <base>...HEAD`
+   - `git diff --name-only <base>...HEAD`
+   - 필요하면 `git diff <base>...HEAD`
+6. 플랫폼과 CLI를 확인한다.
+   - GitHub remote: `gh auth status`, `gh pr create --help`
+   - GitLab remote: `glab auth status`, `glab mr create --help`
+   - `--draft` 플래그가 없거나 확인할 수 없으면 생성하지 않는다.
+7. 주변 스타일을 확인한다.
+   - GitHub: `gh pr list --limit 10 --json title,body,baseRefName,headRefName,url`
+   - GitLab: `glab mr list`로 최근 MR 제목과 설명 구조를 확인한다.
+   - CLI나 권한 문제로 최근 MR/PR을 볼 수 없으면 템플릿과 git log를 우선한다.
+
+## 제목 규칙
+
+제목은 Conventional Commits 형식을 기본으로 한다.
+
+```text
+<type>[(<scope>)]: <한글 요약>
+```
+
+예:
+
+```text
+feat: 피그마식 디자인 패널 도입
+feat(workspace): 피그마식 디자인 패널 도입
+fix(auth): 세션 만료 처리 보정
+docs(mr): 드래프트 MR 생성 규칙 추가
+```
+
+제목 판단 우선순위:
+
+1. 현재 브랜치의 대표 커밋 메시지
+2. 최근 MR/PR 제목
+3. 최근 git log 제목
+4. 변경 파일의 최상위 디렉터리나 도메인
+
+규칙:
+
+- 주변 MR/PR 제목은 스타일 참고용이다. 최종 제목은 항상 Conventional Commits 형식을 유지한다.
+- 주변 스타일이 비정형이면 의미만 가져오고 형식은 정규화한다.
+- 주변 MR/PR이 `feat: ...`처럼 scope 없이 이어져 있으면 scope를 생략한다.
+- 주변 MR/PR이 `feat(workspace): ...`처럼 scope를 쓰면 변경 범위에 맞는 scope를 붙인다.
+- 섞여 있으면 변경 범위가 명확할 때만 scope를 붙이고, 애매하면 생략한다.
+- 요약은 한글로 쓰고 마침표를 붙이지 않는다.
+
+## 본문 규칙
+
+본문은 레포 템플릿과 주변 MR/PR 구조를 우선 따른다.
+
+우선순위:
+
+1. 레포 템플릿
+   - `.github/pull_request_template.md`
+   - `.github/PULL_REQUEST_TEMPLATE.md`
+   - `.github/PULL_REQUEST_TEMPLATE/*.md`
+   - `.gitlab/merge_request_templates/*.md`
+2. 최근 MR/PR 본문 구조
+3. 현재 브랜치 커밋과 diff 내용
+4. 기본 템플릿
+
+기본 템플릿:
+
+```md
+## 요약
+-
+
+## 변경 사항
+-
+
+## 검증
+- [ ]
+
+## 리스크
+-
+```
+
+템플릿이 있으면 필수 섹션을 삭제하지 말고 실제 내용으로 채운다.
+검증을 실행했으면 `[x]`로 표시하고, 실행하지 못했으면 이유를 적는다.
+리스크가 낮아도 "낮음"처럼 명시한다.
+
+## `/mr` 응답 형식
+
+기본 호출에서는 아래를 제안하고 멈춘다.
+
+```text
+MR 계획
+- 플랫폼: GitHub PR 또는 GitLab MR
+- base/head: <base> <- <branch>
+- 제목: <title>
+- 본문:
+  ...
+
+검증
+- 실행: ...
+- 생략: ...
+
+생성 방식
+- draft로 생성
+- push 예정: ...
+
+이대로 draft MR을 만들까요?
+```
+
+## `--go` 실행 규칙
+
+`--go` 또는 `-go`가 있으면 다음 순서로 진행한다.
+
+1. 중단 조건을 확인한다.
+2. 필요한 검증을 실행한다.
+3. 현재 브랜치를 push한다.
+
+```bash
+git push -u origin <branch>
+```
+
+4. 본문을 임시 파일에 저장한다.
+5. GitHub면 draft PR을 생성한다.
+
+```bash
+body_file=/tmp/mr-body.md
+gh pr create \
+  --draft \
+  --base <base> \
+  --head <branch> \
+  --title "<title>" \
+  --body-file "$body_file"
+```
+
+6. GitLab이면 draft MR을 생성한다.
+
+```bash
+body_file=/tmp/mr-body.md
+glab mr create \
+  --draft \
+  --target-branch <base> \
+  --source-branch <branch> \
+  --title "<title>" \
+  --description "$(cat "$body_file")"
+```
+
+7. 생성된 URL, 제목, base/head, 실행한 검증을 보고한다.
+
+## 중단 조건
+
+아래 상황에서는 `--go`여도 생성하지 않는다.
+
+- dirty worktree가 있음
+- 현재 브랜치가 default branch임
+- base 브랜치를 판단할 수 없음
+- base 대비 새 커밋이 없음
+- remote 플랫폼이 GitHub/GitLab인지 판단할 수 없음
+- `gh` 또는 `glab` 인증이 안 됨
+- draft 생성 플래그를 확인할 수 없음
+- push 또는 MR/PR 생성 명령이 일반 MR/PR로 fallback될 위험이 있음
+- secret, credential, 개인 정보가 리뷰 범위에 포함된 정황
+- submodule, 대형 바이너리, 대량 삭제처럼 사용자의 명시 승인이 필요한 변경이 포함됨
+
+중단할 때는 이유와 다음 행동을 짧게 제시한다.
