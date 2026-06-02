@@ -3,7 +3,7 @@ name: trim
 license: Apache-2.0
 metadata:
   version: 0.1.0
-description: 동작 유지하며 변경분의 코드량과 복잡도를 줄일 때 사용한다.
+description: 동작 유지하며 변경분의 코드량과 복잡도를 다듬을 때 사용한다.
 ---
 
 # trim

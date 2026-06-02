@@ -3,7 +3,7 @@ name: commit
 license: Apache-2.0
 metadata:
   version: 0.1.0
-description: 변경분을 나눠 한글 커밋으로 정리할 때 사용한다.
+description: 변경분을 나누고 로그 스타일에 맞춰 한글 커밋할 때 사용한다.
 ---
 
 # commit

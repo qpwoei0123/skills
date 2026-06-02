@@ -3,7 +3,7 @@ name: ghostwriter
 license: Apache-2.0
 metadata:
   version: 0.1.1
-description: 글 샘플을 분석해 내 문체로 쓸 때 사용한다.
+description: 글 샘플을 분석해 내 문체로 대신 쓸 때 사용한다.
 ---
 
 # Ghostwriter — 당신 대신 글을 씁니다

@@ -3,7 +3,7 @@ name: orbit-cleanup
 license: Apache-2.0
 metadata:
   version: 1.0.0
-description: orbit 이슈를 중복/묶음/해결됨으로 정리할 때 사용한다.
+description: orbit 이슈를 중복/묶음/해결됨으로 분류해 정리할 때 사용한다.
 ---
 
 # orbit-cleanup
