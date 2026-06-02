@@ -4,14 +4,8 @@ license: Apache-2.0
 metadata:
   version: 1.0.0
 description: >
-  Weekly curator for orbit-generated GitHub/GitLab issues. Labels duplicate,
-  batchable, and already-resolved orbit issues, comments with a structured
-  explanation, conditionally closes safe high-confidence issues, and updates
-  ~/.orbit known_findings so future orbit runs skip closed/suppressed findings.
-  Activate ONLY when the user types $orbit-cleanup or explicitly references the
-  orbit-cleanup skill by name. Do NOT trigger for generic cleanup, issue triage,
-  repo audit, or orbit analysis requests. 한국어: $orbit-cleanup 또는 orbit-cleanup
-  스킬을 명시할 때만 실행한다.
+  $orbit-cleanup으로 orbit가 만든 누적 이슈를 중복, 묶음, 해결됨 기준으로
+  정리할 때만 사용한다.
 ---
 
 # orbit-cleanup

@@ -4,12 +4,8 @@ license: Apache-2.0
 metadata:
   version: 1.10.2
 description: >
-  Codebase inspection pipeline for seven views (SAFE/ARCH/DEP/BUILD/DATA/OPS/DOC)
-  that publishes only qualified technical findings to GitHub/GitLab issues.
-  Manually invoked by name. Activate ONLY when the user types $orbit or explicitly
-  references the orbit skill by name. Do NOT auto-trigger from generic phrases like
-  "analyze repo", "audit code", or "find tech debt". 한국어: $orbit 또는 orbit
-  스킬을 명시할 때만 실행한다.
+  $orbit으로 레포를 7개 관점에서 점검하고 기준을 통과한 기술 발견 사항만
+  이슈로 발행할 때만 사용한다.
 ---
 
 # orbit 🪐

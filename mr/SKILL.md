@@ -4,10 +4,8 @@ license: Apache-2.0
 metadata:
   version: 0.1.0
 description: >
-  Use when the user types /mr, /mr --go, /mr -go, asks to create a GitHub Pull
-  Request or GitLab Merge Request from the current branch, or explicitly
-  requests the mr skill. 한국어: 현재 브랜치의 코드 리뷰 요청을 계획하거나
-  draft MR/PR로 생성하라는 요청에서만 사용한다.
+  /mr로 현재 브랜치 변경을 드래프트 PR/MR로 만들 때 사용한다.
+  제목과 본문은 주변 리뷰 요청 스타일을 따른다.
 ---
 
 # mr

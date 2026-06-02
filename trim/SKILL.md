@@ -4,10 +4,8 @@ license: Apache-2.0
 metadata:
   version: 0.1.0
 description: >
-  Use when the user types /trim, /trim --go, /trim -go, asks to reduce or
-  simplify an already-finished diff without changing behavior, or explicitly
-  requests the trim skill. 한국어: 이미 구현된 변경사항의 동작을 유지하면서 코드량,
-  중복, 불필요한 복잡도를 줄이라는 요청에서만 사용한다.
+  /trim으로 구현된 변경분의 동작은 유지하고 코드량, 중복,
+  불필요한 복잡도를 줄일 때 사용한다.
 ---
 
 # trim
