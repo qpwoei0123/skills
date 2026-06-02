@@ -98,6 +98,7 @@ skills/
 │       └── validate-skills.yml     # 스킬 형식 자동 검증 CI
 ├── commit/                         # git diff 기반 커밋 계획/실행 스킬
 ├── mr/                             # draft MR/PR 계획/생성 스킬
+├── trim/                           # diff 기반 코드 단순화 스킬
 ├── orbit/                          # 레포 점검/이슈 발행 워크플로 스킬
 └── ghostwriter/                    # 사용자 문체 기반 글쓰기 스킬
 ```
@@ -106,6 +107,7 @@ skills/
 
 - `commit`: 현재 git diff를 분석해 적절한 커밋 단위와 한글 Conventional Commits 메시지로 커밋하는 스킬
 - `mr`: 현재 브랜치의 커밋과 diff를 분석해 draft MR/PR을 계획하거나 생성하는 스킬
+- `trim`: 이미 구현된 diff의 동작을 유지하면서 코드량과 불필요한 복잡도를 줄이는 스킬
 - `orbit 🪐`: 레포를 요일별 관점으로 분석하고 finding을 이슈로 발행하는 워크플로 스킬
 - `ghostwriter 👻`: 사용자 문체를 분석해 그 사람처럼 글을 써주는 글쓰기 스킬
 
