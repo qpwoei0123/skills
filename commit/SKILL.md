@@ -1,0 +1,138 @@
+---
+name: commit
+license: Apache-2.0
+metadata:
+  version: 0.1.0
+description: >
+  Use when the user types /commit, /commit --go, /commit -go, asks to make git
+  commits from the current diff, or explicitly requests the commit skill.
+  한국어: 현재 git 변경사항을 분석해 커밋 계획을 세우거나 바로 커밋하라는 요청에서만 사용한다.
+---
+
+# commit
+
+현재 git diff를 읽고 최근 커밋 스타일에 맞춰 의미 있는 단위로 커밋하는 스킬이다.
+기본값은 계획 제안 후 승인 대기이고, `--go` 또는 `-go`가 있으면 승인 없이 실행한다.
+
+## 호출 형태
+
+```text
+/commit
+/commit --go
+/commit -go
+```
+
+- `/commit`: diff, staged diff, untracked 파일, 최근 커밋 로그를 보고 커밋 계획만 제안한다. 사용자가 승인하기 전에는 `git add`와 `git commit`을 실행하지 않는다.
+- `/commit --go`, `/commit -go`: 같은 분석을 수행하되 승인 질문 없이 바로 커밋한다.
+
+## 분석 순서
+
+1. 현재 위치가 git repo인지 확인한다. 아니면 가장 가까운 작업 레포를 찾고, 애매하면 사용자에게 묻는다.
+2. 아래 정보를 먼저 확인한다.
+   - `git status --short`
+   - `git log --oneline -12`
+   - `git diff --stat`
+   - `git diff --cached --stat`
+   - `git diff`
+   - `git diff --cached`
+   - `git ls-files --others --exclude-standard`
+3. untracked 파일은 이름만 보고 판단하지 말고 필요한 만큼 내용을 확인한다.
+4. 변경량이 많거나 여러 영역이 섞였으면 `git diff --name-only`와 디렉터리 구조를 함께 보고 커밋 단위를 나눈다.
+5. 전체 영향 분석이 필요할 정도로 넓은 변경이면 Gemini CLI가 있을 때 보조 분석을 맡길 수 있다.
+
+```bash
+git diff | gemini -p "이 변경사항을 의미 있는 커밋 단위로 나눠줘. 각 단위의 목적, 관련 파일, Conventional Commits 한글 메시지를 제안해줘."
+```
+
+Gemini 결과는 참고용이다. 최종 분할, 메시지, 실행 판단은 직접 diff를 읽고 결정한다.
+
+## 커밋 분할 기준
+
+하나의 커밋은 하나의 의도만 담는다.
+
+분리한다:
+- 기능 추가, 버그 수정, 리팩터링, 문서, 테스트, 설정 변경이 서로 독립적일 때
+- 서로 다른 사용자 흐름이나 서로 다른 패키지/앱 영역을 건드릴 때
+- 대량 변경 안에 생성물, 문서, 실제 코드 변경이 섞였고 독립 검토가 가능할 때
+- 한 파일 안에서도 서로 무관한 hunk가 명확히 나뉠 때
+
+묶는다:
+- 같은 동작을 완성하기 위해 코드, 테스트, 문서가 함께 필요한 경우
+- `package.json`과 lockfile처럼 원인과 결과가 붙어 있는 경우
+- 타입/스키마 변경과 그 호출부 수정처럼 한쪽만 커밋하면 깨지는 경우
+- 너무 잘게 쪼개면 리뷰보다 노이즈가 커지는 경우
+
+한 파일에 여러 의도가 섞였고 hunk 분리가 안전하지 않으면 억지로 나누지 않는다.
+
+## 메시지 규칙
+
+항상 Conventional Commits 형식을 쓴다.
+
+```text
+<type>[(<scope>)]: <한글 요약>
+```
+
+예:
+
+```text
+feat: 피그마식 디자인 패널 도입
+feat(workspace): 피그마식 디자인 패널 도입
+fix(auth): 만료된 세션 처리 보정
+docs(commit): 커밋 스킬 사용법 추가
+```
+
+- `type`: `feat`, `fix`, `refactor`, `docs`, `test`, `chore`, `build`, `ci`, `perf`, `style`, `revert` 중에서 고른다.
+- `scope`는 선택이다. 최근 로그가 `feat: ...`처럼 scope 없이 이어져 있으면 생략한다.
+- 최근 로그가 `feat(workspace): ...`처럼 scope를 쓰면 변경된 앱, 패키지, 도메인, 최상위 디렉터리 중 가장 좁고 자연스러운 이름을 쓴다.
+- 최근 로그가 섞여 있으면 변경 범위가 명확할 때만 scope를 붙이고, 애매하면 최근 다수 스타일을 따른다.
+- 요약은 한글로 쓴다. 마침표를 붙이지 않는다.
+- 최근 커밋이 Conventional 형식이 아니어도 새 커밋은 Conventional 형식을 지킨다.
+- 최근 로그에서 제목 길이, scope 이름, 한글/영문 혼용 습관은 참고하되 사용자의 "한글 메시지" 지시를 우선한다.
+- 본문이 필요하면 한글 bullet로 변경 이유나 검증 결과만 짧게 적는다.
+
+## `/commit` 응답 형식
+
+승인 없는 기본 호출에서는 아래를 제안하고 멈춘다.
+
+```text
+커밋 계획
+1. <message>
+   - 파일: ...
+   - 이유: ...
+
+검증
+- 실행 예정: ...
+- 생략: ...
+
+이대로 커밋할까요?
+```
+
+계획에는 너무 많은 내부 사고를 적지 말고, 사용자가 승인 여부를 판단할 정보만 담는다.
+
+## `--go` 실행 규칙
+
+`--go` 또는 `-go`가 있으면 다음 순서로 바로 진행한다.
+
+1. 위험 파일을 확인한다.
+   - `.env`, 인증 토큰, 비밀키, 개인 정보, 대형 바이너리, 충돌 마커가 보이면 중단하고 보고한다.
+2. 커밋 단위를 확정한다.
+3. 단위별로 필요한 파일만 stage한다.
+   - 전체 stage가 안전할 때만 `git add -A`를 쓴다.
+   - 파일 단위 분리가 필요하면 `git add <path...>`를 쓴다.
+   - hunk 단위 분리가 명확하고 안전할 때만 `git add -p`를 쓴다.
+4. 명확하고 짧은 검증 명령이 있으면 실행한다.
+5. `git commit -m "<message>"`로 커밋한다.
+6. 여러 커밋을 만들 때는 매 커밋 후 `git status --short`로 남은 변경을 확인한다.
+7. 마지막에 생성된 커밋 해시, 메시지, 실행한 검증을 보고한다.
+
+## 중단 조건
+
+아래 상황에서는 `--go`여도 커밋하지 않는다.
+
+- merge/rebase/cherry-pick 충돌 상태
+- secret, credential, 개인 정보가 diff에 포함된 정황
+- 커밋 대상이 현재 요청과 무관한지 판단할 수 없는 대규모 변경
+- 생성물이나 lockfile만 바뀌었는데 원인 변경이 보이지 않는 경우
+- submodule 변경, 파일 삭제, 대형 바이너리 추가처럼 되돌리기 어려운 변경이 섞인 경우
+
+중단할 때는 문제 파일, 이유, 사용자가 선택할 수 있는 다음 행동을 짧게 제시한다.
