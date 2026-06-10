@@ -49,6 +49,7 @@ skill-name/
 - `references/`
 - `scripts/`
 - `assets/`
+- `evals/`
 - `INDEX.md`
 
 ## Validate

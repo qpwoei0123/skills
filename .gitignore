@@ -2,7 +2,7 @@
 __pycache__/
 *.pyc
 
-# 초안/평가 산출물 (정식 편입 전 작업물은 추적하지 않는다)
+# 초안/평가 산출물 (정식 편입 전 작업물과 eval 실행 결과는 추적하지 않는다)
 .conductor/
-/repo-orbit-workspace/
+.eval-archive/
 /*.html

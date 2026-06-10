@@ -16,7 +16,7 @@ ACCEPTED_SKILL_LINE_RE = re.compile(r"^- `([^`]+)`", re.MULTILINE)
 QUICKSTART_MARKERS = ("## Quick Start", "## 사용 예시", "## Quickstart")
 STRUCTURE_MARKERS = ("## Structure", "## 포함 파일", "## 디렉터리 구조")
 TEST_MARKERS = ("## Test", "## 테스트", "## 검증 방법")
-OPTIONAL_DIRS = ("agents", "references", "scripts", "assets")
+OPTIONAL_DIRS = ("agents", "references", "scripts", "assets", "evals")
 
 AUTOFIXABLE_ERROR_CODES = {
     "missing_readme",
