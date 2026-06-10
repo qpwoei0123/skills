@@ -3,7 +3,7 @@ name: mr
 license: Apache-2.0
 metadata:
   version: 0.3.0
-description: 현재 브랜치를 push하고 제목/본문을 맞춰 GitHub draft PR 또는 GitLab draft MR을 만드는 스킬. "PR 올려줘", "MR 만들어줘", "리뷰 요청해줘", "/mr" 등 코드 리뷰 요청 관련 말이 나오면 사용한다.
+description: (v0.3.0) 현재 브랜치를 push하고 제목/본문을 맞춰 GitHub draft PR 또는 GitLab draft MR을 만드는 스킬. "PR 올려줘", "MR 만들어줘", "리뷰 요청해줘", "/mr" 등 코드 리뷰 요청 관련 말이 나오면 사용한다.
 ---
 
 # mr

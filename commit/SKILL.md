@@ -3,7 +3,7 @@ name: commit
 license: Apache-2.0
 metadata:
   version: 0.3.0
-description: git 변경분을 의미 단위로 나누고 최근 로그 스타일에 맞춰 Conventional Commits 한글 메시지로 커밋하는 스킬. "커밋해줘", "커밋 나눠줘", "커밋 정리해줘", "/commit" 등 커밋 관련 요청이 나오면 사용한다.
+description: (v0.3.0) git 변경분을 의미 단위로 나누고 최근 로그 스타일에 맞춰 Conventional Commits 한글 메시지로 커밋하는 스킬. "커밋해줘", "커밋 나눠줘", "커밋 정리해줘", "/commit" 등 커밋 관련 요청이 나오면 사용한다.
 ---
 
 # commit
