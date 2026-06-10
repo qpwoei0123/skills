@@ -72,8 +72,7 @@ name: orbit
 license: Apache-2.0
 metadata:
   version: 1.7.0
-description: >
-  스킬 설명
+description: (v1.7.0) 스킬 설명. 트리거 문구 예시 포함.
 ---
 ```
 
@@ -90,6 +89,7 @@ description: >
 - `metadata.version`은 `SemVer(주버전.부버전.수정버전 규칙)` 형식을 따른다.
 - 버전 표기의 `SSOT(단일 기준 원천)`는 항상 `metadata.version`이다.
 - `description`은 트리거와 용도를 설명해야 한다.
+- `description`은 단일행으로 쓰고 `(vx.y.z)` 버전 접두사로 시작한다. 접두사는 `metadata.version`과 같아야 하며 normalize가 자동 동기화한다.
 
 ### MUST — `README.md`
 

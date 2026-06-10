@@ -23,10 +23,11 @@ npx skills add qpwoei0123/skills
 - `README.md`는 사람용 사용 설명서
 - `CHANGELOG.md`는 버전별 변경 이력
 - 버전의 `SSOT(단일 기준 원천)`는 `SKILL.md.metadata.version`
+- `description`은 `(vx.y.z)` 버전 접두사로 시작하며, README 표기와 함께 normalize가 SSOT에 동기화
 
 표준 문서:
 
-- [docs/SKILL-STANDARD.md](/Users/han-won-yeong/Documents/project/skills/docs/SKILL-STANDARD.md)
+- [docs/SKILL-STANDARD.md](docs/SKILL-STANDARD.md)
 
 ## Admission Rule
 
@@ -67,9 +68,9 @@ python3 scripts/validate_skills.py --skill ghostwriter
 
 자동 검증:
 
-- [scripts/validate_skills.py](/Users/han-won-yeong/Documents/project/skills/scripts/validate_skills.py)
-- [scripts/normalize_skill.py](/Users/han-won-yeong/Documents/project/skills/scripts/normalize_skill.py)
-- [.github/workflows/validate-skills.yml](/Users/han-won-yeong/Documents/project/skills/.github/workflows/validate-skills.yml)
+- [scripts/validate_skills.py](scripts/validate_skills.py)
+- [scripts/normalize_skill.py](scripts/normalize_skill.py)
+- [.github/workflows/validate-skills.yml](.github/workflows/validate-skills.yml)
 
 자동 수정 가능한 항목은 로컬에서 먼저 정규화할 수 있습니다.
 
@@ -93,6 +94,8 @@ skills/
 │   └── SKILL-STANDARD.md           # 저장소 공통 스킬 표준
 ├── scripts/
 │   └── validate_skills.py          # accepted 스킬 형식 검증 스크립트
+├── templates/
+│   └── skill/                      # README/CHANGELOG 생성 템플릿
 ├── .github/
 │   └── workflows/
 │       └── validate-skills.yml     # 스킬 형식 자동 검증 CI
