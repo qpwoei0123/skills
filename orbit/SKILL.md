@@ -2,8 +2,8 @@
 name: orbit
 license: Apache-2.0
 metadata:
-  version: 1.10.2
-description: (v1.10.2) 레포를 7개 관점으로 점검해 기술 이슈를 발행할 때 사용한다.
+  version: 1.11.0
+description: (v1.11.0) 레포를 7개 관점으로 점검해 기술 이슈를 발행할 때 사용한다.
 ---
 
 # orbit 🪐

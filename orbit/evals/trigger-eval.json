@@ -1,0 +1,22 @@
+[
+  {"query": "https://github.com/my-company/backend 레포 분석해줘, 오늘 뭐 봐야 해?", "should_trigger": true},
+  {"query": "우리 레포 기술 부채 좀 찾아줘. 주소는 https://gitlab.corp.com/platform/api-service 야", "should_trigger": true},
+  {"query": "$repo-orbit https://github.com/org/repo --view SAFE --dry-run", "should_trigger": true},
+  {"query": "코드베이스 점검해줘 기술 부채 너무 쌓인 것 같아", "should_trigger": true},
+  {"query": "CI 빠졌는지 확인해줘, 레포는 . 이야", "should_trigger": true},
+  {"query": "의존성 점검 좀 해줘 https://github.com/foo/bar", "should_trigger": true},
+  {"query": "테스트 커버리지 확인해줘 지금 레포에서", "should_trigger": true},
+  {"query": "이슈 자동 등록해줘 https://github.com/myorg/myrepo", "should_trigger": true},
+  {"query": "이 레포 아키텍처 경계 분석해줘 https://github.com/frontend/app --view ARCH", "should_trigger": true},
+  {"query": "보안 취약점 있는지 봐줘 https://github.com/secure/app --view SAFE", "should_trigger": true},
+  {"query": "파이썬 코드 리뷰해줘, 함수 이름이 좀 이상해", "should_trigger": false},
+  {"query": "이 PR 코드 리뷰해줘: https://github.com/org/repo/pull/42", "should_trigger": false},
+  {"query": "README.md 파일 작성해줘, 이 프로젝트는 Node.js 백엔드야", "should_trigger": false},
+  {"query": "git blame 으로 누가 이 코드 썼는지 찾아줘", "should_trigger": false},
+  {"query": "pytest 실행하고 실패한 테스트 고쳐줘", "should_trigger": false},
+  {"query": "package.json의 express 버전을 5.0으로 올려줘", "should_trigger": false},
+  {"query": "이 에러 로그 분석해줘: TypeError: Cannot read properties of undefined", "should_trigger": false},
+  {"query": "GitHub Actions 워크플로우 파일 만들어줘, Node.js 프로젝트야", "should_trigger": false},
+  {"query": "레포 클론해서 로컬에서 실행하는 법 알려줘", "should_trigger": false},
+  {"query": "이 코드의 시간복잡도 분석해줘: for i in range(n): for j in range(n):", "should_trigger": false}
+]

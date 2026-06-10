@@ -1,0 +1,82 @@
+{
+  "skill_name": "orbit",
+  "evals": [
+    {
+      "id": 0,
+      "eval_name": "dry-run-github",
+      "prompt": "https://github.com/expressjs/express 레포 분석해줘. 오늘이 수요일이라고 가정하고, --dry-run 모드로 실행해서 이슈 발행은 하지 말고 결과만 보여줘.",
+      "expected_output": "DEP view 실행, triage 통과 finding 목록, dry-run payload 출력 (API 호출 없음)",
+      "files": [],
+      "assertions": [
+        {
+          "id": "a1",
+          "name": "view-is-DEP",
+          "description": "수요일 → DEP view가 선택되어야 한다"
+        },
+        {
+          "id": "a2",
+          "name": "dry-run-no-api-call",
+          "description": "--dry-run 모드이므로 실제 이슈 발행 API 호출 없이 payload만 출력해야 한다"
+        },
+        {
+          "id": "a3",
+          "name": "step1-report-present",
+          "description": "날짜/view/레포/유형 보고 줄이 Step 1 완료 후 나타나야 한다"
+        },
+        {
+          "id": "a4",
+          "name": "triage-result-reported",
+          "description": "triage 통과/스킵 건수가 최종 보고에 포함되어야 한다"
+        }
+      ]
+    },
+    {
+      "id": 1,
+      "eval_name": "no-url-ask",
+      "prompt": "코드베이스 점검해줘. 기술 부채 좀 찾아줘.",
+      "expected_output": "레포 URL 또는 로컬 경로가 없으므로 사용자에게 URL 요청. 현재 디렉터리에 .git 없으면 질문해야 함.",
+      "files": [],
+      "assertions": [
+        {
+          "id": "b1",
+          "name": "skill-triggered",
+          "description": "repo-orbit 스킬이 트리거되어야 한다 (스킬 없는 버전과 비교 시 repo-orbit 특유의 파이프라인 언급)"
+        },
+        {
+          "id": "b2",
+          "name": "asks-for-url",
+          "description": "레포 URL 또는 경로를 사용자에게 요청해야 한다 (바로 분석 시작하면 안 됨)"
+        },
+        {
+          "id": "b3",
+          "name": "no-hallucinated-analysis",
+          "description": "URL 없이 가상의 레포를 분석하거나 결과를 꾸며내면 안 된다"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "eval_name": "local-path-view-override",
+      "prompt": "지금 내 로컬 레포 /tmp/sample-repo 를 SAFE view로 점검해줘. --dry-run으로.",
+      "expected_output": "로컬 경로 /tmp/sample-repo에 접근 시도, SAFE view 강제 선택 (요일 무관), --dry-run 모드, 경로 없으면 에러 보고",
+      "files": [],
+      "assertions": [
+        {
+          "id": "c1",
+          "name": "view-is-SAFE-not-weekday",
+          "description": "--view SAFE 지정 시 요일과 무관하게 SAFE view가 선택되어야 한다"
+        },
+        {
+          "id": "c2",
+          "name": "local-path-access-attempted",
+          "description": "/tmp/sample-repo 경로 접근을 시도해야 한다"
+        },
+        {
+          "id": "c3",
+          "name": "graceful-error-on-missing-path",
+          "description": "경로가 없으면 [error] 메시지와 함께 중단해야 한다 (크래시/예외 없음)"
+        }
+      ]
+    }
+  ]
+}
