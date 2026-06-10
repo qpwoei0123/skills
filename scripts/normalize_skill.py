@@ -13,6 +13,7 @@ from skill_repo_lib import (
     load_frontmatter_document,
     metadata_version,
     normalize_changelog_content,
+    normalize_description_prefix,
     normalize_readme_content,
     parse_frontmatter,
     render_frontmatter_document,
@@ -47,10 +48,15 @@ def normalize_skill_directory(skill_dir: Path, repo_root: Path, write: bool) -> 
     if not resolved_version:
         resolved_version = metadata_version(frontmatter)
 
+    changed_prefix = normalize_description_prefix(document, resolved_version)
+
     pending_writes: list[tuple[Path, str]] = []
-    if changed_frontmatter:
+    if changed_frontmatter or changed_prefix:
         pending_writes.append((skill_path, render_frontmatter_document(document)))
-        result.applied_changes.append("SKILL.md metadata.version 정규화")
+        if changed_frontmatter:
+            result.applied_changes.append("SKILL.md metadata.version 정규화")
+        if changed_prefix:
+            result.applied_changes.append("SKILL.md description 버전 접두사 동기화")
 
     readme_path = skill_dir / "README.md"
     if readme_path.exists():

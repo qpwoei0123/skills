@@ -79,6 +79,34 @@ class NormalizeSkillTest(unittest.TestCase):
             self.assertTrue((skill_dir / "README.md").exists())
             self.assertTrue((skill_dir / "CHANGELOG.md").exists())
 
+    def test_write_mode_syncs_description_version_prefix(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            skill_dir = Path(tmp) / "wild-skill"
+            self.write(
+                skill_dir / "SKILL.md",
+                "\n".join(
+                    [
+                        "---",
+                        "name: wild-skill",
+                        "license: Apache-2.0",
+                        "metadata:",
+                        "  version: 0.2.0",
+                        "description: (v0.1.0) 테스트 스킬",
+                        "---",
+                        "",
+                        "# Wild Skill",
+                    ]
+                ),
+            )
+
+            result = normalize_skill_directory(skill_dir, repo_root=self.repo_root, write=True)
+            skill_text = (skill_dir / "SKILL.md").read_text(encoding="utf-8")
+
+            self.assertFalse(result.has_blockers)
+            self.assertIn("SKILL.md description 버전 접두사 동기화", result.applied_changes)
+            self.assertIn("description: (v0.2.0) 테스트 스킬", skill_text)
+            self.assertFalse(result.remaining_errors)
+
     def test_manual_blockers_stop_normalization(self):
         with tempfile.TemporaryDirectory() as tmp:
             skill_dir = Path(tmp) / "wild-skill"

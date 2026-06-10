@@ -9,6 +9,9 @@ from pathlib import Path
 SEMVER_RE = re.compile(r"^\d+\.\d+\.\d+$")
 README_VERSION_RE = re.compile(r"version:\s*([0-9]+\.[0-9]+\.[0-9]+)", re.IGNORECASE)
 CHANGELOG_VERSION_RE = re.compile(r"^##\s+([0-9]+\.[0-9]+\.[0-9]+)\s*$", re.MULTILINE)
+DESC_VERSION_PREFIX_RE = re.compile(r"^\(v([0-9]+\.[0-9]+\.[0-9]+)\)\s*")
+BLOCK_SCALAR_INDICATORS = (">", "|", ">-", "|-", ">+", "|+")
+ACCEPTED_SKILL_LINE_RE = re.compile(r"^- `([^`]+)`", re.MULTILINE)
 
 QUICKSTART_MARKERS = ("## Quick Start", "## 사용 예시", "## Quickstart")
 STRUCTURE_MARKERS = ("## Structure", "## 포함 파일", "## 디렉터리 구조")
@@ -25,6 +28,7 @@ AUTOFIXABLE_ERROR_CODES = {
     "changelog_missing_version_header",
     "changelog_version_mismatch",
     "metadata_version_missing_with_legacy_version",
+    "description_version_prefix_mismatch",
 }
 
 
@@ -258,6 +262,20 @@ def validate_skill(skill_dir: Path) -> SkillReport:
     elif not SEMVER_RE.match(version):
         report.add_error("invalid_semver", f"metadata.version이 SemVer 형식이 아님: {version}")
 
+    description = frontmatter_value(frontmatter, "description")
+    if description and version and description not in BLOCK_SCALAR_INDICATORS:
+        prefix_match = DESC_VERSION_PREFIX_RE.match(description)
+        if not prefix_match:
+            report.add_error(
+                "description_version_prefix_mismatch",
+                "description에 (vx.y.z) 버전 접두사가 없습니다.",
+            )
+        elif prefix_match.group(1) != version:
+            report.add_error(
+                "description_version_prefix_mismatch",
+                f"description 버전 접두사 불일치: {prefix_match.group(1)} != {version}",
+            )
+
     if readme_exists:
         readme_text = (skill_dir / "README.md").read_text(encoding="utf-8")
         version_match = README_VERSION_RE.search(readme_text)
@@ -374,6 +392,57 @@ def upsert_metadata_version(document: FrontmatterDocument) -> tuple[bool, str]:
             resolved_version = legacy_value
 
     return changed, resolved_version
+
+
+def normalize_description_prefix(document: FrontmatterDocument, version: str) -> bool:
+    """description 단일행 스칼라의 (vx.y.z) 접두사를 metadata.version과 동기화한다."""
+    if not version:
+        return False
+    entry = frontmatter_entry(document.entries, "description")
+    if entry is None:
+        return False
+    value = scalar_value(entry)
+    if not value or value in BLOCK_SCALAR_INDICATORS:
+        return False
+    stripped = DESC_VERSION_PREFIX_RE.sub("", value)
+    desired = f"(v{version}) {stripped}"
+    if value == desired:
+        return False
+    entry.lines[0] = f"description: {desired}"
+    return True
+
+
+def validate_root_readme(root: Path, skill_names: list[str]) -> SkillReport:
+    """루트 README의 Accepted Skills 목록과 스킬 디렉터리 일치를 검사한다."""
+    report = SkillReport(name="(repo)")
+    readme_path = root / "README.md"
+    if not readme_path.exists():
+        report.add_error("root_readme_missing", "루트 README.md가 없습니다.")
+        return report
+
+    text = readme_path.read_text(encoding="utf-8")
+    if "## Accepted Skills" not in text:
+        report.add_error(
+            "root_readme_missing_accepted_section",
+            "루트 README.md에 Accepted Skills 섹션이 없습니다.",
+        )
+        return report
+
+    section = text.split("## Accepted Skills", 1)[1].split("\n## ", 1)[0]
+    listed = {match.split()[0] for match in ACCEPTED_SKILL_LINE_RE.findall(section)}
+    dirs = set(skill_names)
+
+    for name in sorted(dirs - listed):
+        report.add_error(
+            "root_readme_skill_unlisted",
+            f"Accepted Skills 목록에 없는 스킬 디렉터리: {name}",
+        )
+    for name in sorted(listed - dirs):
+        report.add_error(
+            "root_readme_stale_skill",
+            f"디렉터리가 없는 스킬이 목록에 남아 있음: {name}",
+        )
+    return report
 
 
 def normalize_readme_content(skill_name: str, version: str, text: str | None = None) -> tuple[str, list[str]]:
