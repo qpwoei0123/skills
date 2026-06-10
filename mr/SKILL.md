@@ -2,8 +2,8 @@
 name: mr
 license: Apache-2.0
 metadata:
-  version: 0.1.0
-description: 현재 브랜치를 제목/본문 맞춰 드래프트 PR/MR로 올릴 때 사용한다.
+  version: 0.3.0
+description: 현재 브랜치를 push하고 제목/본문을 맞춰 GitHub draft PR 또는 GitLab draft MR을 만드는 스킬. "PR 올려줘", "MR 만들어줘", "리뷰 요청해줘", "/mr" 등 코드 리뷰 요청 관련 말이 나오면 사용한다.
 ---
 
 # mr
@@ -56,7 +56,11 @@ description: 현재 브랜치를 제목/본문 맞춰 드래프트 PR/MR로 올�
    - GitHub remote: `gh auth status`, `gh pr create --help`
    - GitLab remote: `glab auth status`, `glab mr create --help`
    - `--draft` 플래그가 없거나 확인할 수 없으면 생성하지 않는다.
-7. 주변 스타일을 확인한다.
+7. 현재 브랜치에 이미 열린 MR/PR이 있는지 확인한다.
+   - GitHub: `gh pr list --head <branch> --state open`
+   - GitLab: `glab mr list --source-branch <branch>`
+   - 이미 있으면 새로 만들지 않고 기존 URL을 보고한다.
+8. 주변 스타일을 확인한다.
    - GitHub: `gh pr list --limit 10 --json title,body,baseRefName,headRefName,url`
    - GitLab: `glab mr list`로 최근 MR 제목과 설명 구조를 확인한다.
    - CLI나 권한 문제로 최근 MR/PR을 볼 수 없으면 템플릿과 git log를 우선한다.
@@ -129,6 +133,19 @@ docs(mr): 드래프트 MR 생성 규칙 추가
 검증을 실행했으면 `[x]`로 표시하고, 실행하지 못했으면 이유를 적는다.
 리스크가 낮아도 "낮음"처럼 명시한다.
 
+본문은 diff 요약이 아니라 리뷰어의 질문에 먼저 답하는 문서다.
+
+- 왜 이 접근인지 적고, 버린 대안이 있으면 한 줄로 남긴다.
+- 리뷰어가 집중해야 할 파일과 위험 지점을 "리뷰 포인트"로 명시한다. 전부 똑같이 중요하다는 본문은 실패다.
+- 기계적으로 따라간 변경(rename 여파, import 정리)은 한 줄로 묶어 리뷰어의 주의를 아낀다.
+
+## 셀프 리뷰
+
+본문을 쓰기 전에 diff를 리뷰어 시점으로 한 번 다시 읽는다.
+
+- 스스로 발견한 문제는 숨기지 않는다. 사소하면 본문 리스크에 적고, 심각하면 생성을 멈추고 보고한다.
+- 커밋이 여러 의도로 섞인 대형 diff면 MR 분할을 먼저 제안한다. 리뷰 불가능한 MR을 만드는 것보다 낫다.
+
 ## `/mr` 응답 형식
 
 기본 호출에서는 아래를 제안하고 멈춘다.
@@ -165,10 +182,14 @@ git push -u origin <branch>
 ```
 
 4. 본문을 임시 파일에 저장한다.
+
+```bash
+body_file=$(mktemp /tmp/mr-body.XXXXXX.md)
+```
+
 5. GitHub면 draft PR을 생성한다.
 
 ```bash
-body_file=/tmp/mr-body.md
 gh pr create \
   --draft \
   --base <base> \
@@ -180,7 +201,6 @@ gh pr create \
 6. GitLab이면 draft MR을 생성한다.
 
 ```bash
-body_file=/tmp/mr-body.md
 glab mr create \
   --draft \
   --target-branch <base> \
@@ -196,6 +216,7 @@ glab mr create \
 아래 상황에서는 `--go`여도 생성하지 않는다.
 
 - dirty worktree가 있음
+- 현재 브랜치에 이미 열린 MR/PR이 있음
 - 현재 브랜치가 default branch임
 - base 브랜치를 판단할 수 없음
 - base 대비 새 커밋이 없음
