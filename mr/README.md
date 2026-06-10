@@ -1,6 +1,6 @@
 # mr
 
-`version: 0.1.0`
+`version: 0.3.0`
 
 현재 브랜치의 커밋과 diff를 읽고 GitHub PR 또는 GitLab MR을 항상 draft로 계획하거나 생성하는 스킬입니다.
 
