@@ -2,8 +2,8 @@
 name: commit
 license: Apache-2.0
 metadata:
-  version: 0.3.0
-description: (v0.3.0) git 변경분을 의미 단위로 나누고 최근 로그 스타일에 맞춰 Conventional Commits 한글 메시지로 커밋하는 스킬. "커밋해줘", "커밋 나눠줘", "커밋 정리해줘", "/commit" 등 커밋 관련 요청이 나오면 사용한다.
+  version: 0.3.1
+description: (v0.3.1) git 변경분을 의미 단위로 나누고 최근 로그 스타일에 맞춰 Conventional Commits 한글 메시지로 커밋하는 스킬. "커밋해줘", "커밋 나눠줘", "커밋 정리해줘", "/commit" 등 커밋 관련 요청이 나오면 사용한다.
 ---
 
 # commit
@@ -34,6 +34,11 @@ description: (v0.3.0) git 변경분을 의미 단위로 나누고 최근 로그 
 3. 전체 diff를 무조건 읽지 않는다. `--stat` 결과를 보고 파일 단위로 `git diff -- <path>`를 골라 읽는다. 변경량이 적으면 전체 `git diff`, `git diff --cached`를 읽어도 된다.
 4. untracked 파일은 이름만 보고 판단하지 말고 필요한 만큼 내용을 확인한다.
 5. 변경량이 많거나 여러 영역이 섞였으면 `git diff --name-only`와 디렉터리 구조를 함께 보고 커밋 단위를 나눈다. 넓은 변경은 Gemini CLI가 있으면 보조 분석을 맡길 수 있고, 결과는 참고용이다.
+6. 최근 커밋 스타일 샘플을 확정한다.
+   - `git log --oneline -12`의 제목을 실제로 읽고, 참고할 커밋 3~5개를 고른다.
+   - 제목 목록만 출력하고 끝내지 않는다. type, scope 사용 여부, 제목 길이, 한글/영문 혼용, 본문 사용 여부를 판단한다.
+   - 본문 있는 커밋이 주변에 보이면 `git log -3 --pretty=medium`처럼 본문 구조도 확인한다.
+   - 최근 로그를 볼 수 없으면 Conventional Commits 기본 규칙으로 fallback하고 계획에 이유를 적는다.
 
 ## 커밋 분할 기준
 
@@ -87,6 +92,7 @@ docs(commit): 커밋 스킬 사용법 추가
 - 최근 커밋이 Conventional 형식이 아니어도 새 커밋은 Conventional 형식을 지킨다.
 - 최근 로그에서 제목 길이, scope 이름, 한글/영문 혼용 습관은 참고하되 사용자의 "한글 메시지" 지시를 우선한다.
 - 본문이 필요하면 한글 bullet로 변경 이유나 검증 결과만 짧게 적는다.
+- 최종 계획에는 참고한 최근 커밋과 채택한 메시지 스타일을 짧게 보고한다.
 
 ## `/commit` 응답 형식
 
@@ -94,6 +100,12 @@ docs(commit): 커밋 스킬 사용법 추가
 
 ```text
 커밋 계획
+참고한 최근 커밋
+- <hash> <title>
+
+채택한 메시지 스타일
+- <scope 사용/생략>, <제목 길이/본문 여부 등>
+
 1. <message>
    - 파일: ...
    - 이유: ...

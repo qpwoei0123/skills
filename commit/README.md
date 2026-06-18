@@ -1,6 +1,6 @@
 # commit
 
-`version: 0.3.0`
+`version: 0.3.1`
 
 현재 git 변경사항을 읽고 최근 커밋 로그 스타일에 맞춰 Conventional Commits 형식의 한글 커밋을 계획하거나 실행하는 스킬입니다.
 
