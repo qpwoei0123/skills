@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.3.1
+
+### Changed
+- GitHub/GitLab 모두 목록 확인과 본문 구조 확인을 별도 단계로 분리
+- GitLab에서 `glab mr list`와 별도로 최근 MR 2~3개의 본문을 `glab mr view <iid> --comments=false`로 확인하도록 명시
+- 로컬 템플릿이 없을 때 주변 MR/PR 본문 구조 확인과 fallback 보고를 강화
+- MR 계획에 참고한 주변 MR/PR과 채택한 본문 구조를 보고하도록 추가
+
 ## 0.3.0
 
 ### Added

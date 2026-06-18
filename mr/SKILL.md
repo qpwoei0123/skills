@@ -2,8 +2,8 @@
 name: mr
 license: Apache-2.0
 metadata:
-  version: 0.3.0
-description: (v0.3.0) 현재 브랜치를 push하고 제목/본문을 맞춰 GitHub draft PR 또는 GitLab draft MR을 만드는 스킬. "PR 올려줘", "MR 만들어줘", "리뷰 요청해줘", "/mr" 등 코드 리뷰 요청 관련 말이 나오면 사용한다.
+  version: 0.3.1
+description: (v0.3.1) 현재 브랜치를 push하고 제목/본문을 맞춰 GitHub draft PR 또는 GitLab draft MR을 만드는 스킬. "PR 올려줘", "MR 만들어줘", "리뷰 요청해줘", "/mr" 등 코드 리뷰 요청 관련 말이 나오면 사용한다.
 ---
 
 # mr
@@ -60,10 +60,15 @@ description: (v0.3.0) 현재 브랜치를 push하고 제목/본문을 맞춰 Git
    - GitHub: `gh pr list --head <branch> --state open`
    - GitLab: `glab mr list --source-branch <branch>`
    - 이미 있으면 새로 만들지 않고 기존 URL을 보고한다.
-8. 주변 스타일을 확인한다.
-   - GitHub: `gh pr list --limit 10 --json title,body,baseRefName,headRefName,url`
-   - GitLab: `glab mr list`로 최근 MR 제목과 설명 구조를 확인한다.
-   - CLI나 권한 문제로 최근 MR/PR을 볼 수 없으면 템플릿과 git log를 우선한다.
+8. 주변 MR/PR 목록을 확인한다.
+   - GitHub: `gh pr list --limit 10 --json number,title,body,baseRefName,headRefName,url`
+   - GitLab: `glab mr list --limit 10`로 최근 MR의 제목과 IID 후보를 확인한다.
+   - 목록 확인은 제목과 후보 수집용이다. 본문 구조 확인을 대체하지 않는다.
+9. 주변 MR/PR 본문 구조를 확인한다.
+   - GitHub: 최근 PR 2~3개의 `body`를 확인한다. 목록 JSON에 본문이 충분하면 그 결과를 사용하고, 비어 있거나 부족하면 `gh pr view <number> --json title,body,url`로 다시 확인한다.
+   - GitLab: 최근 MR 2~3개를 골라 `glab mr view <iid> --comments=false`를 실행한다.
+   - 로컬 템플릿이 없으면 이 단계는 더 엄격하다. CLI/권한 오류가 아닌 한 건너뛰지 않는다.
+   - CLI나 권한 문제로 최근 MR/PR 본문을 볼 수 없으면 기본 템플릿으로 fallback하고, 실패 이유를 계획에 명시한다.
 
 ## 제목 규칙
 
@@ -130,6 +135,9 @@ docs(mr): 드래프트 MR 생성 규칙 추가
 ```
 
 템플릿이 있으면 필수 섹션을 삭제하지 말고 실제 내용으로 채운다.
+로컬 템플릿이 없으면 최근 MR/PR 본문 2~3개의 섹션 순서, 체크리스트, 검증 표기 방식을 확인한 뒤 본문 구조를 정한다.
+`gh pr list`, `glab mr list`처럼 제목 목록만 확인한 상태에서는 "최근 MR/PR 본문 구조 확인"을 완료한 것으로 보지 않는다.
+주변 본문을 확인하지 못했으면 기본 템플릿으로 fallback하고, "본문 확인 실패: <이유>"를 계획에 적는다.
 검증을 실행했으면 `[x]`로 표시하고, 실행하지 못했으면 이유를 적는다.
 리스크가 낮아도 "낮음"처럼 명시한다.
 
@@ -155,6 +163,8 @@ MR 계획
 - 플랫폼: GitHub PR 또는 GitLab MR
 - base/head: <base> <- <branch>
 - 제목: <title>
+- 참고한 주변 MR/PR: <번호 또는 URL, 본문 확인 여부>
+- 채택한 본문 구조: <레포 템플릿/최근 MR 구조/기본 템플릿>, <주요 섹션>
 - 본문:
   ...
 
