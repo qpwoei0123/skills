@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.0
+
+### Added
+- `scripts/setup.sh` 추가: 런타임 데이터 디렉터리 부트스트랩
+- `scripts/score.py` 추가: 점수 합산·등급 계산
+
 ## 0.2.0
 
 ### Added

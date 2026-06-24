@@ -2,8 +2,8 @@
 name: soul-extractor
 license: Apache-2.0
 metadata:
-  version: 0.2.0
-description: (v0.2.0) 허가된 사람·브랜드·캐릭터의 글 샘플에서 문체 지문(voice profile)을 뽑고 스타일 일치도를 %로 채점해 글을 다듬는 스킬. "내 스타일로 다듬어줘", "이 사람 말투로 써줘", "문체 일치도 채점해줘", "소울 익스트랙터" 등 허가된 대상의 문체를 추출·점검·적용하자는 말이 나오면 사용한다. 블로그 포스팅 작성은 blogging을 쓴다.
+  version: 0.3.0
+description: (v0.3.0) 허가된 사람·브랜드·캐릭터의 글 샘플에서 문체 지문(voice profile)을 뽑고 스타일 일치도를 %로 채점해 글을 다듬는 스킬. "내 스타일로 다듬어줘", "이 사람 말투로 써줘", "문체 일치도 채점해줘", "소울 익스트랙터" 등 허가된 대상의 문체를 추출·점검·적용하자는 말이 나오면 사용한다. 블로그 포스팅 작성은 blogging을 쓴다.
 ---
 
 # soul-extractor
@@ -55,6 +55,7 @@ soul-extractor "<글을 이 사람 스타일로 다듬어줘>"
 ```
 
 프로필 템플릿은 `references/profile-template.md`를 따른다.
+데이터 디렉터리는 이 스킬의 `scripts/setup.sh`로 보장한다.
 
 ## 작동 플로우
 
@@ -135,6 +136,8 @@ soul-extractor "<글을 이 사람 스타일로 다듬어줘>"
 - 60~74: 짧은 글만 권장
 - 60 미만: 샘플 추가 요청
 
+총점·등급은 이 스킬의 `scripts/score.py`로 계산해 재현성을 확보한다. 예: `python3 scripts/score.py completeness 16 14 24 8 15` (완성도), `python3 scripts/score.py match 17 16 18 17 8 8` (일치도). 항목 순서는 위 점수표 순서와 같다.
+
 ## 5. 변환과 작성
 
 사용자 요청을 먼저 분류한다.
@@ -179,6 +182,8 @@ soul-extractor "<글을 이 사람 스타일로 다듬어줘>"
 - 마무리가 원래 프로필보다 조금 정돈되어 있음
 - 접속사가 한 종류로 몰림
 ```
+
+총점·등급은 이 스킬의 `scripts/score.py`로 계산해 재현성을 확보한다. 예: `python3 scripts/score.py completeness 16 14 24 8 15` (완성도), `python3 scripts/score.py match 17 16 18 17 8 8` (일치도). 항목 순서는 위 점수표 순서와 같다.
 
 점수는 자기 점검용이다. "이 사람이 쓴 확률"이라고 말하지 않는다.
 
