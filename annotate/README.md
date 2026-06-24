@@ -1,6 +1,6 @@
 # annotate
 
-`version: 0.1.0`
+`version: 0.2.0`
 
 현재 작업과 관련된 로직을 읽기 쉽게 짧은 한글 주석으로 정리하는 스킬입니다.
 
@@ -29,5 +29,6 @@ annotate/
 ## Test
 
 ```bash
+# 레포 루트에서 실행
 python3 scripts/validate_skills.py --skill annotate
 ```
