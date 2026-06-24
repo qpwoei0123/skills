@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.5.0
+
+### Added
+- 읽기 전용 커밋 개요를 한 번에 수집하는 `scripts/collect_context.sh` 추가
+
+### Removed
+- 분석 순서에서 Gemini 보조 분석 언급 제거
+
+## 0.4.0
+
+### Added
+- `--go` 실행 모드에 계획 모드와 짝이 맞는 실행 결과 보고 템플릿 추가
+- 트리거 정확도 점검용 `evals/trigger-eval.json` 추가
+
 ## 0.3.2
 
 ### Changed

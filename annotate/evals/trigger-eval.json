@@ -23,5 +23,13 @@
   {
     "query": "README에 설치 방법 추가해줘",
     "should_trigger": false
+  },
+  {
+    "query": "이 diff 군더더기 많은데 좀 정리해서 줄여줘",
+    "should_trigger": false
+  },
+  {
+    "query": "커밋 메시지들 좀 정리해줘",
+    "should_trigger": false
   }
 ]

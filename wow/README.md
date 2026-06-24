@@ -1,6 +1,6 @@
 # wow
 
-`version: 0.3.0`
+`version: 0.3.2`
 
 문제를 새 관점으로 다시 설계해 "이렇게 했으면 훨씬 단순했겠다" 싶은 우아한 단순화안을 제안하는 스킬입니다.
 
@@ -24,5 +24,6 @@ wow/
 ## Test
 
 ```bash
+# 레포 루트에서 실행
 python3 scripts/validate_skills.py --skill wow
 ```
