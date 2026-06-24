@@ -1,0 +1,27 @@
+[
+  {
+    "query": "/annotate 현재 diff에 필요한 주석 후보만 봐줘",
+    "should_trigger": true
+  },
+  {
+    "query": "이번 작업과 연관된 로직을 파악하기 쉽게 주석 정리해줘",
+    "should_trigger": true
+  },
+  {
+    "query": "이 함수 왜 이렇게 분기되는지 짧은 한글 주석 달아줘",
+    "should_trigger": true
+  },
+  {
+    "query": "코드 전체에 주석을 최대한 많이 달아줘",
+    "should_trigger": true,
+    "expected_behavior": "트리거하되 과잉 주석을 거절하고 작업 관련 후보만 제안한다"
+  },
+  {
+    "query": "이 코드 리팩터링해서 중복 줄여줘",
+    "should_trigger": false
+  },
+  {
+    "query": "README에 설치 방법 추가해줘",
+    "should_trigger": false
+  }
+]
