@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.12.0
+
+### Changed
+- description을 7개 관점(SAFE/ARCH/DEP/BUILD/DATA/OPS/DOC)과 트리거 문구, code-review와의 경계를 명시하도록 보강
+- eval 케이스(`evals/trigger-eval.json`, `evals/evals.json`)에 남아 있던 stale 스킬명 `repo-orbit`/`$repo-orbit`을 `orbit`/`$orbit`으로 정정
+
+### Removed
+- `최소 규칙` 절에서 Step 5·6과 중복되던 legacy fingerprint open/closed 발행 분기 문장을 제거하고 "발행 분기 규칙은 Step 5·6을 따른다" 포인터로 대체
+
 ## 1.11.0
 
 ### Added

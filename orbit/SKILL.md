@@ -2,8 +2,8 @@
 name: orbit
 license: Apache-2.0
 metadata:
-  version: 1.11.0
-description: (v1.11.0) 레포를 7개 관점으로 점검해 기술 이슈를 발행할 때 사용한다.
+  version: 1.12.0
+description: (v1.12.0) 레포를 SAFE/ARCH/DEP/BUILD/DATA/OPS/DOC 7개 관점으로 점검해 통과한 finding만 GitHub/GitLab 이슈로 발행하는 워크플로 스킬. "레포 점검해줘", "기술 부채 찾아줘", "의존성/CI/아키텍처 점검해줘", "이슈 자동 등록해줘", "$orbit" 등 정기 레포 감사나 기술 이슈 발행 요청에 사용한다. 특정 PR/diff 리뷰나 단발성 코드 수정은 code-review를 쓴다.
 ---
 
 # orbit 🪐
@@ -607,5 +607,4 @@ python3 scripts/publish_issue.py \
 - 리드 리뷰어만 병합, 채점, triage, 발행 판단을 한다.
 - Step 3에서는 선택된 view 파일만 읽는다.
 - fingerprint는 `pipeline:<repo>:<view_id>:<finding_id>`를 유지한다.
-- 동일 fingerprint 또는 같은 repo/view의 `--legacy-fingerprint` alias의 open 이슈는 스킵하지 않고 최신 `format_version`으로 update한다.
-- 동일 fingerprint 또는 같은 repo/view의 `--legacy-fingerprint` alias의 closed 이슈는 reopen하지 않는다. 최종 보고에 별도 항목으로 표시하고 사용자에게 안내한다.
+- 발행 분기 규칙(legacy alias의 open update, closed reopen 금지)은 Step 5·6을 따른다.

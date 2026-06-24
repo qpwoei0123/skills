@@ -40,7 +40,7 @@
         {
           "id": "b1",
           "name": "skill-triggered",
-          "description": "repo-orbit 스킬이 트리거되어야 한다 (스킬 없는 버전과 비교 시 repo-orbit 특유의 파이프라인 언급)"
+          "description": "orbit 스킬이 트리거되어야 한다 (스킬 없는 버전과 비교 시 orbit 특유의 파이프라인 언급)"
         },
         {
           "id": "b2",
