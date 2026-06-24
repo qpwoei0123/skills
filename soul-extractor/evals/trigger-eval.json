@@ -27,5 +27,13 @@
   {
     "query": "블로그 글 주제 추천해줘",
     "should_trigger": false
+  },
+  {
+    "query": "내 말투 그대로 이번 분기 회고 글 새로 써줘",
+    "should_trigger": true
+  },
+  {
+    "query": "블로그 글 초안 구조 잡아줘",
+    "should_trigger": false
   }
 ]

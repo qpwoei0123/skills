@@ -1,6 +1,6 @@
 # soul-extractor
 
-`version: 0.1.0`
+`version: 0.2.0`
 
 허가된 사람, 브랜드, 캐릭터의 글 샘플에서 문체 지문을 만들고 스타일 일치도를 점검해 글을 다듬는 스킬입니다.
 
@@ -34,5 +34,6 @@ soul-extractor/
 ## Test
 
 ```bash
+# 레포 루트에서 실행
 python3 scripts/validate_skills.py --skill soul-extractor
 ```
