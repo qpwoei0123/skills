@@ -2,8 +2,8 @@
 name: mr
 license: Apache-2.0
 metadata:
-  version: 0.3.1
-description: (v0.3.1) 현재 브랜치를 push하고 제목/본문을 맞춰 GitHub draft PR 또는 GitLab draft MR을 만드는 스킬. "PR 올려줘", "MR 만들어줘", "리뷰 요청해줘", "/mr" 등 코드 리뷰 요청 관련 말이 나오면 사용한다.
+  version: 0.3.2
+description: (v0.3.2) 현재 브랜치를 push하고 제목/본문을 맞춰 GitHub draft PR 또는 GitLab draft MR을 만드는 스킬. "PR 올려줘", "MR 만들어줘", "리뷰 요청해줘", "/mr" 등 코드 리뷰 요청 관련 말이 나오면 사용한다.
 ---
 
 # mr
@@ -29,6 +29,14 @@ description: (v0.3.1) 현재 브랜치를 push하고 제목/본문을 맞춰 Git
 
 - `/mr`: 현재 브랜치, base, 커밋, diff, 주변 MR/PR 스타일을 분석하고 계획만 제안한다. 승인 전에는 push나 MR/PR 생성을 하지 않는다.
 - `/mr --go`, `/mr -go`: 같은 분석을 수행하되 승인 질문 없이 push와 draft MR/PR 생성을 진행한다.
+
+## 세션 경계
+
+- push와 MR/PR 생성 권한은 현재 사용자 요청 1회에만 적용된다.
+- 이전 턴의 승인, `--go`, MR 계획, push 결과, 생성 결과는 다음 사용자 요청에 이월하지 않는다.
+- 직전 턴에서 MR/PR을 만들었더라도 다음 구현, 수정, 리뷰 요청은 새 작업으로 본다.
+- 다음 작업에서 `/mr`, `/mr --go`, "MR 만들어줘", "PR 올려줘", "리뷰 요청해줘" 같은 명시 요청이 없으면 절대 push하거나 MR/PR을 만들지 않는다.
+- 새 커밋이나 파일 수정이 발생한 뒤 MR/PR을 만들려면 사용자가 다시 MR/PR 생성을 요청해야 한다.
 
 ## 분석 순서
 
@@ -176,6 +184,10 @@ MR 계획
 - draft로 생성
 - push 예정: ...
 
+후속 작업
+- 자동 push/MR 생성 없음
+- 다음 MR/PR 생성은 사용자가 다시 요청해야 함
+
 이대로 draft MR을 만들까요?
 ```
 
@@ -220,6 +232,7 @@ glab mr create \
 ```
 
 7. 생성된 URL, 제목, base/head, 실행한 검증을 보고한다.
+8. MR intent를 종료한다. 최종 보고에는 "MR 작업은 여기서 종료됐습니다. 다음 작업은 별도 요청 없이는 push하거나 MR/PR을 만들지 않습니다."를 포함한다.
 
 ## 중단 조건
 
