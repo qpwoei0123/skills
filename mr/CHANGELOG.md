@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.5.0
+
+### Added
+- `scripts/preflight.sh` 추가: git 읽기 전용 사전 점검(worktree 상태, 브랜치/remote, base 후보, 플랫폼 추정)을 한 번에 출력
+
 ## 0.4.0
 
 ### Added
