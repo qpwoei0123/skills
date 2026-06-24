@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.3.1
+
+### Changed
+- `weave`와의 경계를 사고 방식 블록에 한 줄 추가
+- Gemini CLI 부재/신뢰도 처리 한 줄 보강
+- README Test 명령에 "레포 루트에서 실행" 한정 명시
+
 ## 0.3.0
 
 ### Added
