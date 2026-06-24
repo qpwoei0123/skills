@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.2.1
+
+### Removed
+- 분석 순서의 Gemini 보조 분석 블록(설명·예시 명령) 제거
+
 ## 0.2.0
 
 ### Changed

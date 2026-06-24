@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.2
+
+### Removed
+- 분석 순서의 Gemini 보조 분석 언급 제거
+
 ## 0.3.1
 
 ### Changed
