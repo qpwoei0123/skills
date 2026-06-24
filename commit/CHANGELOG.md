@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.4.0
+
+### Added
+- `--go` 실행 모드에 계획 모드와 짝이 맞는 실행 결과 보고 템플릿 추가
+- 트리거 정확도 점검용 `evals/trigger-eval.json` 추가
+
 ## 0.3.2
 
 ### Changed

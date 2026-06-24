@@ -1,0 +1,6 @@
+[
+  {"query": "변경분 의미 단위로 나눠서 커밋해줘", "should_trigger": true},
+  {"query": "지금 작업한 거 커밋해줘", "should_trigger": true},
+  {"query": "이 브랜치 PR 올려줘", "should_trigger": false},
+  {"query": "이 코드 단순하게 줄여줘", "should_trigger": false}
+]
