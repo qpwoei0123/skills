@@ -1,6 +1,6 @@
 # weave
 
-`version: 0.1.0`
+`version: 0.2.0`
 
 흩어진 코드와 패턴을 같은 이유로 변하는 단위로 엮어 일관된 구조로 정리하는 스킬입니다.
 
@@ -27,5 +27,6 @@ weave/
 ## Test
 
 ```bash
+# 레포 루트에서 실행
 python3 scripts/validate_skills.py --skill weave
 ```
