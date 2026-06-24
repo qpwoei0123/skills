@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.12.1
+
+### Changed
+- Step 4.5 재심 정책과 선택적 3라운드(query_response) 스키마를 `references/execution-lifecycle.md`로 위임하고 본문에는 요약·포인터만 남겨 SKILL.md 분량을 줄임(610→550줄)
+
 ## 1.12.0
 
 ### Changed

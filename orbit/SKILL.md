@@ -2,8 +2,8 @@
 name: orbit
 license: Apache-2.0
 metadata:
-  version: 1.12.0
-description: (v1.12.0) 레포를 SAFE/ARCH/DEP/BUILD/DATA/OPS/DOC 7개 관점으로 점검해 통과한 finding만 GitHub/GitLab 이슈로 발행하는 워크플로 스킬. "레포 점검해줘", "기술 부채 찾아줘", "의존성/CI/아키텍처 점검해줘", "이슈 자동 등록해줘", "$orbit" 등 정기 레포 감사나 기술 이슈 발행 요청에 사용한다. 특정 PR/diff 리뷰나 단발성 코드 수정은 code-review를 쓴다.
+  version: 1.12.1
+description: (v1.12.1) 레포를 SAFE/ARCH/DEP/BUILD/DATA/OPS/DOC 7개 관점으로 점검해 통과한 finding만 GitHub/GitLab 이슈로 발행하는 워크플로 스킬. "레포 점검해줘", "기술 부채 찾아줘", "의존성/CI/아키텍처 점검해줘", "이슈 자동 등록해줘", "$orbit" 등 정기 레포 감사나 기술 이슈 발행 요청에 사용한다. 특정 PR/diff 리뷰나 단발성 코드 수정은 code-review를 쓴다.
 ---
 
 # orbit 🪐
@@ -320,22 +320,7 @@ evidence 있는 rebuttal이 하나라도 있으면 해당 claim의 confidence는
 
 **3라운드 — query_response** (리뷰어 → 리드 리뷰어, 선택적)
 
-리드 리뷰어가 사실 불명확 시 특정 리뷰어에게 재확인을 요청할 때만 발생한다.
-
-```json
-{
-  "agent": "A",
-  "query_response": {
-    "query": "리드 리뷰어 질의 내용 요약",
-    "finding": "직접 확인한 결과 한 문장",
-    "evidence": ["확인한 파일:줄"],
-    "conclusion": "claim 유지 | claim 수정 필요 | claim 철회"
-  }
-}
-```
-
-규칙: 질의는 finding당 최대 1회, 리뷰어당 최대 1회다.
-`claim 철회` 시 finding을 제거하고 `queries_withdrawn`에 기록한다.
+리드 리뷰어가 사실이 불명확할 때만, finding당 1회·리뷰어당 1회로 재확인을 요청한다. 응답은 `claim 유지 | claim 수정 필요 | claim 철회`로 귀결되며, `claim 철회` 시 finding을 제거하고 `queries_withdrawn`에 기록한다. JSON 형식은 [`references/execution-lifecycle.md`](references/execution-lifecycle.md)의 "리드 리뷰어 질의 형식"을 읽는다.
 
 result.json 전체 스키마, comment_history, 병합 규칙은 [`references/execution-lifecycle.md`](references/execution-lifecycle.md)를 읽는다.
 
@@ -381,57 +366,12 @@ result.json 전체 스키마, comment_history, 병합 규칙은 [`references/exe
 
 ### Step 4.5 — 재심 (선택적)
 
-채점 직후, triage 전에 두 가지 경로로 재심이 발생할 수 있다.
+채점 직후 triage 전에, 아래 두 경로 중 하나로만 재심이 발생할 수 있다. 둘 다 finding당 최대 1회이고, 하나가 발동하면 다른 하나는 발동하지 않는다.
 
-#### (a) 리드 리뷰어 주도 재조사 (기존)
+- (a) 리드 리뷰어 주도 재조사: evidence 있는 rebuttal이 claim을 일부만 뒤집거나, source와 산출물·테스트·문서가 서로 다른 사실을 가리켜 의문이 남는 finding에 대해 해당 리뷰어에게 재조사를 건다.
+- (b) 리뷰어 주도 이의 제기: triage 미달로 스킵될 finding에 대해, 리뷰어가 원래 observation에 없던 **새 evidence**를 들고 점수에 이의를 제기한다. 새 evidence 없는 이의는 기각한다. 리드 리뷰어가 `sustained`(재채점·triage 재적용) 또는 `overruled`(점수 유지, 최종)로 판정한다.
 
-리드 리뷰어가 채점 결과에 기술적 의문을 가지면 해당 리뷰어에게 재조사를 건다.
-
-발동 조건:
-
-- evidence 있는 rebuttal이 claim을 **일부만** 뒤집는 경우
-- source와 generated 산출물이 서로 다른 사실을 가리키는 경우
-- 테스트는 있지만 핵심 경로 커버 여부가 불명확한 경우
-- 문서와 실제 코드 경로가 충돌하는 경우
-
-#### (b) 리뷰어 주도 이의 제기 (신규)
-
-리드 리뷰어가 채점 결과를 리뷰어에게 공유한 뒤, 리뷰어가 점수에 동의하지 않으면 **추가 근거**를 들고 이의를 제기할 수 있다.
-
-발동 조건:
-
-- 리뷰어의 finding이 triage 기준 미달로 스킵 예정일 때
-- 리뷰어가 원래 observation에 포함하지 않았던 **새 evidence**를 제시할 수 있을 때
-
-이의 제기 형식:
-
-```json
-{
-  "agent": "A",
-  "objection": {
-    "finding_id": "f-12345678",
-    "contested_field": "impact",
-    "current_score": 3,
-    "argument": "추가 근거로 영향 범위가 더 넓음을 확인했다",
-    "new_evidence": ["src/api/routes.ts:42", "src/middleware/auth.ts:15"],
-    "requested_score": 4
-  }
-}
-```
-
-규칙:
-
-- 새 evidence가 없는 이의는 기각한다. "동의하지 않는다"만으로는 부족하다.
-- finding당 이의 1회, 리뷰어당 이의 1회.
-- 리드 리뷰어는 새 evidence를 확인하고 `sustained` (인용) 또는 `overruled` (기각)로 판정한다.
-- `sustained`: 해당 필드를 재채점하고 triage를 다시 적용한다.
-- `overruled`: 원래 점수를 유지한다. 판정은 최종이며 추가 항소 없음.
-
-#### 공통 규칙
-
-(a)와 (b) 모두 finding당 최대 1회. 하나가 발동하면 다른 하나는 발동하지 않는다.
-`claim_refined / claim_withdrawn / claim_upheld / sustained / overruled` 중 하나로 귀결된다.
-정확한 JSON 스키마는 [`references/execution-lifecycle.md`](references/execution-lifecycle.md)를 읽는다.
+`claim_refined / claim_withdrawn / claim_upheld / sustained / overruled` 중 하나로 귀결된다. 발동 조건·반환 JSON·판정 규칙 상세는 [`references/execution-lifecycle.md`](references/execution-lifecycle.md)의 "Step 4.5 재심 정책"을 읽는다.
 
 ## Step 5 — Triage
 
