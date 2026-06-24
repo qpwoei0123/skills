@@ -1,6 +1,6 @@
 # trim
 
-`version: 0.3.0`
+`version: 0.3.1`
 
 이미 구현된 diff의 동작을 유지하면서 코드량, 중복, 불필요한 복잡도를 줄이는 스킬입니다.
 
@@ -27,5 +27,6 @@ trim/
 ## Test
 
 ```bash
+# 레포 루트에서 실행
 python3 scripts/validate_skills.py --skill trim
 ```

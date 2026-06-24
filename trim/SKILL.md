@@ -2,8 +2,8 @@
 name: trim
 license: Apache-2.0
 metadata:
-  version: 0.3.0
-description: (v0.3.0) 동작을 유지하면서 현재 diff의 코드량, 중복, 불필요한 복잡도를 줄이는 스킬. "코드 줄여줘", "단순하게 해줘", "다듬어줘", "정리해줘", "/trim" 등 작성한 변경분을 간결하게 만들자는 말이 나오면 사용한다.
+  version: 0.3.1
+description: (v0.3.1) 동작을 유지하면서 현재 diff의 코드량, 중복, 불필요한 복잡도를 줄이는 스킬. "코드 줄여줘", "단순하게 해줘", "다듬어줘", "정리해줘", "/trim" 등 작성한 변경분을 간결하게 만들자는 말이 나오면 사용한다.
 ---
 
 # trim
@@ -76,53 +76,53 @@ diff가 크면 Gemini CLI가 있을 때 보조 분석을 맡길 수 있고, 결�
 
 ## 단순화 포인트
 
-아래 예시는 React/TS 기준이다. 다른 스택이면 같은 원리(파생 값, 중복, 과한 추상화, 죽은 방어 코드)를 그 스택의 관용구로 적용한다.
+아래는 스택 중립 원리다. 괄호 안 예시는 React/TS 관용구이며, 백엔드·CLI·라이브러리에서는 같은 원리를 그 스택의 형태로 찾는다.
 
 우선적으로 찾는다:
 
-- 파생 state: props나 기존 state에서 계산 가능한 값을 state로 들고 있는 경우
-- 불필요한 effect: 렌더 중 계산하면 되는 값을 `useEffect`로 동기화하는 경우
-- 과한 memoization: 이득 없는 `useMemo`, `useCallback`, `memo`
+- 파생 값을 별도 상태로 저장: 다른 값에서 계산 가능한데 따로 들고 있는 경우 (예: React 파생 state, 서버 응답을 로컬에 중복 캐시, 계산 가능한 멤버 필드)
+- 불필요한 동기화: 필요할 때 계산하면 되는 값을 별도 단계로 동기화하는 경우 (예: `useEffect`로 state 복사, setter에서 파생 필드 갱신, 캐시 무효화 콜백)
+- 이득 없는 메모이제이션: 비용보다 효과가 작은 캐싱 (예: `useMemo`, `useCallback`, `memo`, 불필요한 lazy/precompute)
 - 중복 로직: 같은 조건, 매핑, 변환, setup이 반복되는 경우
-- 불필요한 wrapper: props를 그대로 전달하는 component, hook, helper
+- 불필요한 wrapper: 입력을 그대로 넘기기만 하는 중간 계층 (예: props를 그대로 전달하는 component, hook, 인자만 포워딩하는 함수)
 - 과한 추상화: 한 번만 쓰이거나 호출부보다 복잡한 helper
 - 장황한 조건문: guard clause, lookup table, 단순 boolean 식으로 표현 가능한 경우
-- 의미 없는 방어 코드: 실제 입력 계약상 도달하지 않는 null/undefined 분기
-- 중복 스타일: 반복되는 class, style 객체, 상수
+- 의미 없는 방어 코드: 실제 입력 계약상 도달하지 않는 null/undefined, 빈 값, 예외 분기
+- 중복 상수/설정: 반복되는 값, 객체, 설정 (예: 반복되는 class, style 객체, 매직 넘버)
 - 테스트 장황함: assertion에 기여하지 않는 mock, setup, 중복 케이스
-- 타입 과설계: 실제 사용보다 복잡한 generic, mapped type, conditional type
+- 타입 과설계: 실제 사용보다 복잡한 타입 구성 (예: generic, mapped type, conditional type)
 
 ## 상태 단순화 기준
 
 수정해도 된다:
 
-- state가 항상 다른 값에서 계산된다.
-- effect가 state를 단순 복사한다.
+- 어떤 값이 항상 다른 값에서 계산된다. (예: 파생 state, 중복 멤버 필드)
+- 동기화 단계가 값을 단순 복사하기만 한다. (예: state를 복사하는 effect)
 - 여러 boolean이 사실 하나의 status로 표현된다.
-- 같은 서버 상태를 로컬 state에 중복 저장한다.
+- 같은 출처의 상태를 두 곳에 중복 저장한다. (예: 서버 상태를 로컬 state에 캐시, 같은 데이터를 두 변수에 보관)
 
 수정하면 안 된다:
 
 - 사용자가 입력 중인 임시 값이다.
-- optimistic update, animation, transition, debounce 같은 시간 의미가 있다.
-- 외부 store나 URL, storage와 동기화하는 의도적 상태다.
-- reference identity가 memoized child나 effect dependency에 의미 있게 쓰인다.
+- 시간 의미가 있는 상태다. (예: optimistic update, animation, transition, debounce)
+- 외부 시스템과 동기화하는 의도적 상태다. (예: 외부 store, URL, storage)
+- reference identity가 동작에 의미 있게 쓰인다. (예: memoized child, effect dependency, 캐시 키)
 
 ## 구조 단순화 기준
 
 수정해도 된다:
 
 - helper가 호출부 하나뿐이고 호출부보다 복잡하다.
-- wrapper component가 의미 있는 semantic, accessibility, layout 책임 없이 그대로 감싼다.
+- wrapper가 의미 있는 책임 없이 그대로 감싸기만 한다. (예: semantic, accessibility, layout 책임 없는 component)
 - 파일 분리가 이해를 돕지 않고 이동 비용만 만든다.
 - 반복 코드를 합쳐도 이름과 책임이 더 명확해진다.
 
 수정하면 안 된다:
 
 - public API이거나 외부에서 import될 가능성이 있다.
-- design system, route boundary, lazy loading boundary처럼 구조 자체가 의미를 가진다.
+- 경계 자체가 의미를 갖는 구조다. (예: design system, route boundary, lazy loading boundary, 모듈/패키지 경계)
 - 테스트 fixture나 story가 문서 역할을 한다.
-- 접근성, semantic tag, layout containment를 위한 wrapper다.
+- 의도적 책임을 가진 wrapper다. (예: 접근성, semantic tag, layout containment)
 
 ## 금지 변경
 
