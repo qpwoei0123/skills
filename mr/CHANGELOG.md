@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.4.0
+
+### Added
+- 트리거 동작을 검증하는 `evals/trigger-eval.json` 추가
+
+### Changed
+- 불변 규칙의 draft 강제, 일반 MR/PR fallback 금지, draft 미보장 중단 항목에 의도 근거를 한 줄씩 명시
+
 ## 0.3.2
 
 ### Changed
