@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.5.0
+
+### Added
+- 읽기 전용 커밋 개요를 한 번에 수집하는 `scripts/collect_context.sh` 추가
+
+### Removed
+- 분석 순서에서 Gemini 보조 분석 언급 제거
+
 ## 0.4.0
 
 ### Added

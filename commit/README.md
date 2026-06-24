@@ -1,6 +1,6 @@
 # commit
 
-`version: 0.4.0`
+`version: 0.5.0`
 
 현재 git 변경사항을 읽고 최근 커밋 로그 스타일에 맞춰 Conventional Commits 형식의 한글 커밋을 계획하거나 실행하는 스킬입니다.
 
@@ -21,7 +21,19 @@
 commit/
 ├── SKILL.md
 ├── README.md
-└── CHANGELOG.md
+├── CHANGELOG.md
+└── scripts/
+    └── collect_context.sh
+```
+
+## Scripts
+
+- `scripts/collect_context.sh`: 커밋 계획에 필요한 읽기 전용 개요(status, 최근 로그, unstaged/staged diff --stat, untracked 목록)를 한 번에 출력합니다. 아무것도 변경하지 않으며, 현재 git 작업 트리가 아니면 오류로 중단합니다.
+
+현재 레포 안에서 실행:
+
+```bash
+bash commit/scripts/collect_context.sh
 ```
 
 ## Test
