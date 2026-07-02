@@ -2,8 +2,8 @@
 name: mr
 license: Apache-2.0
 metadata:
-  version: 0.5.0
-description: (v0.5.0) 현재 브랜치를 push하고 제목/본문을 맞춰 GitHub draft PR 또는 GitLab draft MR을 만드는 스킬. "PR 올려줘", "MR 만들어줘", "리뷰 요청해줘", "/mr" 등 코드 리뷰 요청 관련 말이 나오면 사용한다.
+  version: 0.5.1
+description: (v0.5.1) 현재 브랜치를 push하고 제목/본문을 맞춰 GitHub draft PR 또는 GitLab draft MR을 만드는 스킬. "PR 올려줘", "MR 만들어줘", "리뷰 올릴 준비해줘", "/mr" 등 PR/MR을 새로 만들자는 말이 나오면 사용한다. 코드를 검토해 달라는 "리뷰해줘"·"코드 봐줘"는 code-review, 이미 올라온 PR 리뷰는 review를 쓴다.
 ---
 
 # mr
@@ -16,7 +16,7 @@ description: (v0.5.0) 현재 브랜치를 push하고 제목/본문을 맞춰 Git
 - MR/PR 생성은 항상 draft로 한다. — 리뷰가 끝나지 않은 코드가 곧장 merge 대상으로 노출되는 사고를 막기 위해서다.
 - 일반 MR/PR 생성으로 fallback하지 않는다. — draft 의도가 사라진 채 리뷰 전 코드가 정식 MR/PR로 열리는 사고를 막기 위해서다.
 - draft 생성이 보장되지 않으면 `--go`여도 생성하지 않고 중단한다. — 보장되지 않은 채 강행하면 일반 MR/PR로 새는 길을 남기기 때문이다.
-- 커밋은 만들지 않는다. dirty worktree가 있으면 `/commit`을 먼저 안내한다.
+- 커밋은 만들지 않는다. dirty worktree가 있으면 `/commit`을 먼저 안내한다. 사용자가 "커밋하고 PR까지 올려줘"처럼 한 번에 요청하면 commit 스킬 절차로 커밋을 먼저 끝낸 뒤(승인 수준은 원 요청을 따름) 이 스킬을 이어서 진행한다.
 - 제목은 Conventional Commits 형식을 유지한다.
 
 ## 호출 형태
@@ -198,7 +198,7 @@ MR 계획
 `--go` 또는 `-go`가 있으면 다음 순서로 진행한다.
 
 1. 중단 조건을 확인한다.
-2. 필요한 검증을 실행한다.
+2. 레포에 정의된 test/lint 명령(package script, Makefile, CI 설정) 중 리뷰 범위와 관련된 것만 실행한다. 없으면 본문 검증 섹션에 "생략: 실행 명령 없음"을 적는다.
 3. 현재 브랜치를 push한다.
 
 ```bash

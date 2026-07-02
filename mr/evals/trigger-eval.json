@@ -1,6 +1,11 @@
 [
   {"query": "이 브랜치 draft PR 올려줘", "should_trigger": true},
-  {"query": "리뷰 요청 좀 올려줘", "should_trigger": true},
+  {"query": "MR 올려줘", "should_trigger": true},
+  {"query": "작업 끝났으니 리뷰 올릴 준비해줘", "should_trigger": true},
+  {"query": "push하고 리뷰 요청까지 해줘", "should_trigger": true},
   {"query": "변경분 커밋부터 해줘", "should_trigger": false},
-  {"query": "이 코드 좀 다듬어줘", "should_trigger": false}
+  {"query": "이 코드 좀 다듬어줘", "should_trigger": false},
+  {"query": "이 diff 코드 리뷰 해줘", "should_trigger": false},
+  {"query": "올라온 PR #12 리뷰해줘", "should_trigger": false},
+  {"query": "PR 머지해줘", "should_trigger": false}
 ]
