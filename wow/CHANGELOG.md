@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.4.0
+
+### Added
+- 제안 밀도의 하한선을 보여주는 `references/example.md` 추가
+- `evals/trigger-eval.json` 신설 (trim·impeccable·code-review 경계 케이스 포함 9건)
+
+### Changed
+- description에 trim·impeccable 위임 문장 추가 (막연한 불만·UI 개선 발화의 오발동 차단)
+- 분석 순서를 "사용자 지목 대상 우선 → 없으면 diff → 둘 다 없으면 질문"으로 재편해 불필요한 왕복 제거
+- trim/weave 비교를 병합 후 단일 trim 기준으로 갱신
+
 ## 0.3.2
 
 ### Removed
