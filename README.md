@@ -100,6 +100,17 @@ python3 scripts/normalize_skill.py --skill ghostwriter --write
 - 자동 수정 가능한 오류만 있으면 스킬 이름 기준 normalize 브랜치를 만들고 PR을 올린다.
 - 사용자는 normalize PR만 머지하면 된다.
 
+## Deploy
+
+실제 세션이 로드하는 것은 레포가 아니라 배포 디렉터리(`~/.agents/skills`)입니다.
+스킬을 고친 뒤 동기화하지 않으면 개선이 세션에 반영되지 않습니다.
+
+```bash
+python3 scripts/deploy_skills.py             # validate 통과 시 전체 동기화
+python3 scripts/deploy_skills.py --skill trim
+python3 scripts/deploy_skills.py --check     # 버전 차이만 확인
+```
+
 ## Repository Structure
 
 ```text
