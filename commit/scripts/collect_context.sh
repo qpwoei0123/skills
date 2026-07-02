@@ -8,8 +8,8 @@ if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
   exit 1
 fi
 
-echo "# status"
-git status --short
+echo "# status (브랜치 포함)"
+git status -sb
 echo
 echo "# recent log"
 git log --oneline -12
@@ -20,5 +20,10 @@ echo
 echo "# diff --cached --stat (staged)"
 git diff --cached --stat
 echo
-echo "# untracked"
-git ls-files --others --exclude-standard
+echo "# untracked (최대 50개)"
+untracked=$(git ls-files --others --exclude-standard)
+echo "$untracked" | head -50
+count=$(printf '%s' "$untracked" | grep -c . || true)
+if [ "$count" -gt 50 ]; then
+  echo "... 외 $((count - 50))개"
+fi
