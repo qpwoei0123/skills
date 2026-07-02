@@ -121,7 +121,8 @@ skills/
 ├── weave/                          # 분산된 코드 응집 스킬
 ├── wow/                            # 설계 관점 재구상 스킬
 ├── orbit/                          # 레포 점검/이슈 발행 워크플로 스킬
-└── soul-extractor/                 # 허가된 문체 지문 추출/변환 스킬
+├── soul-extractor/                 # 허가된 문체 지문 추출/변환 스킬
+└── code-to-figma/                  # 웹 화면 → Figma 변환 스킬
 ```
 
 ## Accepted Skills
@@ -134,6 +135,7 @@ skills/
 - `wow`: 구현된 변경을 새 관점으로 다시 설계해 우아한 단순화안을 제안하는 스킬
 - `orbit 🪐`: 레포를 요일별 관점으로 분석하고 finding을 이슈로 발행하는 워크플로 스킬
 - `soul-extractor`: 허가된 글 샘플에서 문체 지문을 추출하고 스타일 일치도를 점검하는 스킬
+- `code-to-figma`: 구현된 웹 화면(URL)을 Figma로 옮기는 스킬 — 단일 화면은 디자인 시스템 바인딩 편집 레이어, 여러 화면은 픽셀 캡처 그리드
 
 ## Next Step
 
