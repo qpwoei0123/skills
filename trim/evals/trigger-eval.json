@@ -1,0 +1,12 @@
+[
+  {"query": "방금 짠 코드 좀 줄여줘", "should_trigger": true},
+  {"query": "이 diff 너무 장황한데 단순하게 해줘", "should_trigger": true},
+  {"query": "여기저기 흩어진 중복 코드 합쳐줘", "should_trigger": true},
+  {"query": "결제 검증 로직이 세 군데 반복되는데 공통화해줘", "should_trigger": true},
+  {"query": "/trim --go", "should_trigger": true},
+  {"query": "작업 끝났으니 커밋 정리해줘", "should_trigger": false},
+  {"query": "이 함수 왜 이렇게 짰는지 주석 정리해줘", "should_trigger": false},
+  {"query": "이 변경에 버그 없는지 리뷰해줘", "should_trigger": false},
+  {"query": "이 모듈 구조가 마음에 안 들어, 처음부터 다시 설계한다면?", "should_trigger": false},
+  {"query": "README 문장 좀 다듬어줘", "should_trigger": false}
+]

@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.4.0
+
+### Added
+- weave 스킬을 흡수 통합: 후보를 "덜어내기"와 "엮기" 두 갈래로 분류, 엮기 판정 기준은 `references/weave-criteria.md`로 분리
+- 사용자가 범위를 지목하면 diff 없이도 그 범위의 흩어진 패턴을 다루는 대상 범위 추가
+- `evals/trigger-eval.json` 신설 (경계 케이스 포함 10건)
+
+### Changed
+- description에서 과광범위 트리거 "정리해줘"·"다듬어줘" 제거, "중복 합쳐줘"·"공통화해줘" 승계, 내장 simplify 우선순위와 wow·code-review 경계 명시
+- 위험도(낮음/보통/높음)와 근거 등급(1/2/3) 이원 체계를 근거 등급 단일 척도로 통합
+- `--go` 스냅샷을 `git diff HEAD`(staged 포함) + untracked 백업으로 보강하고 mktemp 경로 사용, 복원 절차를 tracked/untracked로 분기
+- 빈 diff·비git 저장소 중단 조건과 base 결정 규칙 명시
+
+### Removed
+- 중복 로직·중복 상수 항목을 덜어내기 목록에서 엮기 후보로 이동
+
 ## 0.3.2
 
 ### Removed
