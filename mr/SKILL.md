@@ -18,7 +18,8 @@ description: (v0.6.0) 현재 브랜치를 push하고 제목/본문을 맞춰 Git
 - draft 생성이 보장되지 않으면 `--go`여도 생성하지 않고 중단한다. — 보장되지 않은 채 강행하면 일반 MR/PR로 새는 길을 남기기 때문이다.
 - 임의로 커밋하지 않는다. dirty worktree가 있으면 "dirty worktree 분기"에 따라 diff 제외(A안)와 커밋 포함(B안)을 나란히 제시하고, 사용자가 B안을 고른 경우에만 commit 스킬 절차로 커밋한다. 사용자가 "커밋하고 PR까지 올려줘"처럼 처음부터 커밋을 포함해 요청하면 두 버전 제시 없이 commit 스킬 절차로 커밋을 먼저 끝낸 뒤(승인 수준은 원 요청을 따름) 이 스킬을 이어서 진행한다.
 - push 전에 브랜치명이 레포 컨벤션에 맞는지 항상 점검한다. rename은 사용자 동의 없이 하지 않는다. — 컨벤션을 벗어난 브랜치명이 원격과 MR/PR에 그대로 박제되는 사고를 막기 위해서다.
-- 제목은 Conventional Commits 형식을 유지한다.
+- 레포 기여 문서(CONTRIBUTING 등)에 명시된 규칙은 이 스킬의 기본값보다 우선한다. — 팀 규칙과 어긋난 MR이 리뷰에서 반려되는 낭비를 막기 위해서다.
+- 제목은 Conventional Commits 형식을 기본으로 한다. 기여 문서가 다른 제목 형식을 명시하면 그쪽을 따른다.
 
 ## 호출 형태
 
@@ -45,43 +46,47 @@ description: (v0.6.0) 현재 브랜치를 push하고 제목/본문을 맞춰 Git
 git 읽기 전용 사전 점검은 이 스킬의 `scripts/preflight.sh`로 한 번에 확인할 수 있다(스크립트를 쓸 수 없으면 아래 단계를 직접 실행한다).
 
 1. 현재 위치가 git repo인지 확인한다.
-2. 작업 트리 상태를 확인한다.
+2. 레포 기여 문서를 확인한다.
+   - 후보: `CONTRIBUTING.md`(루트, `.github/`, `docs/`). `preflight.sh`가 존재하는 후보를 출력한다.
+   - 브랜치명, 제목, 본문, 리뷰 절차에 대한 규칙이 있으면 이후 판단에서 이 스킬의 기본값보다 우선한다.
+   - 없으면 이후 단계의 주변 MR/PR 관례 추정으로 진행한다.
+3. 작업 트리 상태를 확인한다.
    - `git status --short`
    - 출력이 있으면(staged, untracked 포함) dirty로 보고 "dirty worktree 분기"를 적용한다. 중단하지 않고 나머지 분석을 계속한다.
-3. 현재 브랜치와 remote를 확인한다.
+4. 현재 브랜치와 remote를 확인한다.
    - `git branch --show-current`
    - `git remote -v`
    - 현재 브랜치가 `main`, `master`, remote default branch면 중단한다.
-4. base 브랜치를 추론한다.
+5. base 브랜치를 추론한다.
    - `branch.<current>.gh-merge-base`
    - upstream 또는 tracking 정보
    - remote default branch
    - `main`
    - `master`
    - 애매하면 사용자에게 묻는다.
-5. 리뷰 범위를 확인한다.
+6. 리뷰 범위를 확인한다.
    - `git log --oneline <base>..HEAD`
    - `git diff --stat <base>...HEAD`
    - `git diff --name-only <base>...HEAD`
    - 필요하면 `git diff <base>...HEAD`
-6. 플랫폼과 CLI를 확인한다.
+7. 플랫폼과 CLI를 확인한다.
    - GitHub remote: `gh auth status`, `gh pr create --help`
    - GitLab remote: `glab auth status`, `glab mr create --help`
    - `--draft` 플래그가 없거나 확인할 수 없으면 생성하지 않는다.
-7. 현재 브랜치에 이미 열린 MR/PR이 있는지 확인한다.
+8. 현재 브랜치에 이미 열린 MR/PR이 있는지 확인한다.
    - GitHub: `gh pr list --head <branch> --state open`
    - GitLab: `glab mr list --source-branch <branch>`
    - 이미 있으면 새로 만들지 않고 기존 URL을 보고한다.
-8. 주변 MR/PR 목록을 확인한다.
+9. 주변 MR/PR 목록을 확인한다.
    - GitHub: `gh pr list --limit 10 --json number,title,body,baseRefName,headRefName,url`
    - GitLab: `glab mr list --limit 10`로 최근 MR의 제목과 IID 후보를 확인한다.
    - 목록 확인은 제목과 후보 수집용이다. 본문 구조 확인을 대체하지 않는다.
-9. 브랜치명 컨벤션을 점검한다.
-   - GitHub: `gh pr list --state merged --limit 20 --json headRefName`
-   - GitLab: `glab mr list --merged -P 20`으로 최근 머지된 MR의 source 브랜치명을 모은다(출력에 브랜치가 없으면 `glab mr view <iid>`로 보완).
-   - gh/glab을 쓸 수 없으면 `preflight.sh`의 최근 머지 브랜치명 후보(merge 커밋 기반)로 대신한다. squash 머지 레포에서는 안 잡힐 수 있다.
-   - 판정과 처리는 "브랜치명 컨벤션 점검" 절을 따른다.
-10. 주변 MR/PR 본문 구조를 확인한다.
+10. 브랜치명 컨벤션을 점검한다.
+    - GitHub: `gh pr list --state merged --limit 20 --json headRefName`
+    - GitLab: `glab mr list --merged -P 20`으로 최근 머지된 MR의 source 브랜치명을 모은다(출력에 브랜치가 없으면 `glab mr view <iid>`로 보완).
+    - gh/glab을 쓸 수 없으면 `preflight.sh`의 최근 머지 브랜치명 후보(merge 커밋 기반)로 대신한다. squash 머지 레포에서는 안 잡힐 수 있다.
+    - 판정과 처리는 "브랜치명 컨벤션 점검" 절을 따른다.
+11. 주변 MR/PR 본문 구조를 확인한다.
     - GitHub: 최근 PR 2~3개의 `body`를 확인한다. 목록 JSON에 본문이 충분하면 그 결과를 사용하고, 비어 있거나 부족하면 `gh pr view <number> --json title,body,url`로 다시 확인한다.
     - GitLab: 최근 MR 2~3개를 골라 `glab mr view <iid> --comments=false`를 실행한다.
     - 로컬 템플릿이 없으면 이 단계는 더 엄격하다. CLI/권한 오류가 아닌 한 건너뛰지 않는다.
@@ -93,7 +98,7 @@ push 전에 현재 브랜치명이 레포 컨벤션에 맞는지 항상 확인�
 
 판정 순서:
 
-1. 레포 문서(CONTRIBUTING.md, docs/ 등)에 브랜치 규칙이 명시돼 있으면 그것이 기준이다.
+1. 분석 순서에서 확인한 기여 문서에 브랜치 규칙이 명시돼 있으면 그것이 기준이다.
 2. 없으면 최근 머지된 MR/PR의 head 브랜치명 10~20개에서 패턴을 찾는다.
    - `dependabot/`, `renovate/` 같은 봇 브랜치는 표본에서 뺀다.
    - 패턴 예: `feat/...` 같은 type prefix, `이름/...` 같은 작성자 prefix, `ABC-123` 같은 티켓 번호, kebab-case 여부.
@@ -128,7 +133,7 @@ push 전에 현재 브랜치명이 레포 컨벤션에 맞는지 항상 확인�
 
 ## 제목 규칙
 
-제목은 Conventional Commits 형식을 기본으로 한다.
+기여 문서에 제목 규칙이 있으면 그것이 최우선이다. 없으면 Conventional Commits 형식을 기본으로 한다.
 
 ```text
 <type>[(<scope>)]: <한글 요약>
@@ -152,7 +157,7 @@ docs(mr): 드래프트 MR 생성 규칙 추가
 
 규칙:
 
-- 주변 MR/PR 제목은 스타일 참고용이다. 최종 제목은 항상 Conventional Commits 형식을 유지한다.
+- 주변 MR/PR 제목은 스타일 참고용이다. 최종 제목은 기여 문서 규칙이 없는 한 Conventional Commits 형식을 유지한다.
 - 주변 스타일이 비정형이면 의미만 가져오고 형식은 정규화한다.
 - 주변 MR/PR이 `feat: ...`처럼 scope 없이 이어져 있으면 scope를 생략한다.
 - 주변 MR/PR이 `feat(workspace): ...`처럼 scope를 쓰면 변경 범위에 맞는 scope를 붙인다.
@@ -173,6 +178,8 @@ docs(mr): 드래프트 MR 생성 규칙 추가
 2. 최근 MR/PR 본문 구조
 3. 현재 브랜치 커밋과 diff 내용
 4. 기본 템플릿
+
+기여 문서에 본문 요구사항(필수 항목, 체크리스트 등)이 있으면 어떤 구조를 택하든 그 요구사항을 함께 채운다.
 
 기본 템플릿:
 
@@ -219,6 +226,7 @@ MR 계획
 - 플랫폼: GitHub PR 또는 GitLab MR
 - base/head: <base> <- <branch>
 - 브랜치명 점검: <부합 | 불일치(제안: <새 이름>) | 컨벤션 없음 | 확인 불가: <이유>> (근거: <참고 브랜치명 2~3개>)
+- 기여 문서: <경로와 반영한 규칙 | 없음>
 - 제목: <title>
 - 참고한 주변 MR/PR: <번호 또는 URL, 본문 확인 여부>
 - 채택한 본문 구조: <레포 템플릿/최근 MR 구조/기본 템플릿>, <주요 섹션>
