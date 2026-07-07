@@ -1,6 +1,11 @@
 [
   {"query": "변경분 의미 단위로 나눠서 커밋해줘", "should_trigger": true},
   {"query": "지금 작업한 거 커밋해줘", "should_trigger": true},
+  {"query": "커밋 메시지 뭐라고 쓸지 추천해서 커밋해줘", "should_trigger": true},
+  {"query": "커밋하고 PR까지 올려줘", "should_trigger": true},
   {"query": "이 브랜치 PR 올려줘", "should_trigger": false},
-  {"query": "이 코드 단순하게 줄여줘", "should_trigger": false}
+  {"query": "이 코드 단순하게 줄여줘", "should_trigger": false},
+  {"query": "마지막 커밋 메시지 좀 고쳐줘", "should_trigger": false},
+  {"query": "방금 커밋 되돌려줘", "should_trigger": false},
+  {"query": "최근 커밋 이력 요약해줘", "should_trigger": false}
 ]

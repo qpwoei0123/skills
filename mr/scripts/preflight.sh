@@ -21,9 +21,28 @@ git config "branch.$branch.gh-merge-base" 2>/dev/null || true
 git rev-parse --abbrev-ref --symbolic-full-name '@{upstream}' 2>/dev/null || true
 git symbolic-ref refs/remotes/origin/HEAD 2>/dev/null | sed 's@refs/remotes/origin/@@' || true
 echo
-echo "# 플랫폼 추정"
-if git remote get-url origin 2>/dev/null | grep -iqE 'gitlab'; then
-  echo "GitLab"
+echo "# 기여 문서 후보 (존재하는 것만)"
+root=$(git rev-parse --show-toplevel)
+for f in CONTRIBUTING.md .github/CONTRIBUTING.md docs/CONTRIBUTING.md; do
+  [ -f "$root/$f" ] && echo "$f"
+done
+echo
+echo "# 최근 머지 브랜치명 후보 (merge 커밋 기반, squash 머지는 안 잡힘 — gh/glab 확인으로 보완)"
+default_branch=$(git symbolic-ref refs/remotes/origin/HEAD 2>/dev/null | sed 's@refs/remotes/origin/@@')
+if [ -n "$default_branch" ]; then
+  git log "origin/$default_branch" --merges -30 --pretty=%s 2>/dev/null \
+    | sed -nE "s@^Merge pull request #[0-9]+ from [^/]+/(.+)@\1@p; s@^Merge branch '([^']+)'.*@\1@p" \
+    | grep -vE '^(dependabot|renovate)/' \
+    | head -15
 else
-  echo "GitHub"
+  echo "(default branch 판단 불가)"
 fi
+echo
+echo "# 플랫폼 추정"
+url=$(git remote get-url origin 2>/dev/null || true)
+case "$url" in
+  *github.com*) echo "GitHub" ;;
+  *[Gg]it[Ll]ab*) echo "GitLab" ;;
+  "") echo "판단 불가: origin remote 없음" ;;
+  *) echo "판단 불가: $url" ;;
+esac

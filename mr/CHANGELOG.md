@@ -1,5 +1,29 @@
 # Changelog
 
+## 0.6.0
+
+### Added
+- 레포 기여 문서 확인 단계 추가: CONTRIBUTING(루트·.github/·docs/)의 브랜치명·제목·본문 규칙을 스킬 기본값보다 우선 적용하고, 계획에 참고한 기여 문서를 보고
+- 브랜치명 컨벤션 점검: push 전에 기여 문서와 최근 머지된 MR/PR의 브랜치명에서 컨벤션을 추정하고, 벗어나면 rename을 제안 (rename은 사용자 동의 없이 하지 않음, 이미 원격에 push된 브랜치는 제안 대상에서 제외)
+- dirty worktree 분기: 중단 대신 commit 스킬을 호출해 diff 제외(A안)와 커밋 포함(B안) 두 MR 계획을 나란히 제시하고 선택받는 흐름 추가
+- `preflight.sh`에 기여 문서 후보와 merge 커밋 기반 최근 머지 브랜치명 후보 섹션 추가 (squash 머지 레포는 gh/glab 확인으로 보완)
+
+### Changed
+- dirty worktree를 중단 조건에서 분기 조건으로 변경. B안을 선택받았을 때만 commit 스킬 절차로 커밋
+- `--go`에서도 A안/B안 선택과 rename 여부는 질문 1회 후 진행 (둘 다 필요하면 한 번에 묶어 질문)
+- 제목 규칙을 "기여 문서 규칙이 있으면 그것이 최우선, 없으면 Conventional Commits"로 조정
+
+## 0.5.1
+
+### Fixed
+- `preflight.sh` 플랫폼 추정을 3값(GitHub/GitLab/판단 불가)으로 수정: URL에 gitlab이 없으면 무조건 GitHub으로 찍혀 자체 호스팅 GitLab에서 gh 오실행을 유도하던 버그 제거
+
+### Changed
+- description을 "PR/MR을 새로 만들자는 말"로 좁히고 code-review·review 경계 명시 ("리뷰해줘" 오발동 차단)
+- `--go` 검증 단계를 "레포에 정의된 test/lint 중 리뷰 범위 관련만 실행"으로 구체화
+- "커밋하고 PR까지" 복합 요청 시 commit 스킬 절차를 먼저 잇는 연동 규칙 추가
+- trigger-eval에 code-review·review·머지 경계 케이스 5건 보강
+
 ## 0.5.0
 
 ### Added

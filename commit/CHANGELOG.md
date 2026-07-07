@@ -1,5 +1,25 @@
 # Changelog
 
+## 0.6.0
+
+### Added
+- 레포 기여 문서 확인 단계 추가: CONTRIBUTING(루트·.github/·docs/), commitlint 설정, commit.template에서 커밋 메시지 규칙을 찾고, 있으면 최근 로그 스타일보다 우선 적용
+- `collect_context.sh`에 기여 문서·커밋 규칙 후보 출력 추가
+- 커밋 계획에 "참고한 기여 문서" 보고 추가
+
+### Changed
+- 메시지 규칙 우선순위를 "사용자 지시 > 레포 기여 문서 > 최근 로그 스타일 > 스킬 기본 규칙"으로 명시
+
+## 0.5.1
+
+### Changed
+- description을 "새 커밋을 만드는 요청"으로 좁히고 amend·되돌리기·로그 조회 제외와 mr 위임을 명시 (오발동 차단)
+- `--go` 검증 단계를 "계획의 실행 예정에 밝힌 명령만, 변경 파일에 대응하는 lint/test로 한정"으로 구체화
+- 중단 조건의 "파일 삭제"를 "현재 요청과 무관해 보이는 대량 파일 삭제"로 완화 (죽은 코드 정리 커밋에서 불필요한 중단 제거)
+- 빈 변경 시 "커밋할 변경 없음" 보고 후 종료, 사용자 staged 상태 의도 존중, pre-commit hook 실패 시 `--no-verify` 우회 금지 규칙 추가
+- `collect_context.sh`: `git status -sb`로 브랜치 표시, untracked 출력 50개 캡
+- trigger-eval에 amend·revert·로그 조회·복합 요청 경계 케이스 5건 보강
+
 ## 0.5.0
 
 ### Added
