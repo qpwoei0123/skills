@@ -2,13 +2,13 @@
 name: commit
 license: Apache-2.0
 metadata:
-  version: 0.5.1
-description: (v0.5.1) git 변경분을 의미 단위로 나누고 최근 로그 스타일에 맞춰 Conventional Commits 한글 메시지로 커밋하는 스킬. "커밋해줘", "커밋 나눠줘", "커밋 정리해줘", "/commit" 등 새 커밋을 만드는 요청에 사용한다. 기존 커밋 수정(amend)·되돌리기·로그 조회에는 쓰지 않고, 커밋 후 리뷰 요청(PR/MR)은 mr을 쓴다.
+  version: 0.6.0
+description: (v0.6.0) git 변경분을 의미 단위로 나누고 레포 커밋 규칙과 최근 로그 스타일에 맞춰 Conventional Commits 한글 메시지로 커밋하는 스킬. "커밋해줘", "커밋 나눠줘", "커밋 정리해줘", "/commit" 등 새 커밋을 만드는 요청에 사용한다. 기존 커밋 수정(amend)·되돌리기·로그 조회에는 쓰지 않고, 커밋 후 리뷰 요청(PR/MR)은 mr을 쓴다.
 ---
 
 # commit
 
-현재 git diff를 읽고 최근 커밋 스타일에 맞춰 의미 있는 단위로 커밋하는 스킬이다.
+현재 git diff를 읽고 레포 커밋 규칙과 최근 커밋 스타일에 맞춰 의미 있는 단위로 커밋하는 스킬이다.
 기본값은 계획 제안 후 승인 대기이고, `--go` 또는 `-go`가 있으면 승인 없이 실행한다.
 
 ## 호출 형태
@@ -40,10 +40,14 @@ description: (v0.5.1) git 변경분을 의미 단위로 나누고 최근 로그 
    - `git diff --cached --stat`
    - `git ls-files --others --exclude-standard`
    - status, diff, untracked가 모두 비어 있으면 "커밋할 변경 없음"으로 보고하고 종료한다.
-3. 전체 diff를 무조건 읽지 않는다. `--stat` 결과를 보고 파일 단위로 `git diff -- <path>`를 골라 읽는다. 변경량이 적으면 전체 `git diff`, `git diff --cached`를 읽어도 된다.
-4. untracked 파일은 이름만 보고 판단하지 말고 필요한 만큼 내용을 확인한다.
-5. 변경량이 많거나 여러 영역이 섞였으면 `git diff --name-only`와 디렉터리 구조를 함께 보고 커밋 단위를 나눈다.
-6. 최근 커밋 스타일 샘플을 확정한다.
+3. 레포 기여 문서와 커밋 규칙을 확인한다. `collect_context.sh`가 존재하는 후보를 출력한다.
+   - 후보: `CONTRIBUTING.md`(루트, `.github/`, `docs/`), commitlint 설정(`.commitlintrc*`, `commitlint.config.*`), `git config commit.template`
+   - 커밋 메시지 규칙(형식, type 목록, scope, 언어)이 있으면 최근 로그 스타일보다 우선한다.
+   - 없으면 다음 단계의 최근 로그 스타일 추정으로 진행한다.
+4. 전체 diff를 무조건 읽지 않는다. `--stat` 결과를 보고 파일 단위로 `git diff -- <path>`를 골라 읽는다. 변경량이 적으면 전체 `git diff`, `git diff --cached`를 읽어도 된다.
+5. untracked 파일은 이름만 보고 판단하지 말고 필요한 만큼 내용을 확인한다.
+6. 변경량이 많거나 여러 영역이 섞였으면 `git diff --name-only`와 디렉터리 구조를 함께 보고 커밋 단위를 나눈다.
+7. 최근 커밋 스타일 샘플을 확정한다.
    - `git log --oneline -12`의 제목을 실제로 읽고, 참고할 커밋 3~5개를 고른다.
    - 제목 목록만 출력하고 끝내지 않는다. type, scope 사용 여부, 제목 길이, 한글/영문 혼용, 본문 사용 여부를 판단한다.
    - 본문 있는 커밋이 주변에 보이면 `git log -3 --pretty=medium`처럼 본문 구조도 확인한다.
@@ -78,7 +82,8 @@ description: (v0.5.1) git 변경분을 의미 단위로 나누고 최근 로그 
 
 ## 메시지 규칙
 
-항상 Conventional Commits 형식을 쓴다.
+기여 문서에 다른 커밋 규칙이 없으면 Conventional Commits 형식을 쓴다.
+우선순위는 사용자 지시 > 레포 기여 문서 > 최근 로그 스타일 > 이 스킬의 기본 규칙이다.
 
 ```text
 <type>[(<scope>)]: <한글 요약>
@@ -93,14 +98,15 @@ fix(auth): 만료된 세션 처리 보정
 docs(commit): 커밋 스킬 사용법 추가
 ```
 
-- `type`: `feat`, `fix`, `refactor`, `docs`, `test`, `chore`, `build`, `ci`, `perf`, `style`, `revert` 중에서 고른다.
+- 기여 문서가 커밋 메시지 규칙(형식, type 목록, 언어)을 명시하면 그것을 따르고, 채택한 근거를 계획에 적는다.
+- `type`: `feat`, `fix`, `refactor`, `docs`, `test`, `chore`, `build`, `ci`, `perf`, `style`, `revert` 중에서 고른다. 기여 문서가 type 목록을 정의하면 그 목록을 쓴다.
 - `scope`는 선택이다. 최근 로그가 `feat: ...`처럼 scope 없이 이어져 있으면 생략한다.
 - 최근 로그가 `feat(workspace): ...`처럼 scope를 쓰면 변경된 앱, 패키지, 도메인, 최상위 디렉터리 중 가장 좁고 자연스러운 이름을 쓴다.
 - 최근 로그가 섞여 있으면 변경 범위가 명확할 때만 scope를 붙이고, 애매하면 최근 다수 스타일을 따른다.
 - 요약은 한글로 쓴다. 마침표를 붙이지 않는다.
 - 요약은 무엇을 만졌는지가 아니라 무엇이 달라지는지를 쓴다. "코드 수정", "로직 변경", "개선"처럼 diff를 봐야만 뜻을 아는 요약은 금지. 메시지만 읽고 의도가 보이면 합격이다.
 - 최근 커밋이 Conventional 형식이 아니어도 새 커밋은 Conventional 형식을 지킨다.
-- 최근 로그에서 제목 길이, scope 이름, 한글/영문 혼용 습관은 참고하되 사용자의 "한글 메시지" 지시를 우선한다.
+- 최근 로그에서 제목 길이, scope 이름, 한글/영문 혼용 습관은 참고하되, 기여 문서 규칙과 사용자의 "한글 메시지" 지시가 로그보다 우선한다.
 - 본문이 필요하면 한글 bullet로 변경 이유나 검증 결과만 짧게 적는다.
 - 최종 계획에는 참고한 최근 커밋과 채택한 메시지 스타일을 짧게 보고한다.
 
@@ -110,6 +116,9 @@ docs(commit): 커밋 스킬 사용법 추가
 
 ```text
 커밋 계획
+참고한 기여 문서
+- <경로와 반영한 규칙, 없으면 "없음">
+
 참고한 최근 커밋
 - <hash> <title>
 

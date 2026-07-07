@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.6.0
+
+### Added
+- 레포 기여 문서 확인 단계 추가: CONTRIBUTING(루트·.github/·docs/), commitlint 설정, commit.template에서 커밋 메시지 규칙을 찾고, 있으면 최근 로그 스타일보다 우선 적용
+- `collect_context.sh`에 기여 문서·커밋 규칙 후보 출력 추가
+- 커밋 계획에 "참고한 기여 문서" 보고 추가
+
+### Changed
+- 메시지 규칙 우선순위를 "사용자 지시 > 레포 기여 문서 > 최근 로그 스타일 > 스킬 기본 규칙"으로 명시
+
 ## 0.5.1
 
 ### Changed
