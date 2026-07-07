@@ -19,12 +19,11 @@ def slugify(value: str) -> str:
 def changed_skill_names(changed_files: list[str], repo_root: Path) -> list[str]:
     skills: set[str] = set()
     for file_path in changed_files:
-        parts = Path(file_path).parts
-        if not parts:
-            continue
-        candidate = repo_root / parts[0]
-        if candidate.is_dir() and (candidate / "SKILL.md").exists():
-            skills.add(parts[0])
+        path = Path(file_path)
+        for parent in path.parents:
+            if (repo_root / parent / "SKILL.md").exists():
+                skills.add(parent.name)
+                break
     return sorted(skills)
 
 

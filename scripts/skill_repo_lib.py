@@ -107,11 +107,24 @@ def contains_any(text: str, markers: tuple[str, ...]) -> bool:
 
 
 def discover_skills(root: Path) -> list[Path]:
-    return sorted(
-        child
-        for child in root.iterdir()
-        if child.is_dir() and not child.name.startswith(".") and (child / "SKILL.md").exists()
-    )
+    """skills/ 아래를 탐색한다. SKILL.md가 있으면 스킬, 없으면 카테고리로 보고 한 단계 더 내려간다."""
+    skills_root = root / "skills"
+    if not skills_root.is_dir():
+        return []
+
+    found: list[Path] = []
+    for child in sorted(skills_root.iterdir()):
+        if not child.is_dir() or child.name.startswith("."):
+            continue
+        if (child / "SKILL.md").exists():
+            found.append(child)
+            continue
+        found.extend(
+            grand
+            for grand in sorted(child.iterdir())
+            if grand.is_dir() and not grand.name.startswith(".") and (grand / "SKILL.md").exists()
+        )
+    return found
 
 
 def split_frontmatter_document(text: str) -> tuple[list[str], list[str]]:
@@ -410,6 +423,23 @@ def normalize_description_prefix(document: FrontmatterDocument, version: str) ->
         return False
     entry.lines[0] = f"description: {desired}"
     return True
+
+
+def validate_skill_name_uniqueness(root: Path, skill_dirs: list[Path]) -> SkillReport:
+    """카테고리가 달라도 스킬 디렉터리 이름은 전역에서 유일해야 한다. 배포와 npx 설치가 이름 기준이기 때문이다."""
+    report = SkillReport(name="(repo)")
+    by_name: dict[str, list[Path]] = {}
+    for skill_dir in skill_dirs:
+        by_name.setdefault(skill_dir.name, []).append(skill_dir)
+
+    for name, dirs in sorted(by_name.items()):
+        if len(dirs) > 1:
+            paths = ", ".join(str(d.relative_to(root)) for d in dirs)
+            report.add_error(
+                "duplicate_skill_name",
+                f"스킬 이름 중복: {name} ({paths})",
+            )
+    return report
 
 
 def validate_root_readme(root: Path, skill_names: list[str]) -> SkillReport:

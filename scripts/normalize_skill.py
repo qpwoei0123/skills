@@ -10,6 +10,7 @@ from pathlib import Path
 from skill_repo_lib import (
     NormalizeResult,
     build_json_payload,
+    discover_skills,
     load_frontmatter_document,
     metadata_version,
     normalize_changelog_content,
@@ -127,8 +128,8 @@ def main() -> int:
     args = parser.parse_args()
 
     repo_root = repo_root_from_script(Path(__file__))
-    skill_dir = repo_root / args.skill
-    if not skill_dir.exists() or not (skill_dir / "SKILL.md").exists():
+    skill_dir = next((d for d in discover_skills(repo_root) if d.name == args.skill), None)
+    if skill_dir is None:
         print(f"[error] 알 수 없는 스킬: {args.skill}")
         return 1
 

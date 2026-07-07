@@ -21,15 +21,17 @@ def main() -> int:
 
     changed_files = json.loads(args.changed_files_json)
     validate_payload = json.loads(Path(args.validate_json).read_text(encoding="utf-8"))
-    changed_skills = sorted({path.split("/", 1)[0] for path in changed_files if "/" in path})
+    skill_reports = {skill["name"]: skill for skill in validate_payload.get("skills", [])}
+    # 경로 조각 중 스킬 이름과 일치하는 것을 변경된 스킬로 본다 (skills/<카테고리>/<스킬>/... 대응)
+    changed_skills = sorted(
+        {part for path in changed_files for part in Path(path).parts if part in skill_reports}
+    )
 
     lines = ["## Skill Validation Summary", ""]
     if changed_skills:
-        lines.append(f"- Changed top-level paths: {', '.join(changed_skills)}")
+        lines.append(f"- Changed skills: {', '.join(changed_skills)}")
     else:
-        lines.append("- Changed top-level paths: none")
-
-    skill_reports = {skill["name"]: skill for skill in validate_payload.get("skills", [])}
+        lines.append("- Changed skills: none")
     for skill_name in changed_skills:
         report = skill_reports.get(skill_name)
         if not report or not report.get("errors"):

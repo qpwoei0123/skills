@@ -19,8 +19,10 @@
 
 이 문서는 이 저장소의 모든 정식 스킬에 적용한다.
 
-- 정식 스킬: 이 저장소 루트 바로 아래의 스킬 디렉터리
-- 예시: `orbit/`, `ghostwriter/`
+- 정식 스킬: `skills/<카테고리>/` 아래의 스킬 디렉터리
+- 카테고리: 사용 무게 기준 — `데일리함`(가벼운 일상 도구), `살짝무거움`(멀티스텝 워크플로)
+- 예시: `skills/데일리함/commit/`, `skills/살짝무거움/orbit/`
+- 스킬 디렉터리 이름은 카테고리가 달라도 전역에서 유일해야 한다. 배포와 npx 설치가 이름 기준이기 때문이다.
 
 임시 초안은 이 저장소 밖에서 만들 수 있다.
 이 저장소에 들어오는 순간부터 이 표준을 따라야 한다.
@@ -185,17 +187,17 @@ description: (v1.7.0) 스킬 설명. 트리거 문구 예시 포함.
 ### 단순 스킬
 
 ```text
-ghostwriter/
+skills/데일리함/annotate/
 ├── SKILL.md
 ├── README.md
 ├── CHANGELOG.md
-└── references/
+└── evals/
 ```
 
 ### 복잡한 워크플로 스킬
 
 ```text
-orbit/
+skills/살짝무거움/orbit/
 ├── SKILL.md
 ├── README.md
 ├── CHANGELOG.md
@@ -240,7 +242,7 @@ orbit/
 
 밖에서 만든 스킬을 이 저장소에 가져올 때는 아래 순서를 따른다.
 
-1. 스킬 디렉터리를 가져온다.
+1. 스킬 디렉터리를 `skills/<카테고리>/` 아래로 가져온다.
 2. `SKILL.md` frontmatter를 표준에 맞춘다.
 3. `README.md`, `CHANGELOG.md`를 추가하거나 보강한다.
 4. 선택 디렉터리(`agents/`, `references/`, `scripts/`, `assets/`)를 역할에 맞게 정리한다.

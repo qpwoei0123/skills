@@ -77,7 +77,7 @@ python3 scripts/validate_skills.py
 
 ```bash
 python3 scripts/validate_skills.py --skill orbit
-python3 scripts/validate_skills.py --skill ghostwriter
+python3 scripts/validate_skills.py --skill trim
 ```
 
 자동 검증:
@@ -89,8 +89,8 @@ python3 scripts/validate_skills.py --skill ghostwriter
 자동 수정 가능한 항목은 로컬에서 먼저 정규화할 수 있습니다.
 
 ```bash
-python3 scripts/normalize_skill.py --skill ghostwriter --check
-python3 scripts/normalize_skill.py --skill ghostwriter --write
+python3 scripts/normalize_skill.py --skill trim --check
+python3 scripts/normalize_skill.py --skill trim --write
 ```
 
 기본 운영 흐름은 `main` push 기준입니다.
@@ -124,14 +124,17 @@ skills/
 ├── .github/
 │   └── workflows/
 │       └── validate-skills.yml     # 스킬 형식 자동 검증 CI
-├── commit/                         # git diff 기반 커밋 계획/실행 스킬
-├── mr/                             # draft MR/PR 계획/생성 스킬
-├── annotate/                       # 작업 관련 로직 주석 정리 스킬
-├── trim/                           # diff 군더더기 축소·중복 엮기 스킬 (weave 흡수)
-├── wow/                            # 설계 관점 재구상 스킬
-├── orbit/                          # 레포 점검/이슈 발행 워크플로 스킬
-├── soul-extractor/                 # 허가된 문체 지문 추출/변환 스킬
-└── code-to-figma/                  # 웹 화면 → Figma 변환 스킬
+└── skills/                         # 정식 스킬 (사용 무게 기준 카테고리)
+    ├── 데일리함/                   # 가벼운 일상 도구
+    │   ├── commit/                 # git diff 기반 커밋 계획/실행 스킬
+    │   ├── mr/                     # draft MR/PR 계획/생성 스킬
+    │   ├── annotate/               # 작업 관련 로직 주석 정리 스킬
+    │   ├── trim/                   # diff 군더더기 축소·중복 엮기 스킬 (weave 흡수)
+    │   └── wow/                    # 설계 관점 재구상 스킬
+    └── 살짝무거움/                 # 멀티스텝 워크플로
+        ├── orbit/                  # 레포 점검/이슈 발행 워크플로 스킬
+        ├── soul-extractor/         # 허가된 문체 지문 추출/변환 스킬
+        └── code-to-figma/          # 웹 화면 → Figma 변환 스킬
 ```
 
 ## Accepted Skills

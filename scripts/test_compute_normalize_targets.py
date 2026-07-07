@@ -1,4 +1,5 @@
 import sys
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -8,18 +9,19 @@ if str(SCRIPTS_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPTS_DIR))
 
 from compute_normalize_targets import build_targets  # noqa: E402
-from skill_repo_lib import repo_root_from_script  # noqa: E402
 
 
 class ComputeNormalizeTargetsTest(unittest.TestCase):
-    def setUp(self):
-        self.repo_root = repo_root_from_script(Path(__file__))
+    def write_skill(self, root: Path, category: str, name: str) -> None:
+        skill_md = root / "skills" / category / name / "SKILL.md"
+        skill_md.parent.mkdir(parents=True, exist_ok=True)
+        skill_md.write_text(f"---\nname: {name}\n---\n", encoding="utf-8")
 
     def test_only_changed_autofixable_skills_become_targets(self):
         payload = {
             "skills": [
                 {
-                    "name": "ghostwriter",
+                    "name": "alpha",
                     "errors": [
                         {
                             "code": "missing_readme",
@@ -30,7 +32,7 @@ class ComputeNormalizeTargetsTest(unittest.TestCase):
                     "warnings": [],
                 },
                 {
-                    "name": "orbit",
+                    "name": "beta",
                     "errors": [
                         {
                             "code": "missing_license",
@@ -43,18 +45,27 @@ class ComputeNormalizeTargetsTest(unittest.TestCase):
             ]
         }
 
-        result = build_targets(
-            validate_payload=payload,
-            changed_files=["ghostwriter/SKILL.md", "orbit/SKILL.md", "README.md"],
-            base_branch="main",
-            trigger_sha="abcdef1234567890",
-            repo_root=self.repo_root,
-        )
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            self.write_skill(root, "데일리함", "alpha")
+            self.write_skill(root, "살짝무거움", "beta")
+
+            result = build_targets(
+                validate_payload=payload,
+                changed_files=[
+                    "skills/데일리함/alpha/SKILL.md",
+                    "skills/살짝무거움/beta/SKILL.md",
+                    "README.md",
+                ],
+                base_branch="main",
+                trigger_sha="abcdef1234567890",
+                repo_root=root,
+            )
 
         self.assertEqual(len(result["include"]), 1)
         target = result["include"][0]
-        self.assertEqual(target["skill"], "ghostwriter")
-        self.assertEqual(target["branch"], "codex/normalize-ghostwriter")
+        self.assertEqual(target["skill"], "alpha")
+        self.assertEqual(target["branch"], "codex/normalize-alpha")
 
 
 if __name__ == "__main__":
