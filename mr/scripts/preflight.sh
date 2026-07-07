@@ -22,8 +22,10 @@ git rev-parse --abbrev-ref --symbolic-full-name '@{upstream}' 2>/dev/null || tru
 git symbolic-ref refs/remotes/origin/HEAD 2>/dev/null | sed 's@refs/remotes/origin/@@' || true
 echo
 echo "# 플랫폼 추정"
-if git remote get-url origin 2>/dev/null | grep -iqE 'gitlab'; then
-  echo "GitLab"
-else
-  echo "GitHub"
-fi
+url=$(git remote get-url origin 2>/dev/null || true)
+case "$url" in
+  *github.com*) echo "GitHub" ;;
+  *[Gg]it[Ll]ab*) echo "GitLab" ;;
+  "") echo "판단 불가: origin remote 없음" ;;
+  *) echo "판단 불가: $url" ;;
+esac

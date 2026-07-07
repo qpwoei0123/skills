@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.5.1
+
+### Fixed
+- `preflight.sh` 플랫폼 추정을 3값(GitHub/GitLab/판단 불가)으로 수정: URL에 gitlab이 없으면 무조건 GitHub으로 찍혀 자체 호스팅 GitLab에서 gh 오실행을 유도하던 버그 제거
+
+### Changed
+- description을 "PR/MR을 새로 만들자는 말"로 좁히고 code-review·review 경계 명시 ("리뷰해줘" 오발동 차단)
+- `--go` 검증 단계를 "레포에 정의된 test/lint 중 리뷰 범위 관련만 실행"으로 구체화
+- "커밋하고 PR까지" 복합 요청 시 commit 스킬 절차를 먼저 잇는 연동 규칙 추가
+- trigger-eval에 code-review·review·머지 경계 케이스 5건 보강
+
 ## 0.5.0
 
 ### Added
