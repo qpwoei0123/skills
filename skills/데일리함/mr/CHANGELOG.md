@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.7.0
+
+### Added
+- 브랜치명 판정과 제목·본문 규칙을 필요할 때 읽는 `references/branch-conventions.md`, `references/review-format.md` 추가
+- 커밋과 PR/MR을 함께 요청하면 mr이 전체 흐름을 소유하고 commit을 선행하는 연계 계약과 트리거 평가 추가
+
+### Changed
+- SKILL.md를 핵심 안전 계약·분기·실행 순서 중심으로 경량화하고 세부 판정표를 references로 분리
+
 ## 0.6.1
 
 ### Added

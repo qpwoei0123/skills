@@ -1,6 +1,6 @@
 # mr
 
-`version: 0.6.1`
+`version: 0.7.0`
 
 현재 브랜치의 커밋과 diff를 읽고 GitHub PR 또는 GitLab MR을 항상 draft로 계획하거나 생성하는 스킬입니다.
 
@@ -13,7 +13,9 @@
 ```
 
 - `/mr`: draft MR/PR 계획을 제안한 뒤 승인을 기다립니다.
-- `/mr --go`, `/mr -go`: 승인 없이 push 후 draft MR/PR을 생성합니다.
+- `/mr --go`, `/mr -go`: 필요한 A/B·rename 선택만 받은 뒤 push하고 draft MR/PR을 생성합니다.
+
+"커밋하고 PR까지"처럼 커밋을 함께 요청하면 `mr`이 전체 흐름을 맡고 `commit` 절차를 먼저 실행합니다.
 
 두 모드 모두 push 전에 아래를 수행합니다.
 
@@ -32,9 +34,15 @@ mr/
 │   └── openai.yaml
 ├── evals/
 │   └── trigger-eval.json
+├── references/
+│   ├── branch-conventions.md
+│   └── review-format.md
 └── scripts/
     └── preflight.sh
 ```
+
+- `references/branch-conventions.md`: push 전 브랜치명 관례 판정과 rename 안전 규칙
+- `references/review-format.md`: 레포 관례에 맞는 제목·본문 생성 규칙
 
 ## Scripts
 

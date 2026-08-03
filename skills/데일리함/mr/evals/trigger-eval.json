@@ -3,6 +3,7 @@
   {"query": "MR 올려줘", "should_trigger": true},
   {"query": "작업 끝났으니 리뷰 올릴 준비해줘", "should_trigger": true},
   {"query": "push하고 리뷰 요청까지 해줘", "should_trigger": true},
+  {"query": "변경분 커밋하고 draft PR까지 올려줘", "should_trigger": true, "expected_behavior": "mr이 전체 흐름을 소유하고 commit 절차로 커밋한 뒤 push와 draft PR 생성을 이어간다"},
   {"query": "변경분 커밋부터 해줘", "should_trigger": false},
   {"query": "이 코드 좀 다듬어줘", "should_trigger": false},
   {"query": "이 diff 코드 리뷰 해줘", "should_trigger": false},
