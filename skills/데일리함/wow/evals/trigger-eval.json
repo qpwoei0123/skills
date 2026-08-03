@@ -3,6 +3,7 @@
   {"query": "이 기능 처음부터 다시 설계한다면 어떻게 할래?", "should_trigger": true},
   {"query": "지금 상태 관리 구조가 마음에 안 들어, 다른 방식 없나?", "should_trigger": true},
   {"query": "/wow", "should_trigger": true},
+  {"query": "처음부터 다시 설계안을 보고 마음에 들면 구현까지 이어가자", "should_trigger": true, "expected_behavior": "wow는 재설계 제안까지만 담당하고 사용자가 안을 고른 뒤 별도 수정 작업으로 넘긴다"},
   {"query": "이 코드 좀 줄여줘", "should_trigger": false},
   {"query": "흩어진 fetch 로직 한곳에 모아줘", "should_trigger": false},
   {"query": "변경분에 버그 없는지 리뷰해줘", "should_trigger": false},
