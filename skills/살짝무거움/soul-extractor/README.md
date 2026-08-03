@@ -1,6 +1,6 @@
 # soul-extractor
 
-`version: 0.3.0`
+`version: 0.3.1`
 
 허가된 사람, 브랜드, 캐릭터의 글 샘플에서 문체 지문을 만들고 스타일 일치도를 점검해 글을 다듬는 스킬입니다.
 
@@ -23,9 +23,12 @@ soul-extractor/
 ├── SKILL.md
 ├── README.md
 ├── CHANGELOG.md
+├── agents/
+│   └── openai.yaml
 ├── scripts/
 │   ├── setup.sh
-│   └── score.py
+│   ├── score.py
+│   └── test_score.py
 ├── references/
 │   └── profile-template.md
 └── evals/
@@ -36,13 +39,15 @@ soul-extractor/
 
 ## Scripts
 
+아래 명령은 `soul-extractor` 스킬 폴더에서 실행합니다.
+
 - `scripts/setup.sh`: 런타임 데이터 디렉터리(`~/.soul-extractor/profiles`)를 보장합니다.
 
   ```bash
   bash scripts/setup.sh
   ```
 
-- `scripts/score.py`: 점수표 항목 점수를 받아 총점과 등급을 재현 가능하게 계산합니다. 항목 순서는 SKILL.md 점수표와 같습니다.
+- `scripts/score.py`: 점수표 항목 점수를 받아 총점과 등급을 재현 가능하게 계산합니다. 항목 순서·개수·각 배점은 SKILL.md 점수표와 같습니다.
 
   ```bash
   python3 scripts/score.py completeness 16 14 24 8 15
@@ -54,4 +59,7 @@ soul-extractor/
 ```bash
 # 레포 루트에서 실행
 python3 scripts/validate_skills.py --skill soul-extractor
+
+# 레포 루트에서 실행
+python3 -m unittest discover -s skills/살짝무거움/soul-extractor/scripts -p 'test_*.py'
 ```

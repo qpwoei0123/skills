@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.4.1
+
+### Added
+- OpenAI 스킬 메타데이터 `agents/openai.yaml` 추가
+
+### Fixed
+- `--go` rollback이 git index를 건드리지 않고 trim 델타만 복원해 기존 staged·unstaged·untracked 변경을 보존하도록 계약 수정
+- rollback 중 동시 사용자 변경을 덮을 수 있으면 자동 복원 대신 중단·보고하도록 보강
+
 ## 0.4.0
 
 ### Added

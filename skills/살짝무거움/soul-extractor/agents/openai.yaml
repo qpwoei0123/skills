@@ -1,0 +1,4 @@
+interface:
+  display_name: "Soul Extractor"
+  short_description: "허가된 글의 문체 지문을 추출하고 일치도를 평가합니다"
+  default_prompt: "$soul-extractor로 이 글 샘플의 문체 지문을 추출해 주세요."

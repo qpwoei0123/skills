@@ -2,8 +2,8 @@
 name: commit
 license: Apache-2.0
 metadata:
-  version: 0.6.0
-description: (v0.6.0) git 변경분을 의미 단위로 나누고 레포 커밋 규칙과 최근 로그 스타일에 맞춰 Conventional Commits 한글 메시지로 커밋하는 스킬. "커밋해줘", "커밋 나눠줘", "커밋 정리해줘", "/commit" 등 새 커밋을 만드는 요청에 사용한다. 기존 커밋 수정(amend)·되돌리기·로그 조회에는 쓰지 않고, 커밋 후 리뷰 요청(PR/MR)은 mr을 쓴다.
+  version: 0.6.1
+description: (v0.6.1) git 변경분을 의미 단위로 나누고 레포 커밋 규칙과 최근 로그 스타일에 맞춰 Conventional Commits 한글 메시지로 커밋하는 스킬. "커밋해줘", "커밋 나눠줘", "커밋 정리해줘", "/commit" 등 새 커밋을 만드는 요청에 사용한다. 기존 커밋 수정(amend)·되돌리기·로그 조회에는 쓰지 않고, 커밋 후 리뷰 요청(PR/MR)은 mr을 쓴다.
 ---
 
 # commit

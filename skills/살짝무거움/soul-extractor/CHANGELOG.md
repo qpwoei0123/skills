@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.3.1
+
+### Added
+- `scripts/test_score.py` 회귀 테스트 추가
+- OpenAI 스킬 메타데이터 `agents/openai.yaml` 추가
+
+### Fixed
+- `scripts/score.py`가 완성도 5개·일치도 6개 항목 개수와 각 항목의 0~배점 범위를 검증하도록 수정
+
 ## 0.3.0
 
 ### Added

@@ -1,6 +1,6 @@
 # annotate
 
-`version: 0.2.1`
+`version: 0.2.2`
 
 현재 작업과 관련된 로직을 읽기 쉽게 짧은 한글 주석으로 정리하는 스킬입니다.
 
@@ -22,6 +22,8 @@ annotate/
 ├── SKILL.md
 ├── README.md
 ├── CHANGELOG.md
+├── agents/
+│   └── openai.yaml
 └── evals/
     └── trigger-eval.json
 ```

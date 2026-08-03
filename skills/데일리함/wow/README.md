@@ -1,6 +1,6 @@
 # wow
 
-`version: 0.4.0`
+`version: 0.4.1`
 
 문제를 새 관점으로 다시 설계해 "이렇게 했으면 훨씬 단순했겠다" 싶은 우아한 단순화안을 제안하는 스킬입니다.
 
@@ -19,6 +19,8 @@ wow/
 ├── SKILL.md
 ├── README.md
 ├── CHANGELOG.md
+├── agents/
+│   └── openai.yaml
 ├── references/
 │   └── example.md
 └── evals/

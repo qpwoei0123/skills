@@ -2,8 +2,8 @@
 name: trim
 license: Apache-2.0
 metadata:
-  version: 0.4.0
-description: (v0.4.0) 동작을 유지하면서 현재 diff의 군더더기를 덜어내고, 흩어진 중복·패턴을 같은 이유로 변하는 단위로 엮는 스킬. "코드 줄여줘", "단순하게 해줘", "중복 합쳐줘", "공통화해줘", "/trim" 등 변경분을 간결하게 정리하자는 말이 나오면 사용한다(변경분 단순화 요청에는 내장 simplify보다 우선). 글·문서 다듬기에는 쓰지 않고, 설계 모델 재정의는 wow, 버그 리뷰는 code-review를 쓴다.
+  version: 0.4.1
+description: (v0.4.1) 동작을 유지하면서 현재 diff의 군더더기를 덜어내고, 흩어진 중복·패턴을 같은 이유로 변하는 단위로 엮는 스킬. "코드 줄여줘", "단순하게 해줘", "중복 합쳐줘", "공통화해줘", "/trim" 등 변경분을 간결하게 정리하자는 말이 나오면 사용한다(변경분 단순화 요청에는 내장 simplify보다 우선). 글·문서 다듬기에는 쓰지 않고, 설계 모델 재정의는 wow, 버그 리뷰는 code-review를 쓴다.
 ---
 
 # trim
@@ -18,6 +18,7 @@ description: (v0.4.0) 동작을 유지하면서 현재 diff의 군더더기를 �
 - 공개 API, 데이터 계약, UX 의도, 접근성 의미를 바꾸지 않는다.
 - 테스트 의미를 약하게 만들지 않는다.
 - 새 기능을 추가하지 않는다. 요구사항을 다시 해석하지 않는다.
+- git index와 staging 구분을 임의로 바꾸지 않으며, rollback 시 실행 전 staged·unstaged·untracked 상태를 정확히 복원한다.
 - 엮기는 비슷해서 묶지 않는다. 같은 이유로 변하는 것만 묶고, 애매하면 묶지 않는다.
 - 작은 중복을 없애려고 큰 추상화를 만들지 않는다. 읽기 쉬운 로컬 코드를 멀리 보내지 않는다.
 
@@ -195,13 +196,14 @@ trim 계획
 
 1. baseline을 기록한다.
    - `git diff HEAD --stat`
-   - `patch=$(mktemp /tmp/pre-trim.XXXXXX.patch)` 후 `git diff HEAD > "$patch"`로 staged를 포함한 적용 전 상태를 스냅샷한다.
-   - 수정 대상에 untracked 신규 파일이 있으면 `backup=$(mktemp -d /tmp/pre-trim.XXXXXX)`에 복사해 둔다. 스냅샷과 백업이 없으면 trim을 시작하지 않는다.
+   - `git diff --cached --binary`와 `git diff --binary`를 서로 다른 `mktemp` 파일에 기록해 staged와 unstaged baseline을 분리한다.
+   - 첫 쓰기 전에 수정할 모든 경로의 작업 트리 내용·존재 여부·파일 종류를 `backup=$(mktemp -d /tmp/pre-trim.XXXXXX)`에 기록한다. 기존 untracked도 같이 백업한다.
+   - trim 중에는 `git add`, `git rm`, `git restore`, `git checkout`, `git reset`을 실행하지 않고 index를 건드리지 않는다. baseline과 백업이 없으면 trim을 시작하지 않는다.
    - 가능한 검증 명령 결과
 2. 근거 1·2등급 후보만 적용한다. feature 경계, public API, 의존성 방향이 바뀌는 엮기 후보는 계획으로만 남긴다.
 3. 엮기를 적용했으면 import, export, 테스트 fixture도 함께 정리한다.
 4. 같은 검증 명령을 다시 실행하고 `git diff HEAD --stat` 전후를 비교한다.
-5. 실패하면 원인을 파악해 고치거나, 되돌린다. tracked 파일은 `git checkout -- <files>` 후 `git apply "$patch"`로, untracked 파일은 백업본 복원으로 스냅샷 시점을 되살린다. 기존 사용자 변경은 임의로 revert하지 않는다.
+5. 실패하면 원인을 파악해 고치거나, trim이 만든 델타만 되돌린다. 수정한 tracked·기존 untracked는 작업 트리 백업으로 복원하고 trim이 새로 만든 경로만 제거하되, index는 처음부터 건드리지 않아 staged 상태를 보존한다. 시작 후 사용자가 같은 경로를 다시 수정했거나 복원이 그 변경을 덮을 수 있으면 자동 복원하지 말고 중단·보고한다. `git restore`/`checkout`/`reset`으로 전체 경로를 되돌리지 않는다.
 6. 최종 보고에는 덜어낸 것, 엮은 개념과 줄어든 변경 지점, 실행한 검증, 남긴 리스크를 포함한다.
 
 ## 중단 조건

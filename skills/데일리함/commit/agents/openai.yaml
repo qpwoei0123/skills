@@ -1,0 +1,4 @@
+interface:
+  display_name: "Commit"
+  short_description: "변경분을 의미 단위의 한글 커밋으로 정리합니다"
+  default_prompt: "$commit으로 현재 변경분을 의미 단위로 나눠 커밋해 주세요."

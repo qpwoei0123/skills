@@ -1,6 +1,6 @@
 # mr
 
-`version: 0.6.0`
+`version: 0.6.1`
 
 현재 브랜치의 커밋과 diff를 읽고 GitHub PR 또는 GitLab MR을 항상 draft로 계획하거나 생성하는 스킬입니다.
 
@@ -28,6 +28,8 @@ mr/
 ├── SKILL.md
 ├── README.md
 ├── CHANGELOG.md
+├── agents/
+│   └── openai.yaml
 ├── evals/
 │   └── trigger-eval.json
 └── scripts/
@@ -40,7 +42,7 @@ mr/
 
 ```bash
 # 스킬 디렉터리에서 실행
-bash mr/scripts/preflight.sh
+bash scripts/preflight.sh
 ```
 
 ## Test

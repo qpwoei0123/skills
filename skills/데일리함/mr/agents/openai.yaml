@@ -1,0 +1,4 @@
+interface:
+  display_name: "MR"
+  short_description: "현재 브랜치를 규칙에 맞는 Draft PR/MR로 올립니다"
+  default_prompt: "$mr로 현재 브랜치를 규칙에 맞는 Draft PR/MR로 올려 주세요."

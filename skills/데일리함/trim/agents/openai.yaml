@@ -1,0 +1,4 @@
+interface:
+  display_name: "Trim"
+  short_description: "동작을 지키며 diff의 군더더기와 중복을 줄입니다"
+  default_prompt: "$trim으로 현재 diff의 동작을 유지하며 군더더기와 중복을 줄여 주세요."

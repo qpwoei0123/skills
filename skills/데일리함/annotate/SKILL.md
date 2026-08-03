@@ -2,8 +2,8 @@
 name: annotate
 license: Apache-2.0
 metadata:
-  version: 0.2.1
-description: (v0.2.1) 현재 작업과 관련된 로직에 왜·조건·주의점을 짧은 한글 주석으로 남기는 스킬. "주석 달아줘", "왜 이렇게 짰는지 주석 남겨줘", "이 로직 맥락 주석으로 정리해줘", "/annotate" 등 주석 요청이 나오면 사용한다. 코드량 축소는 trim, 커밋 분할은 commit을 쓴다.
+  version: 0.2.2
+description: (v0.2.2) 현재 작업과 관련된 로직에 왜·조건·주의점을 짧은 한글 주석으로 남기는 스킬. "주석 달아줘", "왜 이렇게 짰는지 주석 남겨줘", "이 로직 맥락 주석으로 정리해줘", "/annotate" 등 주석 요청이 나오면 사용한다. 코드량 축소는 trim, 커밋 분할은 commit을 쓴다.
 ---
 
 # annotate

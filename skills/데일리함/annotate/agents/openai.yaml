@@ -1,0 +1,4 @@
+interface:
+  display_name: "Annotate"
+  short_description: "필요한 코드 맥락만 짧은 한글 주석으로 남깁니다"
+  default_prompt: "$annotate로 현재 변경분에 필요한 맥락 주석을 선별해 주세요."

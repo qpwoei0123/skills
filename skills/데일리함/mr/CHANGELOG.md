@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.6.1
+
+### Added
+- Codex 스킬 목록에 표시할 이름·설명·기본 프롬프트 메타데이터 추가
+
+### Fixed
+- 스킬 디렉터리 기준 `preflight.sh` 실행 경로 수정
+
 ## 0.6.0
 
 ### Added
