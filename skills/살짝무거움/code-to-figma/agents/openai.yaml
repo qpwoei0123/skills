@@ -1,0 +1,4 @@
+interface:
+  display_name: "Code to Figma"
+  short_description: "구현된 웹 화면을 Figma 파일로 일관되게 옮깁니다"
+  default_prompt: "$code-to-figma로 현재 웹 화면을 Figma 디자인으로 옮겨 주세요."

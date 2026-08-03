@@ -1,0 +1,42 @@
+[
+  {
+    "query": "code-to-figma로 현재 localhost 대시보드를 이 Figma 파일로 옮겨줘",
+    "should_trigger": true
+  },
+  {
+    "query": "이 웹 화면을 Figma에서 편집 가능한 레이어로 만들어줘",
+    "should_trigger": true
+  },
+  {
+    "query": "여기 URL 4개를 피그마 한 페이지에 일괄 캡처해줘",
+    "should_trigger": true
+  },
+  {
+    "query": "/code-to-figma 현재 프리뷰 화면을 지정한 Figma frame 근처에 배치해줘",
+    "should_trigger": true
+  },
+  {
+    "query": "우리 디자인 시스템을 써서 이 구현 화면을 Figma로 변환해줘",
+    "should_trigger": true
+  },
+  {
+    "query": "Figma 시안을 React 코드로 구현해줘",
+    "should_trigger": false
+  },
+  {
+    "query": "이 Figma 디자인의 UX를 리뷰해줘",
+    "should_trigger": false
+  },
+  {
+    "query": "현재 화면을 PNG 스크린샷으로만 저장해줘",
+    "should_trigger": false
+  },
+  {
+    "query": "새 랜딩페이지 디자인을 처음부터 만들어줘",
+    "should_trigger": false
+  },
+  {
+    "query": "Figma 파일의 컴포넌트 이름만 정리해줘",
+    "should_trigger": false
+  }
+]

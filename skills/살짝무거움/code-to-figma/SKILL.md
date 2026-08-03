@@ -2,14 +2,14 @@
 name: code-to-figma
 license: Apache-2.0
 metadata:
-  version: 0.1.0
-description: (v0.1.0) 구현된 웹 화면(로컬 dev/preview URL)을 Figma 파일로 옮길 때 사용한다. "피그마로 옮겨줘", "Figma로 변환해줘", "피그마 디자인 생성해줘", "/code-to-figma" 등 화면을 Figma로 옮기자는 요청이 나오면 사용한다. 단일 화면은 디자인 시스템에 바인딩된 편집 가능한 레이어로, 여러 화면은 픽셀 캡처 후 그리드 정렬로 옮긴다.
+  version: 0.1.1
+description: (v0.1.1) 구현된 웹 화면(로컬 dev/preview URL)을 Figma 파일로 옮길 때 사용한다. "피그마로 옮겨줘", "Figma로 변환해줘", "피그마 디자인 생성해줘", "/code-to-figma" 등 화면을 Figma로 옮기자는 요청이 나오면 사용한다. 단일 화면은 디자인 시스템에 바인딩된 편집 가능한 레이어로, 여러 화면은 픽셀 캡처 후 그리드 정렬로 옮긴다.
 ---
 
 # code-to-figma
 
-구현된 화면을 Figma로 옮기는 실행 계약을 고정한 스킬이다. Figma 공식 플러그인
-(`figma@claude-plugins-official`)의 `figma-generate-design` 스킬과 Figma MCP 위에서 동작한다.
+구현된 화면을 Figma로 옮기는 실행 계약을 고정한 스킬이다. 특정 호스트나 플러그인 이름을
+가정하지 않고, 현재 환경이 노출한 Figma 읽기·편집·캡처 capability에 매핑해 동작한다.
 
 핵심 순서: **작업 계약 확인 → 권한/접근 점검 → 디자인 시스템 탐색 → 실행 → 보고**.
 사용자에게 보이는 응답 문구는 `references/response-templates.md`의 톤을 따른다.
@@ -27,13 +27,16 @@ description: (v0.1.0) 구현된 웹 화면(로컬 dev/preview URL)을 Figma 파�
 막힌 칸이 있으면 "작업 실패"처럼 말하지 말고 **어느 칸이 막혔는지**만 알려준다.
 이미 받은 입력값은 버리지 말고 보존했다가 이어서 쓴다.
 
-## 2. 권한/접근 점검
+## 2. capability/권한 점검
 
-- `claude plugin list --json`에서 `figma@claude-plugins-official`이 installed + enabled인지 확인한다.
-  - 미설치: `claude plugin install figma@claude-plugins-official --scope user`
-  - 설치됐지만 비활성: `claude plugin enable figma@claude-plugins-official --scope <scope>`
-- `claude mcp list`에서 `plugin:figma:figma` 연결 상태를 확인한다. 인증이 필요하면
-  사용자에게 인증을 안내하고, 완료 후 같은 요청을 이어서 진행한다.
+- 먼저 현재 환경의 도구를 살펴 아래 capability와 실제 호출을 매핑한다.
+  - 필수: Figma 파일/노드 읽기, 노드 생성·편집, 결과 스크린샷 확인
+  - 배치 모드 필수: capture ID 생성·상태 조회
+  - 선택: 디자인 시스템 검색, Code Connect 제안 조회
+- `get_screenshot`, `use_figma`, `generate_figma_design`, `search_design_system`은 가능한 도구명의
+  **예시**다. 다른 이름이어도 같은 capability를 제공하면 그 호출을 사용한다.
+- 필수 capability가 없거나 인증이 필요하면 없는 능력과 인증 방법을 안내하고,
+  완료 후 같은 요청을 이어서 진행한다. 특정 CLI나 플러그인 매니저 명령은 임의로 가정하지 않는다.
 - 목적지 Figma URL을 파싱한다: `figma.com/design/<fileKey>/...` → `fileKey`,
   `?node-id=<a-b>` → `nodeId`(하이픈을 콜론으로 치환). design 링크가 아니면 다시 요청한다.
 - 대상 파일에 가벼운 읽기 호출(예: `get_screenshot`)을 시도해 접근/편집 가능 여부를 확인한다.
@@ -52,7 +55,7 @@ description: (v0.1.0) 구현된 웹 화면(로컬 dev/preview URL)을 Figma 파�
 
 `references/design-system-discovery.md`의 우선순위대로 증거를 모아 매핑표(후보 + 확신도)를 만든다.
 요약: 사용자 지정 > Code Connect > 목적지 파일의 기존 instance > 연결된 라이브러리 >
-`search_design_system` > 실패 시 새 레이어 + 미연동 보고.
+디자인 시스템 검색 capability > 실패 시 새 레이어 + 미연동 보고.
 
 배치(픽셀 캡처) 모드는 DS 연동 대상이 아니다 — 미리 명확히 말한다.
 
@@ -83,19 +86,20 @@ description: (v0.1.0) 구현된 웹 화면(로컬 dev/preview URL)을 Figma 파�
 
 ### 여러 화면 — 픽셀 캡처 배치
 
-캡처 드라이버는 `tsx`, `playwright`, chromium이 필요하다 — 없으면 실행 전에
-`npx playwright install chromium`으로 설치를 먼저 시도한다.
+캡처 드라이버는 Node.js 20+ 및 `package-lock.json`에 고정된 `tsx`, `playwright`, chromium이
+필요하다. 스킬 폴더에서 `npm ci`로 의존성을 맞춘 뒤 `npm exec -- playwright install chromium`으로 chromium을 준비한다.
 
-1. 화면마다 `generate_figma_design(fileKey)`를 호출해 `captureId`를 1개씩 발급받는다.
+1. 화면마다 캡처 생성 capability를 호출해 `captureId`를 1개씩 발급받는다.
 2. `[{ "captureId", "url", "label"? }]` 배열을 JSON 파일(예: `/tmp/figma-batch-jobs.json`)로
    쓰고, 이 스킬 폴더의 캡처 드라이버를 실행한다:
-   `npx tsx <이 스킬 폴더>/scripts/capture-url.ts --batch <jobs.json>`
+   스킬 폴더에서 `npm run capture -- --batch <jobs.json>`
    (기본 순차 캡처 — 캡처가 CPU-bound라 병렬은 보통 더 느리다.)
-3. 각 `captureId`를 `generate_figma_design(fileKey, captureId)`로 status=completed까지 5초
+3. 성공한 각 `captureId`를 캡처 상태 조회 capability로 status=completed까지 5초
    간격 폴링하고, 완성된 frame nodeId를 모은다.
 4. `use_figma`로 정리한다: 새 Figma 페이지를 만들고, 캡처된 frame들을 3열 그리드로 배치
    (간격 일정, 각 frame 위에 label 표기). 캡처가 자동 생성한 빈 페이지는 제거한다.
-5. 특정 화면 캡처가 실패해도 나머지는 계속 진행하고, 실패분은 마지막에 보고한다.
+5. 특정 화면 캡처가 실패해도 나머지는 계속 진행하되, submit timeout·HTTP·응답 본문 오류를
+   성공으로 세지 않고 하나라도 실패하면 드라이버를 non-zero로 종료한 뒤 실패분을 보고한다.
 
 ## 7. 결과 보고
 

@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.1.1
+
+### Added
+
+- `package.json`/`package-lock.json` 추가: Node.js 20+, `tsx`, `playwright` 버전과 캡처/smoke 명령 고정
+- 트리거·비트리거 5개씩으로 구성한 `evals/trigger-eval.json` 추가
+- OpenAI 스킬 메타데이터 `agents/openai.yaml` 추가
+- batch 입력과 submit 응답 본문의 실패 경계를 고정하는 Node 회귀 테스트 추가
+
+### Fixed
+
+- 캡처 CLI의 top-level await를 `main()`으로 대체해 CJS 변환 환경에서도 실행 가능하게 수정
+- Figma submit timeout·non-2xx·응답 본문 오류를 실패로 처리하고, 부분 실패가 있으면 프로세스를 non-zero로 종료
+- 빈 batch와 비어 있는 capture ID/URL을 입력 오류로 처리
+- Claude 전용 플러그인 CLI 전제를 제거하고 호스트 도구를 Figma capability에 매핑하는 계약으로 변경
+
 ## 0.1.0
 
 ### Added

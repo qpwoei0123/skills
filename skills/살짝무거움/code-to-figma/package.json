@@ -1,0 +1,19 @@
+{
+  "name": "@qpwoei0123/code-to-figma-capture",
+  "version": "0.1.1",
+  "private": true,
+  "type": "module",
+  "packageManager": "npm@10.9.2",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "capture": "tsx scripts/capture-url.ts",
+    "smoke": "tsx scripts/capture-url.ts --help",
+    "test": "tsx --test scripts/capture-contracts.test.ts"
+  },
+  "dependencies": {
+    "playwright": "1.62.1",
+    "tsx": "4.23.5"
+  }
+}

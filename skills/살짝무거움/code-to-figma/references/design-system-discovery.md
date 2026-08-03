@@ -10,7 +10,7 @@
 2. Code Connect
 3. 목적지 파일의 기존 instance
 4. 연결된 라이브러리 목록
-5. search_design_system
+5. 디자인 시스템 검색 capability
 6. 실패 시 새 레이어 + 미연동 보고
 ```
 
@@ -35,8 +35,8 @@
 
 ### 4~5. Figma 라이브러리 검색
 
-- `get_libraries`로 사용 가능한 라이브러리 확인
-- `search_design_system`으로 `button`, `input`, `table`, `surface`, `text`, `radius`,
+- 라이브러리 조회 capability로 사용 가능한 라이브러리 확인
+- 디자인 시스템 검색 capability로 `button`, `input`, `table`, `surface`, `text`, `radius`,
   `space` 같은 이름 검색
 - 찾은 컴포넌트는 임시 instance로 만들어 properties까지 확인한다
 
