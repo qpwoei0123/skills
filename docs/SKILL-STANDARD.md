@@ -12,7 +12,7 @@
 
 - 스킬마다 최소한의 형식을 맞춘다.
 - 버전, 변경 이력, 사용자 문서를 일관되게 유지한다.
-- `orbit` 같은 복잡한 스킬과 `ghostwriter` 같은 단순한 스킬을 모두 수용한다.
+- `orbit` 같은 복잡한 스킬과 `annotate` 같은 단순한 스킬을 모두 수용한다.
 - 이후 `validator(형식 검증 스크립트)`와 `CI(자동 검증 파이프라인)`로 자동 검사할 수 있게 만든다.
 
 ## 적용 범위
@@ -92,6 +92,7 @@ description: (v1.7.0) 스킬 설명. 트리거 문구 예시 포함.
 - 버전 표기의 `SSOT(단일 기준 원천)`는 항상 `metadata.version`이다.
 - `description`은 트리거와 용도를 설명해야 한다.
 - `description`은 단일행으로 쓰고 `(vx.y.z)` 버전 접두사로 시작한다. 접두사는 `metadata.version`과 같아야 하며 normalize가 자동 동기화한다.
+- `description: |`, `description: >` 같은 block scalar는 단일행 규약 위반으로 처리한다.
 
 ### MUST — `README.md`
 
@@ -147,8 +148,22 @@ description: (v1.7.0) 스킬 설명. 트리거 문구 예시 포함.
 
 ### `agents/`
 
+- Codex 인터페이스 메타데이터가 필요한 스킬
 - 멀티 에이전트 흐름이 있는 스킬
 - 역할 분리, 병합, 라운드 규칙이 필요한 경우
+
+`agents/openai.yaml`이 있으면 아래 최소 계약을 지킨다.
+
+```yaml
+interface:
+  display_name: "Orbit"
+  short_description: "레포를 7개 관점으로 점검해 검증된 기술 이슈를 발행합니다"
+  default_prompt: "$orbit으로 이 레포를 종합 점검해 주세요."
+```
+
+- `display_name`은 비어 있지 않아야 한다.
+- `short_description`은 25~64자여야 한다.
+- `default_prompt`에는 `$<skill-name>` 호출 예시가 있어야 한다.
 
 ### `references/`
 
@@ -176,6 +191,13 @@ description: (v1.7.0) 스킬 설명. 트리거 문구 예시 포함.
 
 - 스킬 동작을 채점하는 eval 정의 (시나리오, assertion, 트리거 케이스)
 - 정의 파일만 추적한다. 실행 결과물(벤치마크, 로그, 리포트)은 추적하지 않고 `.eval-archive/` 등 무시 경로에 둔다.
+
+`evals/trigger-eval.json`이 있으면 비어 있지 않은 JSON 배열이어야 한다.
+
+- 각 항목의 `query`는 비어 있지 않은 문자열이어야 한다.
+- 각 항목의 `should_trigger`는 boolean이어야 한다.
+- 선택 필드 `expected_behavior`는 비어 있지 않은 문자열이어야 한다.
+- positive·negative 경계를 함께 검증하도록 `should_trigger: true`와 `false`를 모두 포함한다.
 
 ### `INDEX.md`
 
@@ -248,6 +270,14 @@ skills/살짝무거움/orbit/
 4. 선택 디렉터리(`agents/`, `references/`, `scripts/`, `assets/`)를 역할에 맞게 정리한다.
 5. 이후 `validator(형식 검증 스크립트)`로 검사한다.
 
+## 검증과 배포
+
+- `validate_skills.py`는 필수 문서, 단일행 description, trigger eval, OpenAI manifest 계약을 검사한다.
+- `deploy_skills.py --check`는 버전뿐 아니라 배포 디렉터리의 실제 파일 내용 drift도 검사한다.
+- 배포는 모든 선택 스킬을 staging에 복사해 다시 검증한 뒤 swap한다.
+- swap이 실패하면 이미 교체한 스킬을 역순으로 rollback해 기존 배포본을 복구한다.
+- `__pycache__/`, `*.pyc`, `.DS_Store`, `node_modules/`는 배포 콘텐츠와 drift 비교에서 제외한다.
+
 ## Autofix Policy
 
 자동 정규화는 구조 보정만 허용한다.
@@ -256,6 +286,7 @@ skills/살짝무거움/orbit/
 자동 수정 가능한 항목:
 
 - `SKILL.md`의 top-level `version`을 `metadata.version`으로 이동
+- 단일행 `description`의 `(vx.y.z)` 접두사를 `metadata.version`에 동기화
 - 누락된 `README.md`, `CHANGELOG.md` 생성
 - README의 `version:` 표기 동기화
 - README의 `Quick Start`, `Structure`, `Test` 섹션 보강
@@ -265,7 +296,7 @@ skills/살짝무거움/orbit/
 
 - `name`
 - `license`
-- `description`
+- block scalar description과 설명 본문
 - README 소개 문장의 의미
 - 스킬 트리거와 동작 의미
 
@@ -289,11 +320,9 @@ skills/살짝무거움/orbit/
 
 즉, 이 표준은 표현보다 계약과 구조를 다룬다.
 
-## 다음 단계
+## 운영 체크리스트
 
-이 문서를 기준으로 다음을 추가한다.
-
-1. `scripts/validate_skills.py`
-2. `.github/workflows/validate-skills.yml`
-3. `welcome/` 표준 템플릿 보강
-4. 기존 스킬(`orbit`, `ghostwriter`, `welcome`) 정합성 점검
+1. `scripts/validate_skills.py`로 전체 스킬 계약을 검사한다.
+2. 루트 unittest로 validator·normalizer·deploy 회귀를 확인한다.
+3. `templates/skill/`을 현재 표준과 함께 유지한다.
+4. `orbit`, `annotate`, `soul-extractor`를 포함한 현재 accepted 스킬의 정합성을 유지한다.

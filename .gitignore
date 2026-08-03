@@ -1,6 +1,7 @@
 .DS_Store
 __pycache__/
 *.pyc
+node_modules/
 
 # 초안/평가 산출물 (정식 편입 전 작업물과 eval 실행 결과는 추적하지 않는다)
 .conductor/

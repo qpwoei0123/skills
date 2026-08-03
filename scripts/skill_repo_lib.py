@@ -10,7 +10,7 @@ SEMVER_RE = re.compile(r"^\d+\.\d+\.\d+$")
 README_VERSION_RE = re.compile(r"version:\s*([0-9]+\.[0-9]+\.[0-9]+)", re.IGNORECASE)
 CHANGELOG_VERSION_RE = re.compile(r"^##\s+([0-9]+\.[0-9]+\.[0-9]+)\s*$", re.MULTILINE)
 DESC_VERSION_PREFIX_RE = re.compile(r"^\(v([0-9]+\.[0-9]+\.[0-9]+)\)\s*")
-BLOCK_SCALAR_INDICATORS = (">", "|", ">-", "|-", ">+", "|+")
+BLOCK_SCALAR_RE = re.compile(r"^[>|](?:[+-]?[1-9]?|[1-9]?[+-]?)(?:\s+#.*)?$")
 ACCEPTED_SKILL_LINE_RE = re.compile(r"^- `([^`]+)`", re.MULTILINE)
 
 QUICKSTART_MARKERS = ("## Quick Start", "## 사용 예시", "## Quickstart")
@@ -104,6 +104,10 @@ def repo_root_from_script(script_path: Path) -> Path:
 
 def contains_any(text: str, markers: tuple[str, ...]) -> bool:
     return any(marker in text for marker in markers)
+
+
+def is_block_scalar(value: str) -> bool:
+    return bool(BLOCK_SCALAR_RE.match(value))
 
 
 def discover_skills(root: Path) -> list[Path]:
@@ -218,6 +222,167 @@ def first_version_header(text: str) -> str:
     return match.group(1) if match else ""
 
 
+def validate_trigger_eval(skill_dir: Path, report: SkillReport) -> None:
+    eval_path = skill_dir / "evals" / "trigger-eval.json"
+    if not eval_path.exists():
+        return
+
+    try:
+        payload = json.loads(eval_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        report.add_error("trigger_eval_invalid_json", f"evals/trigger-eval.json JSON 오류: {exc}")
+        return
+
+    if not isinstance(payload, list) or not payload:
+        report.add_error(
+            "trigger_eval_invalid_shape",
+            "evals/trigger-eval.json은 비어 있지 않은 JSON 배열이어야 합니다.",
+        )
+        return
+
+    trigger_values: list[bool] = []
+    for index, case in enumerate(payload):
+        if not isinstance(case, dict):
+            report.add_error(
+                "trigger_eval_invalid_case",
+                f"evals/trigger-eval.json[{index}]는 객체여야 합니다.",
+            )
+            continue
+
+        query = case.get("query")
+        if not isinstance(query, str) or not query.strip():
+            report.add_error(
+                "trigger_eval_invalid_query",
+                f"evals/trigger-eval.json[{index}].query는 비어 있지 않은 문자열이어야 합니다.",
+            )
+
+        should_trigger = case.get("should_trigger")
+        if not isinstance(should_trigger, bool):
+            report.add_error(
+                "trigger_eval_invalid_should_trigger",
+                f"evals/trigger-eval.json[{index}].should_trigger는 boolean이어야 합니다.",
+            )
+        else:
+            trigger_values.append(should_trigger)
+
+        if "expected_behavior" in case:
+            expected_behavior = case["expected_behavior"]
+            if not isinstance(expected_behavior, str) or not expected_behavior.strip():
+                report.add_error(
+                    "trigger_eval_invalid_expected_behavior",
+                    f"evals/trigger-eval.json[{index}].expected_behavior는 비어 있지 않은 문자열이어야 합니다.",
+                )
+
+    if len(trigger_values) == len(payload) and (
+        not any(trigger_values) or all(trigger_values)
+    ):
+        report.add_error(
+            "trigger_eval_unbalanced",
+            "evals/trigger-eval.json에는 should_trigger true와 false가 모두 있어야 합니다.",
+        )
+
+
+def parse_simple_yaml_scalar(value: str) -> str | None:
+    value = value.strip()
+    if not value:
+        return ""
+
+    if value.startswith('"'):
+        try:
+            parsed, end = json.JSONDecoder().raw_decode(value)
+        except json.JSONDecodeError:
+            return None
+        remainder = value[end:].strip()
+        return parsed if isinstance(parsed, str) and (not remainder or remainder.startswith("#")) else None
+
+    if value.startswith("'"):
+        chars: list[str] = []
+        index = 1
+        while index < len(value):
+            if value[index] != "'":
+                chars.append(value[index])
+                index += 1
+                continue
+            if index + 1 < len(value) and value[index + 1] == "'":
+                chars.append("'")
+                index += 2
+                continue
+            remainder = value[index + 1 :].strip()
+            return "".join(chars) if not remainder or remainder.startswith("#") else None
+        return None
+
+    return re.split(r"\s+#", value, maxsplit=1)[0].strip()
+
+
+def parse_simple_nested_mapping(text: str, root_key: str) -> dict[str, str]:
+    lines = text.splitlines()
+    root_pattern = re.compile(rf"^{re.escape(root_key)}:\s*(?:#.*)?$")
+    root_index = next(
+        (index for index, line in enumerate(lines) if root_pattern.match(line)),
+        None,
+    )
+    if root_index is None:
+        return {}
+
+    values: dict[str, str] = {}
+    child_indent: int | None = None
+    for line in lines[root_index + 1 :]:
+        stripped = line.strip()
+        if not stripped or stripped.startswith("#"):
+            continue
+
+        indent = len(line) - len(line.lstrip(" "))
+        if indent == 0:
+            break
+        if child_indent is None:
+            child_indent = indent
+        if indent != child_indent or ":" not in stripped:
+            continue
+
+        key, raw_value = stripped.split(":", 1)
+        value = parse_simple_yaml_scalar(raw_value)
+        if value is not None:
+            values[key.strip()] = value
+    return values
+
+
+def validate_openai_manifest(skill_dir: Path, report: SkillReport) -> None:
+    manifest_path = skill_dir / "agents" / "openai.yaml"
+    if not manifest_path.exists():
+        return
+
+    try:
+        interface = parse_simple_nested_mapping(
+            manifest_path.read_text(encoding="utf-8"),
+            "interface",
+        )
+    except OSError as exc:
+        report.add_error("openai_yaml_unreadable", f"agents/openai.yaml 읽기 오류: {exc}")
+        return
+
+    for field_name in ("display_name", "short_description", "default_prompt"):
+        value = interface.get(field_name, "")
+        if not value or is_block_scalar(value):
+            report.add_error(
+                "openai_yaml_missing_field",
+                f"agents/openai.yaml interface.{field_name}는 비어 있지 않은 단일행 문자열이어야 합니다.",
+            )
+
+    short_description = interface.get("short_description", "")
+    if short_description and not 25 <= len(short_description) <= 64:
+        report.add_error(
+            "openai_yaml_short_description_length",
+            "agents/openai.yaml interface.short_description은 25~64자여야 합니다.",
+        )
+
+    default_prompt = interface.get("default_prompt", "")
+    if default_prompt and f"${skill_dir.name}" not in default_prompt:
+        report.add_error(
+            "openai_yaml_default_prompt_trigger",
+            f"agents/openai.yaml interface.default_prompt에 ${skill_dir.name} 호출 예시가 필요합니다.",
+        )
+
+
 def validate_skill(skill_dir: Path) -> SkillReport:
     report = SkillReport(name=skill_dir.name)
 
@@ -276,7 +441,12 @@ def validate_skill(skill_dir: Path) -> SkillReport:
         report.add_error("invalid_semver", f"metadata.version이 SemVer 형식이 아님: {version}")
 
     description = frontmatter_value(frontmatter, "description")
-    if description and version and description not in BLOCK_SCALAR_INDICATORS:
+    if is_block_scalar(description):
+        report.add_error(
+            "description_must_be_single_line",
+            "description은 block scalar가 아닌 단일행 문자열이어야 합니다.",
+        )
+    elif description and version:
         prefix_match = DESC_VERSION_PREFIX_RE.match(description)
         if not prefix_match:
             report.add_error(
@@ -329,6 +499,9 @@ def validate_skill(skill_dir: Path) -> SkillReport:
                 "changelog_version_mismatch",
                 f"CHANGELOG.md 최신 버전 불일치: {header_version} != {version}",
             )
+
+    validate_trigger_eval(skill_dir, report)
+    validate_openai_manifest(skill_dir, report)
 
     for dirname in OPTIONAL_DIRS:
         dir_path = skill_dir / dirname
@@ -415,7 +588,7 @@ def normalize_description_prefix(document: FrontmatterDocument, version: str) ->
     if entry is None:
         return False
     value = scalar_value(entry)
-    if not value or value in BLOCK_SCALAR_INDICATORS:
+    if not value or is_block_scalar(value):
         return False
     stripped = DESC_VERSION_PREFIX_RE.sub("", value)
     desired = f"(v{version}) {stripped}"

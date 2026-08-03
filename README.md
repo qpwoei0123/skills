@@ -58,7 +58,7 @@ skill-name/
 
 선택 구조:
 
-- `agents/`
+- `agents/` (`openai.yaml` 제품 메타데이터 포함)
 - `references/`
 - `scripts/`
 - `assets/`
@@ -86,6 +86,15 @@ python3 scripts/validate_skills.py --skill trim
 - [scripts/normalize_skill.py](scripts/normalize_skill.py)
 - [.github/workflows/validate-skills.yml](.github/workflows/validate-skills.yml)
 
+형식 검사와 함께 운영 코드 회귀 테스트를 실행합니다.
+
+```bash
+python3 -m unittest discover -s scripts -p 'test_*.py' -v
+python3 -m unittest discover -s 'skills/살짝무거움/orbit/scripts' -p 'test_*.py' -v
+python3 -m unittest discover -s 'skills/살짝무거움/soul-extractor/scripts' -p 'test_*.py' -v
+(cd 'skills/살짝무거움/code-to-figma' && PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npm ci && npm test && npm run smoke)
+```
+
 자동 수정 가능한 항목은 로컬에서 먼저 정규화할 수 있습니다.
 
 ```bash
@@ -108,17 +117,20 @@ python3 scripts/normalize_skill.py --skill trim --write
 ```bash
 python3 scripts/deploy_skills.py             # validate 통과 시 전체 동기화
 python3 scripts/deploy_skills.py --skill trim
-python3 scripts/deploy_skills.py --check     # 버전 차이만 확인
+python3 scripts/deploy_skills.py --check     # 버전과 실제 파일 내용 차이 확인
 ```
+
+배포는 먼저 임시 디렉터리에 복사·검증한 뒤 교체하므로, 복사나 검증이 실패해도 기존 설치본을 유지합니다.
 
 ## Repository Structure
 
 ```text
-skills/
+.
 ├── docs/
 │   └── SKILL-STANDARD.md           # 저장소 공통 스킬 표준
 ├── scripts/
-│   └── validate_skills.py          # accepted 스킬 형식 검증 스크립트
+│   ├── validate_skills.py          # accepted 스킬 형식 검증 스크립트
+│   └── deploy_skills.py            # 설치본 검증·동기화 스크립트
 ├── templates/
 │   └── skill/                      # README/CHANGELOG 생성 템플릿
 ├── .github/
@@ -148,13 +160,10 @@ skills/
 - `soul-extractor`: 허가된 글 샘플에서 문체 지문을 추출하고 스타일 일치도를 점검하는 스킬
 - `code-to-figma`: 구현된 웹 화면(URL)을 Figma로 옮기는 스킬 — 단일 화면은 디자인 시스템 바인딩 편집 레이어, 여러 화면은 픽셀 캡처 그리드
 
-## Next Step
+## Release Flow
 
-이 레포에서 다음으로 이어질 작업은 보통 아래 순서입니다.
-
-1. 새 스킬 초안을 밖에서 만든다.
-2. 이 저장소로 가져와 표준 형식에 맞춘다.
-3. `main`에 푸시한다.
-4. CI가 실패하면 자동 normalize PR이 생성될 수 있다.
-5. normalize PR을 머지한다.
-6. `validate_skills.py`가 다시 통과하는지 확인한다.
+1. 새 스킬 초안을 저장소 밖에서 만든다.
+2. 이 저장소로 가져와 표준 형식과 테스트를 맞춘다.
+3. validator·unit test·`deploy_skills.py --check`를 실행한다.
+4. `main`에 푸시한다.
+5. CI를 통과한 소스를 `deploy_skills.py`로 설치본에 동기화한다.
