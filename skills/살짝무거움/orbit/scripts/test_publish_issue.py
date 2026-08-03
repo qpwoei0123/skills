@@ -23,6 +23,40 @@ class PublishIssueTest(unittest.TestCase):
             f"<!-- orbit-fingerprint: {fingerprint} -->",
         ])
 
+    def test_api_request_serializes_gitlab_auth_and_json_payload(self):
+        class FakeResponse:
+            headers = {"X-Next-Page": ""}
+
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *_):
+                return False
+
+            def read(self):
+                return b'{"iid": 7}'
+
+        with patch.object(
+            MODULE.urllib.request,
+            "urlopen",
+            return_value=FakeResponse(),
+        ) as urlopen:
+            payload, headers = MODULE.api_request(
+                "POST",
+                "https://gitlab.example.com/api/v4/projects/owner%2Frepo/issues",
+                "gitlab",
+                "test-token",
+                {"title": "test"},
+            )
+
+        request = urlopen.call_args.args[0]
+        request_headers = {key.lower(): value for key, value in request.header_items()}
+        self.assertEqual(request.method, "POST")
+        self.assertEqual(request_headers["private-token"], "test-token")
+        self.assertEqual(json.loads(request.data), {"title": "test"})
+        self.assertEqual(payload, {"iid": 7})
+        self.assertEqual(headers, {"X-Next-Page": ""})
+
     def test_fingerprint_candidates_keeps_current_then_unique_legacy_aliases(self):
         self.assertEqual(
             MODULE.fingerprint_candidates(
@@ -498,30 +532,100 @@ class PublishIssueTest(unittest.TestCase):
 
     def test_github_update_reapplies_labels(self):
         fingerprint = "pipeline:owner/repo:SAFE:f-33333333"
+        responses = [
+            ([{"name": "automation"}], {}),
+            ([{
+                "number": 5,
+                "state": "open",
+                "body": self.make_body(fingerprint),
+            }], {"Link": ""}),
+            ({"number": 5, "html_url": "https://github.com/owner/repo/issues/5"}, {}),
+        ]
+        requests = []
+
+        def fake_api_request(method, url, platform, token, data=None):
+            requests.append((method, url, platform, token, data))
+            return responses.pop(0)
 
         with patch.object(MODULE, "load_auth", return_value=("token", "https://api.github.com")):
-            with patch.object(MODULE, "github_ensure_labels"):
-                with patch.object(
-                    MODULE,
-                    "find_existing_issue",
-                    return_value={"number": 5, "state": "open"},
-                ):
-                    with patch.object(
-                        MODULE,
-                        "github_update",
-                        return_value={"number": 5, "html_url": "https://github.com/owner/repo/issues/5"},
-                    ) as update_mock:
-                        result = MODULE.publish_issue(
-                            "https://github.com/owner/repo",
-                            "[view: SAFE] 테스트",
-                            self.make_body(fingerprint),
-                            fingerprint,
-                            ["automation"],
-                        )
+            with patch.object(MODULE, "api_request", side_effect=fake_api_request):
+                result = MODULE.publish_issue(
+                    "https://github.com/owner/repo",
+                    "[view: SAFE] 테스트",
+                    self.make_body(fingerprint),
+                    fingerprint,
+                    ["automation"],
+                )
 
         self.assertEqual(result["action"], "updated")
-        self.assertEqual(update_mock.call_args.args[-2], ["automation"])
-        self.assertIsNone(update_mock.call_args.args[-1])  # state=None (open 이슈는 상태 변경 없음)
+        patch_request = next(request for request in requests if request[0] == "PATCH")
+        self.assertEqual(
+            patch_request[-1],
+            {
+                "title": "[view: SAFE] 테스트",
+                "body": self.make_body(fingerprint),
+                "labels": ["automation"],
+            },
+        )
+        self.assertEqual(len(responses), 0)
+
+    def test_gitlab_create_encodes_project_and_payload(self):
+        with patch.object(
+            MODULE,
+            "api_request",
+            return_value=({"iid": 7, "web_url": "https://gitlab.example.com/issues/7"}, {}),
+        ) as api_request:
+            result = MODULE.gitlab_create(
+                "https://gitlab.example.com",
+                "owner/repo",
+                "token",
+                "title",
+                "body",
+                ["automation", "orbit"],
+            )
+
+        api_request.assert_called_once_with(
+            "POST",
+            "https://gitlab.example.com/api/v4/projects/owner%2Frepo/issues",
+            "gitlab",
+            "token",
+            {
+                "title": "title",
+                "description": "body",
+                "labels": "automation,orbit",
+            },
+        )
+        self.assertEqual(result["iid"], 7)
+
+    def test_gitlab_update_omits_state_event_when_none(self):
+        with patch.object(
+            MODULE,
+            "api_request",
+            return_value=({"iid": 7, "web_url": "https://gitlab.example.com/issues/7"}, {}),
+        ) as api_request:
+            MODULE.gitlab_update(
+                "https://gitlab.example.com",
+                "owner/repo",
+                "token",
+                7,
+                "title",
+                "body",
+                ["automation"],
+                None,
+            )
+
+        method, url, platform, token, data = api_request.call_args.args
+        self.assertEqual(method, "PUT")
+        self.assertEqual(
+            url,
+            "https://gitlab.example.com/api/v4/projects/owner%2Frepo/issues/7",
+        )
+        self.assertEqual(platform, "gitlab")
+        self.assertEqual(token, "token")
+        self.assertEqual(
+            data,
+            {"title": "title", "description": "body", "labels": "automation"},
+        )
 
 
 if __name__ == "__main__":

@@ -2,8 +2,8 @@
 name: orbit
 license: Apache-2.0
 metadata:
-  version: 1.12.1
-description: (v1.12.1) 레포를 SAFE/ARCH/DEP/BUILD/DATA/OPS/DOC 7개 관점으로 점검해 통과한 finding만 GitHub/GitLab 이슈로 발행하는 워크플로 스킬. "레포 점검해줘", "기술 부채 찾아줘", "의존성/CI/아키텍처 점검해줘", "이슈 자동 등록해줘", "$orbit" 등 정기 레포 감사나 기술 이슈 발행 요청에 사용한다. 특정 PR/diff 리뷰나 단발성 코드 수정은 code-review를 쓴다.
+  version: 1.12.2
+description: (v1.12.2) 레포를 SAFE/ARCH/DEP/BUILD/DATA/OPS/DOC 7개 관점으로 점검해 통과한 finding만 GitHub/GitLab 이슈로 발행하는 워크플로 스킬. "레포 점검해줘", "기술 부채 찾아줘", "의존성/CI/아키텍처 점검해줘", "이슈 자동 등록해줘", "$orbit" 등 정기 레포 감사나 기술 이슈 발행 요청에 사용한다. 특정 PR/diff 리뷰나 단발성 코드 수정은 code-review를 쓴다.
 ---
 
 # orbit 🪐
@@ -28,27 +28,35 @@ description: (v1.12.1) 레포를 SAFE/ARCH/DEP/BUILD/DATA/OPS/DOC 7개 관점으
 ## 디렉터리 구조
 
 ```text
-orbit/                          # 스킬 루트
-├── SKILL.md                         # 스킬 메인 규칙과 실행 흐름
-├── assets/                          # README용 시각 에셋
-│   └── orbit.png               # orbit 대표 이미지
-├── agents/                          # view별 리뷰어와 리드 리뷰어 지침
-│   ├── orchestrator.md              # 리드 리뷰어 공통 제어, 병합, triage, 발행 규칙
-│   ├── SAFE.md                      # 변경 안전성 view 지침
-│   ├── ARCH.md                      # 경계 건강도 view 지침
-│   ├── DEP.md                       # 의존성/설정 안정성 view 지침
-│   ├── BUILD.md                     # 빌드/배포 재현성 view 지침
-│   ├── DATA.md                      # 데이터 구조 & 흐름 view 지침
-│   ├── OPS.md                       # 운영 관측성 view 지침
-│   └── DOC.md                       # 지식 내구성 view 지침
-├── references/                      # 공통 참조 문서와 출력 계약
-│   ├── agent-playbook.md            # 리뷰어 공통 조사 원칙과 승격 조건
-│   ├── execution-lifecycle.md       # Step 3~4.5 실행 세부 규칙
-│   ├── triage-rules.md              # triage override와 재검토 기준
-│   ├── output-templates.md          # 이슈 본문과 최종 보고 템플릿
-│   ├── coverage-log-schema.md       # coverage-log/result 저장 스키마
-│   └── view-playbooks.md            # 과거 플레이북 호환 안내
-└── scripts/                         # 자동 발행과 테스트 스크립트
+orbit/                               # 스킬 루트
+├── SKILL.md                          # 스킬 메인 규칙과 실행 흐름
+├── README.md                         # 설치·인증·사용 안내
+├── CHANGELOG.md                      # 버전별 변경 이력
+├── INDEX.md                          # 리소스 탐색 순서
+├── LICENSE
+├── agents/                           # view별 리뷰어와 Codex 메타데이터
+│   ├── openai.yaml
+│   ├── orchestrator.md
+│   ├── SAFE.md
+│   ├── ARCH.md
+│   ├── DEP.md
+│   ├── BUILD.md
+│   ├── DATA.md
+│   ├── OPS.md
+│   └── DOC.md
+├── evals/
+│   ├── evals.json                    # 동작 시나리오
+│   └── trigger-eval.json             # 트리거 경계 케이스
+├── references/                       # 공통 참조 문서와 출력 계약
+│   ├── agent-playbook.md
+│   ├── coverage-log-schema.md
+│   ├── execution-lifecycle.md
+│   ├── output-templates.md
+│   ├── repo-types.md
+│   ├── triage-rules.md
+│   └── view-playbooks.md
+└── scripts/                          # 자동 발행과 테스트 스크립트
+    ├── pipeline_contracts.py        # view·채점·triage·fingerprint 순수 계약 로직
     ├── publish_issue.py             # GitHub/GitLab 이슈 create/update (closed 이슈는 skipped_closed 반환)
     ├── test_contracts.py            # 문서/발행 계약 정합성 테스트
     ├── test_pipeline.py             # Step 1~5 파이프라인 로직 테스트

@@ -11,6 +11,7 @@
 
 | 파일 | 역할 |
 |------|------|
+| [agents/openai.yaml](agents/openai.yaml) | Codex 표시 메타데이터와 기본 `$orbit` 프롬프트 |
 | [agents/orchestrator.md](agents/orchestrator.md) | 리드 리뷰어: 병합·채점·발행 공통 제어 |
 | [agents/SAFE.md](agents/SAFE.md) | 변경 안전성 (월) |
 | [agents/ARCH.md](agents/ARCH.md) | 경계 건강도 (화) |
@@ -35,6 +36,7 @@
 
 | 파일 | 역할 |
 |------|------|
+| [scripts/pipeline_contracts.py](scripts/pipeline_contracts.py) | view·채점·triage·fingerprint 순수 계약 로직 |
 | [scripts/publish_issue.py](scripts/publish_issue.py) | GitHub/GitLab 이슈 create/update, fingerprint 중복 체크 |
 | [scripts/test_contracts.py](scripts/test_contracts.py) | 문서/발행 계약 정합성 테스트 |
 | [scripts/test_publish_issue.py](scripts/test_publish_issue.py) | publish_issue.py 회귀 테스트 |

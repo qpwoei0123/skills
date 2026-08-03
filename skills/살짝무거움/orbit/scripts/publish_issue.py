@@ -8,7 +8,6 @@ GitHub / GitLab 이슈 생성, 업데이트를 담당한다.
 from __future__ import annotations
 
 import argparse
-import hashlib
 import json
 import os
 import re
@@ -17,6 +16,8 @@ import urllib.error
 import urllib.parse
 import urllib.request
 from pathlib import Path
+
+from pipeline_contracts import build_finding_id, is_current_fingerprint
 
 
 # 재시도 정책: 429(rate limit) 와 5xx(일시 오류) 에 한정
@@ -31,8 +32,6 @@ _LEGACY_FINGERPRINT_LINE_TEMPLATE = r"^`?fingerprint:\s*{fingerprint}`?$"
 _LEGACY_FORMAT_VERSION_LINE_RE = re.compile(
     r"^`?format_version:\s*orbit/v2(?:\.[0-9]+)*`?$"
 )
-_CURRENT_FINGERPRINT_RE = re.compile(r"^pipeline:[^:]+:[A-Z]+:f-[0-9a-f]{8}$")
-_WHITESPACE_RE = re.compile(r"\s+")
 
 
 class PublishFallback(Exception):
@@ -115,11 +114,6 @@ def format_fingerprint_footer(fingerprint: str) -> str:
     return f"<!-- orbit-fingerprint: {fingerprint} -->"
 
 
-def is_current_fingerprint(fingerprint: str) -> bool:
-    """현재 finding ID 계약을 따르는 fingerprint인지 확인한다."""
-    return bool(_CURRENT_FINGERPRINT_RE.match(fingerprint))
-
-
 def fingerprint_scope(fingerprint: str) -> tuple[str, str] | None:
     """fingerprint에서 repo와 view 범위를 추출한다."""
     parts = fingerprint.strip().split(":")
@@ -133,18 +127,6 @@ def same_fingerprint_scope(current: str, candidate: str) -> bool:
     current_scope = fingerprint_scope(current)
     candidate_scope = fingerprint_scope(candidate)
     return current_scope is not None and current_scope == candidate_scope
-
-
-def normalize_finding_part(value: str) -> str:
-    """finding_id 해시에 들어갈 텍스트를 정규화한다."""
-    return _WHITESPACE_RE.sub(" ", value.lower().strip())
-
-
-def build_finding_id(claim: str, impact_surface: str) -> str:
-    """claim과 impact_surface만으로 안정적인 finding_id를 만든다."""
-    payload = f"{normalize_finding_part(claim)}\n{normalize_finding_part(impact_surface)}"
-    digest = hashlib.sha1(payload.encode("utf-8")).hexdigest()[:8]
-    return f"f-{digest}"
 
 
 def fingerprint_candidates(
@@ -463,15 +445,19 @@ def github_update(
     title: str,
     body: str,
     labels: list[str],
-    state: str = "open",
+    state: str | None = None,
 ) -> dict:
     """GitHub 이슈를 업데이트한다."""
+    data = {"title": title, "body": body, "labels": labels}
+    if state is not None:
+        data["state"] = state
+
     payload, _ = api_request(
         "PATCH",
         f"{api_base}/repos/{project}/issues/{number}",
         "github",
         token,
-        {"title": title, "body": body, "labels": labels, "state": state},
+        data,
     )
     return payload
 

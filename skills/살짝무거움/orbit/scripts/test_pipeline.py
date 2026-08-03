@@ -3,35 +3,18 @@ orbit 파이프라인 로직 단위 테스트 (Step 1~5)
 publish_issue.py 와 분리된 순수 로직 검증.
 """
 import hashlib
-import importlib.util
 import unittest
-from pathlib import Path
 
-
-SCRIPT_PATH = Path(__file__).resolve().parent / "publish_issue.py"
-SPEC = importlib.util.spec_from_file_location("repo_orbit_publish_issue", SCRIPT_PATH)
-MODULE = importlib.util.module_from_spec(SPEC)
-assert SPEC.loader is not None
-SPEC.loader.exec_module(MODULE)
+from pipeline_contracts import (
+    build_finding_id,
+    compute_actionability,
+    is_current_fingerprint as validate_fingerprint,
+    resolve_view,
+    triage_pass,
+)
 
 
 # ─── Step 1: View 결정 ────────────────────────────────────────────────────────
-
-WEEKDAY_VIEW = {
-    0: "SAFE",   # 월
-    1: "ARCH",   # 화
-    2: "DEP",    # 수
-    3: "BUILD",  # 목
-    4: "DATA",   # 금
-    5: "OPS",    # 토
-    6: "DOC",    # 일
-}
-
-def resolve_view(weekday: int, override: str | None = None) -> str:
-    if override:
-        return override.upper()
-    return WEEKDAY_VIEW[weekday]
-
 
 class ViewResolutionTest(unittest.TestCase):
     def test_weekday_mapping(self):
@@ -51,20 +34,6 @@ class ViewResolutionTest(unittest.TestCase):
 
 # ─── Step 4: actionability 채점 공식 ─────────────────────────────────────────
 
-def compute_actionability(next_step: str) -> int:
-    score = 0
-    import re
-    if re.search(r'\S+/\S+\.\w+|:\d+', next_step):   # 파일 경로
-        score += 2
-    if re.search(r'`[^`]+`|\b[A-Z_]{2,}\b', next_step):  # 식별자
-        score += 1
-    if re.search(r'\bnpm\b|\bpip\b|\bgit\b|\bpython\b|\bbash\b|--\w+', next_step):  # CLI
-        score += 1
-    if len(next_step.split('.')[0]) > 0 and next_step.count('.') <= 1:  # 한 문장 이하
-        score += 1
-    return min(score, 5)
-
-
 class ActionabilityTest(unittest.TestCase):
     def test_full_score_five(self):
         next_step = "`src/middleware/auth.ts:12`에 경로 추가 후 `npm test` 실행"
@@ -80,18 +49,6 @@ class ActionabilityTest(unittest.TestCase):
 
 
 # ─── Step 5: Triage 통과 조건 ─────────────────────────────────────────────────
-
-def triage_pass(impact: int, urgency: int, confidence: str, actionability: int) -> tuple[bool, str]:
-    if impact < 4:
-        return False, "low_impact"
-    if urgency < 3:
-        return False, "low_urgency"
-    if confidence == "low":
-        return False, "low_confidence"
-    if actionability < 3:
-        return False, "low_actionability"
-    return True, "pass"
-
 
 class TriageTest(unittest.TestCase):
     def test_all_conditions_met(self):
@@ -133,18 +90,6 @@ class TriageTest(unittest.TestCase):
 
 
 # ─── Step 4: fingerprint 형식 검증 ───────────────────────────────────────────
-
-import re
-
-FINGERPRINT_PATTERN = re.compile(r'^pipeline:[^:]+:[A-Z]+:f-[0-9a-f]{8}$')
-
-def validate_fingerprint(fp: str) -> bool:
-    return bool(FINGERPRINT_PATTERN.match(fp))
-
-
-def build_finding_id(claim: str, impact_surface: str) -> str:
-    return MODULE.build_finding_id(claim, impact_surface)
-
 
 class FingerprintTest(unittest.TestCase):
     def test_valid_fingerprint(self):

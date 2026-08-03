@@ -1,5 +1,18 @@
 # Changelog
 
+## 1.12.2
+
+### Added
+- `agents/openai.yaml`에 Codex 표시 이름·짧은 설명·기본 `$orbit` 프롬프트 추가
+
+### Fixed
+- 열린 GitHub 이슈를 업데이트할 때 `state: null`을 보내지 않고 상태 필드를 생략하도록 수정
+
+### Changed
+- Step 1·4·5 파이프라인 계약 로직을 `scripts/pipeline_contracts.py`로 추출해 발행 코드와 테스트가 같은 구현을 사용하도록 정리
+- GitHub/GitLab 요청 payload와 인증 헤더 경계 테스트 보강
+- SKILL/README 파일 트리를 실제 패키지 구조와 동기화
+
 ## 1.12.1
 
 ### Changed
