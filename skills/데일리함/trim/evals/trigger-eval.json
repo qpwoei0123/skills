@@ -4,6 +4,7 @@
   {"query": "여기저기 흩어진 중복 코드 합쳐줘", "should_trigger": true},
   {"query": "결제 검증 로직이 세 군데 반복되는데 공통화해줘", "should_trigger": true},
   {"query": "/trim --go", "should_trigger": true},
+  {"query": "변경분을 단순하게 다듬고 필요한 이유만 주석으로 남겨줘", "should_trigger": true, "expected_behavior": "trim이 전체 코드 정리와 검증을 맡고 annotate가 최종 diff의 주석 단계만 이어간다"},
   {"query": "작업 끝났으니 커밋 정리해줘", "should_trigger": false},
   {"query": "이 함수 왜 이렇게 짰는지 주석 정리해줘", "should_trigger": false},
   {"query": "이 변경에 버그 없는지 리뷰해줘", "should_trigger": false},

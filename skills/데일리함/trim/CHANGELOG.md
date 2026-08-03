@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.4.2
+
+### Changed
+- weave 세부 판정을 기존 reference로 위임하고 상태·구조·금지 기준의 중복을 줄여 SKILL.md 경량화
+- 코드 정리와 주석을 함께 요청하면 trim이 전체 수정 흐름을 소유하고 검증 후 annotate를 잇도록 연계 계약 명시
+
 ## 0.4.1
 
 ### Added
