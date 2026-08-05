@@ -1,0 +1,4 @@
+interface:
+  display_name: "고맥락 리뷰"
+  short_description: "큰 PR/MR에서 사람이 답해야 할 핵심 질문만 추립니다"
+  default_prompt: "$context-review로 이 PR과 관련 자료에서 고맥락 리뷰 질문을 뽑아 주세요."
