@@ -145,7 +145,7 @@ python3 scripts/deploy_skills.py --check     # 버전과 실제 파일 내용 �
     │   └── wow/                    # 설계 관점 재구상 스킬
     └── 살짝무거움/                 # 멀티스텝 워크플로
         ├── context-review/         # 큰 PR/MR에서 고맥락 질문을 추리는 리뷰 스킬
-        ├── ship/                   # 정리부터 Draft PR/MR까지 잇는 출항 워크플로
+        ├── ship/                   # 새 Draft 생성·기존 Draft 갱신까지 잇는 출항 워크플로
         ├── orbit/                  # 레포 점검/이슈 발행 워크플로 스킬
         ├── soul-extractor/         # 허가된 문체 지문 추출/변환 스킬
         └── code-to-figma/          # 웹 화면 → Figma 변환 스킬
@@ -161,7 +161,7 @@ python3 scripts/deploy_skills.py --check     # 버전과 실제 파일 내용 �
 - `orbit 🪐`: 레포를 요일별 관점으로 분석하고 finding을 이슈로 발행하는 워크플로 스킬
 - `soul-extractor`: 허가된 글 샘플에서 문체 지문을 추출하고 스타일 일치도를 점검하는 스킬
 - `code-to-figma`: 구현된 웹 화면(URL)을 Figma로 옮기는 스킬 — 단일 화면은 디자인 시스템 바인딩 편집 레이어, 여러 화면은 픽셀 캡처 그리드
-- `ship`: 현재 작업을 다듬고 주석·검증·커밋한 뒤 Draft PR/MR까지 한 번에 만드는 출항 워크플로
+- `ship`: 현재 작업을 다듬고 주석·검증·커밋한 뒤 새 Draft를 만들거나 기존 Draft 본문을 갱신하는 출항 워크플로
 - `context-review`: 큰 PR/MR과 관련 자료에서 사람이 답해야 할 고맥락 리뷰 질문만 근거와 함께 추리는 스킬
 
 ## 추천 사용 흐름
@@ -183,7 +183,7 @@ wow? → trim? → annotate? → commit? → mr?
 /annotate --go 최종 diff에서 코드만으로 안 보이는 이유만 주석으로 남겨줘
 /commit --go 변경분을 의미 단위로 나눠 커밋해줘
 /mr --go 현재 브랜치를 draft PR/MR로 올려줘
-$ship --go 현재 작업을 다듬고 커밋해 Draft PR/MR까지 출항시켜줘
+$ship --go 현재 작업을 다듬고 커밋해 새 Draft를 만들거나 기존 Draft를 갱신해줘
 $context-review <PR/MR URL> 이 변경에서 사람이 답해야 할 고맥락 질문만 추려줘
 ```
 
@@ -191,7 +191,7 @@ $context-review <PR/MR URL> 이 변경에서 사람이 답해야 할 고맥락 �
 
 - "변경분을 다듬고 필요한 주석도 남겨줘" → `trim`이 수정·검증한 뒤 `annotate`가 최종 diff에 주석을 남김
 - "커밋하고 PR까지 올려줘" → `mr`이 전체 흐름을 맡고 `commit`을 먼저 실행한 뒤 push·draft 리뷰 요청을 이어감
-- "다듬고 주석·커밋해서 Draft까지 한 번에 올려줘" → `ship`이 전체 흐름을 맡고 `trim → annotate → commit → mr`을 순서대로 실행함
+- "다듬고 주석·커밋해서 Draft까지 한 번에 올려줘" → `ship`이 전체 흐름을 맡아 새 Draft를 만들고, 현재 branch에 Draft가 있으면 생성 대신 기존 본문을 갱신함
 
 ## Release Flow
 

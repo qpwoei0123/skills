@@ -1,4 +1,4 @@
 interface:
   display_name: "출항"
-  short_description: "변경을 다듬고 커밋해 Draft PR/MR까지 출항시킵니다"
-  default_prompt: "$ship --go로 현재 작업을 다듬고 커밋해 Draft PR/MR로 출항시켜 주세요."
+  short_description: "새 Draft를 만들거나 기존 Draft 본문을 갱신합니다"
+  default_prompt: "$ship --go로 현재 작업을 다듬고 커밋해 새 Draft를 만들거나 기존 Draft를 갱신해 주세요."
