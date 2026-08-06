@@ -144,6 +144,7 @@ python3 scripts/deploy_skills.py --check     # 버전과 실제 파일 내용 �
     │   ├── trim/                   # diff 군더더기 축소·중복 엮기 스킬 (weave 흡수)
     │   └── wow/                    # 설계 관점 재구상 스킬
     └── 살짝무거움/                 # 멀티스텝 워크플로
+        ├── code-visualizer/        # 코드·아키텍처를 단일 HTML로 설명하는 시각화 스킬
         ├── context-review/         # 큰 PR/MR에서 고맥락 질문을 추리는 리뷰 스킬
         ├── ship/                   # 새 Draft 생성·기존 Draft 갱신까지 잇는 출항 워크플로
         ├── orbit/                  # 레포 점검/이슈 발행 워크플로 스킬
@@ -163,6 +164,7 @@ python3 scripts/deploy_skills.py --check     # 버전과 실제 파일 내용 �
 - `code-to-figma`: 구현된 웹 화면(URL)을 Figma로 옮기는 스킬 — 단일 화면은 디자인 시스템 바인딩 편집 레이어, 여러 화면은 픽셀 캡처 그리드
 - `ship`: 현재 작업을 다듬고 주석·검증·커밋한 뒤 새 Draft를 만들거나 기존 Draft 본문을 갱신하는 출항 워크플로
 - `context-review`: 큰 PR/MR과 관련 자료에서 사람이 답해야 할 고맥락 리뷰 질문만 근거와 함께 추리는 스킬
+- `code-visualizer`: 코드·diff의 아키텍처와 실행·데이터·상태 흐름을 근거가 연결된 단일 HTML로 보여주는 스킬
 
 ## 추천 사용 흐름
 
@@ -185,6 +187,7 @@ wow? → trim? → annotate? → commit? → mr?
 /mr --go 현재 브랜치를 draft PR/MR로 올려줘
 $ship --go 현재 작업을 다듬고 커밋해 새 Draft를 만들거나 기존 Draft를 갱신해줘
 $context-review <PR/MR URL> 이 변경에서 사람이 답해야 할 고맥락 질문만 추려줘
+$code-visualizer 이 기능의 요청부터 저장까지를 HTML로 한눈에 보여줘
 ```
 
 복합 요청은 다음 스킬이 전체 흐름을 맡습니다.

@@ -1,0 +1,12 @@
+<div class="state-grid" style="--columns: 3" aria-label="{{QUESTION}}">
+  <article class="node static entry {{E1_CLASS}}"><span class="node-title">{{INITIAL_STATE}}</span><span class="badge {{E1_CLASS}}">{{E1_LABEL}} · initial</span></article>
+  <article class="node static domain {{E2_CLASS}}"><span class="node-title">{{ACTIVE_STATE}}</span><span class="badge {{E2_CLASS}}">{{E2_LABEL}}</span></article>
+  <article class="node static data {{E3_CLASS}}"><span class="node-title">{{TERMINAL_STATE}}</span><span class="badge {{E3_CLASS}}">{{E3_LABEL}} · terminal</span></article>
+</div>
+<table aria-label="상태 전이 근거">
+  <thead><tr><th>From</th><th>event · guard</th><th>To</th><th>근거</th></tr></thead>
+  <tbody>
+    <tr><td>{{INITIAL_STATE}}</td><td>{{EVENT_1}} · {{GUARD_1}}</td><td>{{ACTIVE_STATE}}</td><td>{{E2_LABEL}}</td></tr>
+    <tr><td>{{ACTIVE_STATE}}</td><td>{{EVENT_2}} · {{GUARD_2}}</td><td>{{TERMINAL_STATE}}</td><td>{{E3_LABEL}}</td></tr>
+  </tbody>
+</table>

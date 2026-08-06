@@ -1,0 +1,849 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'none'; img-src data:; style-src 'unsafe-inline'; script-src 'sha256-8BBuom7rIiJyAIbPv+cLPZRnYHPDi2sQ76UZcPeh8RM='; connect-src 'none'; object-src 'none'; frame-src 'none'; base-uri 'none'; form-action 'none'"
+    >
+    <title>{{TITLE}}</title>
+    <style>
+      :root {
+        color-scheme: light dark;
+        --bg: #f4f6f8;
+        --surface: #ffffff;
+        --surface-2: #f8fafc;
+        --ink: #18212f;
+        --muted: #5f6b7a;
+        --line: #d9e0e8;
+        --line-strong: #9aa8b8;
+        --entry: #0b74c8;
+        --domain: #7555c7;
+        --data: #187d61;
+        --external: #a86608;
+        --risk: #b42318;
+        --focus: #0369a1;
+        --shadow: 0 12px 34px rgba(32, 49, 70, 0.08);
+        --radius: 16px;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html {
+        background: var(--bg);
+        scroll-behavior: smooth;
+      }
+
+      body {
+        margin: 0;
+        min-width: 320px;
+        color: var(--ink);
+        background: var(--bg);
+        font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        font-size: 16px;
+        line-height: 1.55;
+      }
+
+      button,
+      code,
+      pre {
+        font: inherit;
+      }
+
+      button {
+        color: inherit;
+      }
+
+      :focus-visible {
+        outline: 3px solid color-mix(in srgb, var(--focus) 72%, transparent);
+        outline-offset: 3px;
+      }
+
+      .shell {
+        width: min(1440px, 100%);
+        margin: 0 auto;
+        padding: 24px;
+      }
+
+      .hero {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 20px;
+        align-items: end;
+        margin-bottom: 18px;
+      }
+
+      .eyebrow {
+        margin: 0 0 4px;
+        color: var(--entry);
+        font-size: 0.76rem;
+        font-weight: 800;
+        letter-spacing: 0.11em;
+        text-transform: uppercase;
+      }
+
+      h1,
+      h2,
+      h3,
+      p {
+        margin-top: 0;
+      }
+
+      h1 {
+        max-width: 980px;
+        margin-bottom: 6px;
+        font-size: clamp(1.75rem, 3vw, 2.7rem);
+        line-height: 1.12;
+        letter-spacing: -0.035em;
+      }
+
+      h2 {
+        margin-bottom: 8px;
+        font-size: 1.05rem;
+        letter-spacing: -0.012em;
+      }
+
+      h3 {
+        margin-bottom: 6px;
+        font-size: 0.96rem;
+      }
+
+      .lede {
+        max-width: 960px;
+        margin-bottom: 0;
+        color: var(--muted);
+        font-size: 1.04rem;
+      }
+
+      .chips {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+        gap: 7px;
+        max-width: 520px;
+      }
+
+      .chip,
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        width: fit-content;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        background: var(--surface);
+        color: var(--muted);
+        font-size: 0.75rem;
+        font-weight: 750;
+        line-height: 1;
+      }
+
+      .chip {
+        min-height: 30px;
+        padding: 7px 10px;
+      }
+
+      .badge {
+        min-height: 22px;
+        padding: 4px 7px;
+      }
+
+      .badge.fact {
+        border-color: color-mix(in srgb, var(--entry) 38%, var(--line));
+        color: var(--entry);
+      }
+
+      .badge.inference {
+        border-style: dashed;
+        border-color: var(--domain);
+        color: var(--domain);
+      }
+
+      .badge.unknown,
+      .chip.risk {
+        border-style: dotted;
+        border-color: var(--risk);
+        color: var(--risk);
+      }
+
+      .layout {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(290px, 0.34fr);
+        gap: 16px;
+        align-items: start;
+      }
+
+      .panel {
+        min-width: 0;
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        background: var(--surface);
+        box-shadow: var(--shadow);
+      }
+
+      .visual-panel {
+        overflow: hidden;
+      }
+
+      .visual-head {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 14px 16px;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .visual-head p {
+        margin: 0;
+        color: var(--muted);
+        font-size: 0.83rem;
+      }
+
+      .route-controls {
+        display: none;
+        flex-wrap: wrap;
+        gap: 6px;
+      }
+
+      .js .route-controls {
+        display: flex;
+      }
+
+      .route-button,
+      .reset-button {
+        min-height: 32px;
+        padding: 7px 10px;
+        border: 1px solid var(--line);
+        border-radius: 9px;
+        background: var(--surface-2);
+        cursor: pointer;
+        font-size: 0.78rem;
+        font-weight: 750;
+      }
+
+      .reset-button {
+        display: none;
+      }
+
+      .js .reset-button {
+        display: inline-block;
+      }
+
+      .route-button[aria-pressed="true"],
+      .reset-button:hover {
+        border-color: var(--focus);
+        background: color-mix(in srgb, var(--focus) 10%, var(--surface));
+        color: var(--focus);
+      }
+
+      .canvas {
+        min-height: 470px;
+        padding: 24px;
+        overflow: auto;
+        background:
+          linear-gradient(var(--surface-2), var(--surface-2)) padding-box,
+          repeating-linear-gradient(
+            0deg,
+            transparent,
+            transparent 31px,
+            color-mix(in srgb, var(--line) 42%, transparent) 32px
+          );
+      }
+
+      .flow-row,
+      .pipeline,
+      .compare-grid,
+      .state-grid,
+      .lane-grid {
+        display: grid;
+        gap: 12px;
+        align-items: stretch;
+      }
+
+      .flow-row,
+      .pipeline {
+        grid-template-columns: repeat(var(--columns, 4), minmax(150px, 1fr));
+      }
+
+      .compare-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .state-grid {
+        grid-template-columns: repeat(var(--columns, 3), minmax(150px, 1fr));
+      }
+
+      .lane-grid {
+        grid-template-columns: repeat(var(--lanes, 4), minmax(145px, 1fr));
+      }
+
+      .lane,
+      .group,
+      .compare-column {
+        min-width: 0;
+        border: 1px solid var(--line);
+        border-radius: 13px;
+        background: color-mix(in srgb, var(--surface) 82%, var(--surface-2));
+        padding: 12px;
+      }
+
+      .lane-title,
+      .group-title {
+        margin-bottom: 10px;
+        color: var(--muted);
+        font-size: 0.74rem;
+        font-weight: 850;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .node {
+        position: relative;
+        display: grid;
+        gap: 6px;
+        width: 100%;
+        min-height: 94px;
+        padding: 13px;
+        border: 2px solid var(--line-strong);
+        border-radius: 13px;
+        background: var(--surface);
+        text-align: left;
+        cursor: pointer;
+        transition: opacity 160ms ease, border-color 160ms ease, transform 160ms ease;
+      }
+
+      .node:hover {
+        border-color: var(--focus);
+      }
+
+      .node.static {
+        cursor: default;
+      }
+
+      .node.static:hover {
+        border-color: var(--line-strong);
+      }
+
+      .node.is-selected {
+        border-color: var(--focus);
+        box-shadow: 0 0 0 4px color-mix(in srgb, var(--focus) 13%, transparent);
+        transform: translateY(-2px);
+      }
+
+      .node.inference {
+        border-style: dashed;
+      }
+
+      .node.unknown {
+        border-style: dotted;
+        border-color: var(--risk);
+      }
+
+      .node.entry {
+        border-top-color: var(--entry);
+      }
+
+      .node.domain {
+        border-top-color: var(--domain);
+      }
+
+      .node.data {
+        border-top-color: var(--data);
+      }
+
+      .node.external {
+        border-top-color: var(--external);
+      }
+
+      .node-title {
+        font-weight: 850;
+        line-height: 1.25;
+        overflow-wrap: anywhere;
+      }
+
+      .node-copy {
+        color: var(--muted);
+        font-size: 0.82rem;
+        line-height: 1.4;
+      }
+
+      .node-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 5px;
+        align-items: center;
+      }
+
+      .connector {
+        display: grid;
+        grid-template-columns: minmax(16px, 1fr) auto auto;
+        gap: 6px;
+        align-items: center;
+        justify-content: center;
+        min-height: 34px;
+        color: var(--line-strong);
+        font-size: 0.72rem;
+        font-weight: 750;
+      }
+
+      .connector::before {
+        width: 100%;
+        border-top: 2px solid currentColor;
+        content: "";
+      }
+
+      .connector::after {
+        content: "→";
+        font-size: 1.1rem;
+        line-height: 1;
+      }
+
+      .connector.fact {
+        color: var(--line-strong);
+      }
+
+      .connector.inference {
+        color: var(--domain);
+      }
+
+      .connector.inference::before {
+        border-top-style: dashed;
+      }
+
+      .connector.unknown {
+        color: var(--risk);
+      }
+
+      .connector.unknown::before {
+        border-top-style: dotted;
+      }
+
+      .connector.vertical {
+        grid-template-columns: 1fr;
+        justify-items: center;
+      }
+
+      .connector.vertical::before {
+        width: 0;
+        height: 22px;
+        border-top: 0;
+        border-left: 2px solid currentColor;
+      }
+
+      .connector.vertical.inference::before {
+        border-left-style: dashed;
+      }
+
+      .connector.vertical.unknown::before {
+        border-left-style: dotted;
+      }
+
+      .connector.vertical::after {
+        content: "↓";
+      }
+
+      [data-route].is-dimmed {
+        opacity: 0.2;
+      }
+
+      .inspector {
+        position: sticky;
+        top: 16px;
+        max-height: calc(100vh - 32px);
+        overflow: auto;
+        padding: 16px;
+      }
+
+      .inspector-kicker {
+        margin-bottom: 8px;
+        color: var(--muted);
+        font-size: 0.75rem;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      [data-detail-panel] {
+        margin-top: 12px;
+        padding-top: 12px;
+        border-top: 1px solid var(--line);
+      }
+
+      .js [data-detail-panel]:not(.is-active) {
+        display: none;
+      }
+
+      .source-list,
+      .step-list {
+        margin: 10px 0 0;
+        padding-left: 1.25rem;
+      }
+
+      .source-list li,
+      .step-list li {
+        margin: 6px 0;
+      }
+
+      code,
+      .source-ref {
+        border-radius: 5px;
+        background: color-mix(in srgb, var(--line) 32%, transparent);
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        font-size: 0.78rem;
+        overflow-wrap: anywhere;
+      }
+
+      code {
+        padding: 2px 5px;
+      }
+
+      pre {
+        max-width: 100%;
+        margin: 10px 0 0;
+        padding: 12px;
+        overflow: auto;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        background: #111827;
+        color: #e5edf7;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        font-size: 0.78rem;
+        line-height: 1.5;
+        white-space: pre;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.84rem;
+      }
+
+      th,
+      td {
+        padding: 9px 10px;
+        border-bottom: 1px solid var(--line);
+        text-align: left;
+        vertical-align: top;
+      }
+
+      th {
+        color: var(--muted);
+        font-size: 0.74rem;
+        letter-spacing: 0.04em;
+      }
+
+      .below-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 16px;
+        margin-top: 16px;
+      }
+
+      .below-grid > .panel {
+        padding: 16px;
+      }
+
+      .callout {
+        margin-top: 12px;
+        padding: 12px 13px;
+        border-left: 4px solid var(--risk);
+        border-radius: 8px;
+        background: color-mix(in srgb, var(--risk) 8%, var(--surface));
+      }
+
+      .callout p:last-child,
+      [data-detail-panel] p:last-child {
+        margin-bottom: 0;
+      }
+
+      .legend {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px 12px;
+        margin-top: 14px;
+        color: var(--muted);
+        font-size: 0.78rem;
+      }
+
+      .legend span {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+      }
+
+      .legend-line {
+        width: 24px;
+        border-top: 2px solid var(--line-strong);
+      }
+
+      .legend-line.inference {
+        border-top-style: dashed;
+        border-color: var(--domain);
+      }
+
+      .legend-line.unknown {
+        border-top-style: dotted;
+        border-color: var(--risk);
+      }
+
+      .muted {
+        color: var(--muted);
+      }
+
+      @media (max-width: 900px) {
+        .shell {
+          padding: 14px;
+        }
+
+        .hero,
+        .layout,
+        .below-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .chips {
+          justify-content: flex-start;
+        }
+
+        .canvas {
+          min-height: auto;
+          padding: 16px;
+        }
+
+        .flow-row,
+        .pipeline,
+        .compare-grid,
+        .state-grid,
+        .lane-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .connector {
+          grid-template-columns: 1fr;
+          justify-items: center;
+        }
+
+        .connector::before {
+          width: 0;
+          height: 22px;
+          border-top: 0;
+          border-left: 2px solid currentColor;
+        }
+
+        .connector.inference::before {
+          border-left-style: dashed;
+        }
+
+        .connector.unknown::before {
+          border-left-style: dotted;
+        }
+
+        .connector::after {
+          content: "↓";
+        }
+
+        .inspector {
+          position: static;
+          max-height: none;
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+          scroll-behavior: auto !important;
+          transition-duration: 0.01ms !important;
+        }
+      }
+
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #0b1119;
+          --surface: #121b27;
+          --surface-2: #0f1722;
+          --ink: #edf2f7;
+          --muted: #aab5c3;
+          --line: #29384a;
+          --line-strong: #60738a;
+          --entry: #63b3ed;
+          --domain: #b5a0ff;
+          --data: #56d2a8;
+          --external: #f2b95f;
+          --risk: #ff8a80;
+          --focus: #7dd3fc;
+          --shadow: none;
+        }
+      }
+
+      @media print {
+        :root {
+          color-scheme: light;
+        }
+
+        body,
+        html {
+          background: #fff;
+        }
+
+        .shell {
+          width: 100%;
+          padding: 0;
+        }
+
+        .route-controls,
+        .reset-button {
+          display: none;
+        }
+
+        .panel {
+          break-inside: avoid;
+          box-shadow: none;
+        }
+
+        .layout,
+        .below-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .inspector {
+          position: static;
+          max-height: none;
+          overflow: visible;
+        }
+
+        .js [data-detail-panel] {
+          display: block !important;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="shell">
+      <header class="hero">
+        <div>
+          <p class="eyebrow">CODE MAP · {{VISUAL_KIND}}</p>
+          <h1>{{TITLE}}</h1>
+          <p class="lede">{{SUMMARY}}</p>
+        </div>
+        <div class="chips" aria-label="조사 범위와 상태">
+          <!-- SCOPE_CHIPS -->
+        </div>
+      </header>
+
+      <section class="layout" aria-label="주 시각화와 근거">
+        <article class="panel visual-panel">
+          <div class="visual-head">
+            <div>
+              <h2>{{MAIN_VISUAL_TITLE}}</h2>
+              <p>{{MAIN_VISUAL_CAPTION}}</p>
+            </div>
+            <div class="route-controls" role="toolbar" aria-label="경로 강조">
+              <button class="route-button" type="button" data-route-filter="all" aria-pressed="true">전체</button>
+              <!-- ROUTE_CONTROLS -->
+            </div>
+          </div>
+          <div class="canvas" id="main-visual">
+            <!-- MAIN_VISUAL -->
+          </div>
+        </article>
+
+        <aside class="panel inspector" aria-live="polite">
+          <p class="inspector-kicker">선택한 요소</p>
+          <button class="reset-button" type="button" data-reset>선택 초기화</button>
+          <section class="is-active" data-detail-panel="overview">
+            <h2>{{OVERVIEW_TITLE}}</h2>
+            <p>{{OVERVIEW_COPY}}</p>
+            <!-- OVERVIEW_EVIDENCE -->
+          </section>
+          <!-- DETAIL_PANELS -->
+        </aside>
+      </section>
+
+      <div class="legend" aria-label="근거 범례">
+        <span><i class="legend-line"></i> 직접 확인 · E#</span>
+        <span><i class="legend-line inference"></i> 추론 · I#</span>
+        <span><i class="legend-line unknown"></i> 미확정 · ?</span>
+        <span><b class="badge">+ / − / Δ</b> 변경 상태</span>
+      </div>
+
+      <section class="below-grid" aria-label="읽는 순서와 근거 색인">
+        <article class="panel">
+          <h2>읽는 순서</h2>
+          <ol class="step-list">
+            <!-- READING_STEPS -->
+          </ol>
+          <!-- PRIMARY_CAVEAT -->
+        </article>
+        <article class="panel">
+          <h2>근거와 미확정</h2>
+          <!-- EVIDENCE_SUMMARY -->
+        </article>
+      </section>
+    </main>
+
+    <script>
+      document.documentElement.classList.add("js");
+
+      const detailTriggers = [...document.querySelectorAll("[data-detail]")];
+      const detailPanels = [...document.querySelectorAll("[data-detail-panel]")];
+      const routeButtons = [...document.querySelectorAll("[data-route-filter]")];
+      const routeElements = [...document.querySelectorAll("[data-route]")];
+      const resetButton = document.querySelector("[data-reset]");
+
+      function selectDetail(detailId) {
+        if (!detailPanels.some((panel) => panel.dataset.detailPanel === detailId)) {
+          return;
+        }
+
+        detailTriggers.forEach((trigger) => {
+          const selected = trigger.dataset.detail === detailId;
+          trigger.classList.toggle("is-selected", selected);
+          trigger.setAttribute("aria-pressed", String(selected));
+        });
+
+        detailPanels.forEach((panel) => {
+          panel.classList.toggle("is-active", panel.dataset.detailPanel === detailId);
+        });
+      }
+
+      function selectRoute(routeId) {
+        routeButtons.forEach((button) => {
+          button.setAttribute("aria-pressed", String(button.dataset.routeFilter === routeId));
+        });
+
+        routeElements.forEach((element) => {
+          const routes = (element.dataset.route || "").split(/\s+/).filter(Boolean);
+          element.classList.toggle("is-dimmed", routeId !== "all" && !routes.includes(routeId));
+        });
+      }
+
+      detailTriggers.forEach((trigger) => {
+        trigger.setAttribute("aria-pressed", "false");
+        trigger.addEventListener("click", () => selectDetail(trigger.dataset.detail));
+      });
+
+      routeButtons.forEach((button) => {
+        button.addEventListener("click", () => selectRoute(button.dataset.routeFilter));
+      });
+
+      resetButton?.addEventListener("click", () => {
+        selectDetail("overview");
+        selectRoute("all");
+      });
+
+      document.addEventListener("keydown", (event) => {
+        if (event.key === "Escape") {
+          selectDetail("overview");
+          selectRoute("all");
+          resetButton?.focus();
+        }
+      });
+    </script>
+  </body>
+</html>

@@ -1,0 +1,28 @@
+<div class="flow-row" style="--columns: 5" aria-label="{{QUESTION}}">
+  <section class="group">
+    <p class="group-title">{{ENTRY_LAYER}}</p>
+    <article class="node static entry {{E1_CLASS}}">
+      <span class="node-title">{{ENTRY_NODE}}</span>
+      <span class="node-copy">{{ENTRY_ROLE}}</span>
+      <span class="node-meta"><span class="badge {{E1_CLASS}}">{{E1_LABEL}}</span></span>
+    </article>
+  </section>
+  <div class="connector {{E2_CLASS}}"><span>{{E2_LABEL}} · {{RELATION_1}}</span></div>
+  <section class="group">
+    <p class="group-title">{{DOMAIN_LAYER}}</p>
+    <article class="node static domain {{E2_CLASS}}">
+      <span class="node-title">{{DOMAIN_NODE}}</span>
+      <span class="node-copy">{{DOMAIN_ROLE}}</span>
+      <span class="node-meta"><span class="badge {{E2_CLASS}}">{{E2_LABEL}}</span></span>
+    </article>
+  </section>
+  <div class="connector {{E3_CLASS}}"><span>{{E3_LABEL}} · {{RELATION_2}}</span></div>
+  <section class="group">
+    <p class="group-title">{{SIDE_EFFECT_LAYER}}</p>
+    <article class="node static data {{E3_CLASS}}">
+      <span class="node-title">{{SIDE_EFFECT_NODE}}</span>
+      <span class="node-copy">{{SIDE_EFFECT_ROLE}}</span>
+      <span class="node-meta"><span class="badge {{E3_CLASS}}">{{E3_LABEL}}</span></span>
+    </article>
+  </section>
+</div>

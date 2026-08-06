@@ -1,0 +1,24 @@
+<div class="pipeline" style="--columns: 3" aria-label="{{QUESTION}}">
+  <article class="node static entry {{E1_CLASS}}">
+    <span class="node-title">{{ENTRY}}</span>
+    <span class="node-meta"><span class="badge {{E1_CLASS}}">{{E1_LABEL}}</span></span>
+  </article>
+  <div class="connector {{E2_CLASS}}"><span>{{E2_LABEL}} · {{INPUT}}</span></div>
+  <article class="node static domain {{E2_CLASS}}">
+    <span class="node-title">{{PREDICATE}}?</span>
+    <span class="node-copy">실제 predicate를 적는다</span>
+    <span class="node-meta"><span class="badge {{E2_CLASS}}">{{E2_LABEL}}</span></span>
+  </article>
+</div>
+<div class="compare-grid" style="margin-top: 12px">
+  <section class="group">
+    <p class="group-title">참 · {{TRUE_LABEL}}</p>
+    <div class="connector vertical {{E3_CLASS}}"><span>{{E3_LABEL}}</span></div>
+    <article class="node static data {{E3_CLASS}}"><span class="node-title">{{TRUE_RESULT}}</span></article>
+  </section>
+  <section class="group">
+    <p class="group-title">거짓 · {{FALSE_LABEL}}</p>
+    <div class="connector vertical {{E4_CLASS}}"><span>{{E4_LABEL}} · {{FALSE_REASON}}</span></div>
+    <article class="node static {{E4_CLASS}}"><span class="node-title">{{FALSE_RESULT}}</span></article>
+  </section>
+</div>

@@ -1,0 +1,19 @@
+<div class="flow-row" style="--columns: 5" aria-label="{{QUESTION}}">
+  <article class="node static entry {{E1_CLASS}}">
+    <span class="node-title">{{STAGE_1}}</span>
+    <span class="node-copy">in · {{INPUT_SHAPE}}<br>out · {{OUTPUT_SHAPE_1}}</span>
+    <span class="badge {{E1_CLASS}}">{{E1_LABEL}}</span>
+  </article>
+  <div class="connector {{E2_CLASS}}"><span>{{E2_LABEL}} · {{TRANSFORM_1}}</span></div>
+  <article class="node static domain {{E2_CLASS}}">
+    <span class="node-title">{{STAGE_2}}</span>
+    <span class="node-copy">in · {{OUTPUT_SHAPE_1}}<br>out · {{OUTPUT_SHAPE_2}}</span>
+    <span class="badge {{E2_CLASS}}">{{E2_LABEL}}</span>
+  </article>
+  <div class="connector {{E3_CLASS}}"><span>{{E3_LABEL}} · {{TRANSFORM_2}}</span></div>
+  <article class="node static data {{E3_CLASS}}">
+    <span class="node-title">{{STAGE_3}}</span>
+    <span class="node-copy">저장 · {{OUTPUT_SHAPE_2}}</span>
+    <span class="badge {{E3_CLASS}}">{{E3_LABEL}}</span>
+  </article>
+</div>

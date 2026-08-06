@@ -1,0 +1,4 @@
+interface:
+  display_name: "코드 한눈"
+  short_description: "복잡한 코드와 아키텍처를 직관적인 HTML 지도로 보여줍니다"
+  default_prompt: "$code-visualizer로 지금 설명 중인 코드의 구조와 실행 흐름을 한눈에 볼 수 있는 HTML로 보여 주세요."
