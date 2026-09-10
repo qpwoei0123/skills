@@ -1,77 +1,29 @@
-# 디자인 시스템 발견 절차
+# 디자인 시스템 탐색
 
-스킬이 "알아서" 아는 게 아니라, **증거를 단계적으로 모아 디자인 시스템 후보를 확정**한다.
-결과물은 실행 전에 만드는 매핑표(후보 + 확신도 + 근거)다.
+목표는 화면과 실제로 연결되는 component·variable·style을 찾는 것이다. 같은 이름이나 색만으로 같은 디자인 시스템이라고 단정하지 않는다.
 
-## 발견 우선순위
+## 근거 순서
 
-```
-1. 사용자 지정 라이브러리/기준 frame
-2. Code Connect
-3. 목적지 파일의 기존 instance
-4. 연결된 라이브러리 목록
-5. 디자인 시스템 검색 capability
-6. 실패 시 새 레이어 + 미연동 보고
-```
+1. 사용자가 지정한 라이브러리·기준 frame·mapping
+2. 현재 코드와 Figma component를 연결한 Code Connect 등의 명시적 정보
+3. 목적지의 실제 instance가 참조하는 main component와 bound variable·style
+4. 접근 가능한 연결 library와 component metadata
+5. 현재 도구의 디자인 시스템 검색 결과를 확인한 후보
 
-### 1. 사용자가 지정한 DS
+위 순서는 검색 출발점이다. 더 직접적인 근거가 나오면 매핑을 갱신한다. 필요한 컴포넌트나 토큰에 대해서만 조사하고 목적지 전체 라이브러리를 무조건 읽지 않는다.
 
-- "Exem DS 써서 옮겨줘"
-- "이 Figma 라이브러리 기준으로"
-- "이 기존 화면이 기준이야" — 기존 frame 하나를 기준 화면으로 받으면 제일 정확하다
+## 매핑 확인
 
-### 2. 코드 쪽 단서
+각 중요한 요소에 원본 역할, 대응 component·variant·property 또는 variable·style, 근거, 미연동 여부를 연결한다. 확률 점수 대신 `직접 매핑`, `후보`, `미연동`을 구분한다.
 
-- React import: `Button`, `Input`, `Table`, `Tabs` 같은 컴포넌트명
-- 디자인 토큰: CSS 변수, theme token, Tailwind config
-- Code Connect 파일: `Button.figma.tsx`, `*.figma.ts` — 여기서
-  "코드 컴포넌트 → Figma 컴포넌트 URL/key" 매핑을 얻을 수 있으면 가장 강한 증거다
+컴포넌트 이름뿐 아니라 실제 구조와 용도·variant를 확인한다. 색이 같다는 이유로 의미가 다른 token을 연결하지 않는다. 원본 디자인과 DS 사이 차이가 결과에 영향을 주면 그 차이를 알리고 사용자 우선순위를 따른다.
 
-### 3. 목적지 Figma 파일의 단서
+후보 확인은 기존 instance와 metadata부터 한다. 임시 instance가 꼭 필요하면 이번 실행에서 만든 node를 추적하고 확인 후 정리한다. 기존 사용자 node를 탐색 부산물로 삭제하지 않는다.
 
-- 이미 연결된 라이브러리 목록
-- 기존 화면 안의 component instance들
-- 로컬 변수, text style, effect style
+## 매핑이 없거나 접근이 막힐 때
 
-### 4~5. Figma 라이브러리 검색
+DS가 지정되지 않았고 적합한 대응을 찾지 못하면 편집 가능한 새 레이어로 진행하고 미연동 부분을 보고한다. 같은 fallback에 대한 확인 질문을 반복하지 않는다.
 
-- 라이브러리 조회 capability로 사용 가능한 라이브러리 확인
-- 디자인 시스템 검색 capability로 `button`, `input`, `table`, `surface`, `text`, `radius`,
-  `space` 같은 이름 검색
-- 찾은 컴포넌트는 임시 instance로 만들어 properties까지 확인한다
+사용자가 필수로 지정한 DS에 접근할 수 없거나 필요한 연결을 도구가 지원하지 않으면 영향받는 부분을 특정한다. 원본 조사나 다른 독립된 화면 작업은 진행할 수 있지만, 필수 조건을 만족하지 않은 결과를 DS 변환 완료로 보고하지 않는다.
 
-## 매핑표
-
-실행 전에 내부적으로 이런 표를 만들고, 확신도 높은 매핑만 사용한다.
-애매한 컴포넌트는 새 레이어로 만들거나 사용자 확인을 요청한다.
-
-```text
-Source UI        Figma DS 후보        확신도
-Button           Exem DS / Button     높음 - Code Connect 있음
-Input            Exem DS / TextField  중간 - 이름/속성 매칭
-Table            Exem DS / DataTable  높음 - 기존 화면 instance와 일치
-SQL Plan Chart   없음                 낮음 - 새 editable layer 필요
-Color/bg/base    var: surface/default 높음 - 기존 화면 bound variable
-```
-
-실행 전 요약에는 DS 추정 결과와 **근거**(예: 목적지 파일 연결 라이브러리 + 기존 화면
-instance + 코드 컴포넌트명)를 함께 보여준다. 그래야 사용자가 "왜 이 컴포넌트를 썼는지"
-납득할 수 있다.
-
-## "연동"의 정의
-
-- 컴포넌트는 **Figma component instance**로 만든다
-- 색/간격/반경은 **variable binding**으로 묶는다
-- 텍스트는 **text style**을 적용한다
-- 그림자 등은 **effect style**을 적용한다
-- 못 찾은 것은 새 레이어로 만들되, 마지막에 **미연동 목록**으로 보고한다
-
-## 실패/제한 시 정책
-
-- 지정한 라이브러리에 접근 불가: 선택지 두 개를 제시한다 —
-  (1) 라이브러리 권한을 받은 뒤 다시 실행, (2) 목적지 파일의 로컬 스타일만 사용해 진행.
-  디자인 시스템 일관성이 중요하면 1번을 권한다.
-- 목적지 파일에서 아무 DS도 못 찾음: 편집 가능한 레이어는 만들 수 있지만 기존 컴포넌트
-  instance/변수 연결은 제한된다고 **고지**한 뒤, 사용할 라이브러리나 기준 frame이 있는지
-  묻는다. 조용히 대충 만들지 않는다.
-- 배치 픽셀 캡처 모드는 raw frame이라 DS 연동 대상이 아니다 — 시작 전에 명확히 말한다.
+Code Connect 등 선택 기능의 권한·요금제 오류는 그 기능의 제약으로 기록한다. 상태 변화 없이 같은 거절을 재시도하지 않는다. 해당 기능이 사용자의 필수 완료 조건인지에 따라 계속할 범위를 정한다.
