@@ -4,7 +4,7 @@
 
 ## 선택표
 
-| 입력 신호 | 주 문법 | 하드 예산 | 주의 |
+| 입력 신호 | 주 문법 | 첫 화면 권장량 | 주의 |
 |---|---|---:|---|
 | 이전·이후 구현과 추가·삭제가 핵심 | aligned before/after | 핵심 변경 5개, excerpt 각 10줄 | 관계 변화가 더 중요하면 architecture map 사용 |
 | 호출·event의 시간 순서와 행위자 | sequence | lane 5, message 9 | 실제 순서를 확정할 수 없으면 병렬·미확정 표시 |
@@ -19,7 +19,7 @@
 | entity 2개 이하·변경 30줄 이하 | annotated excerpt | excerpt 3개, 각 10줄 | 다이어그램을 억지로 만들지 않음 |
 | 근거가 약하거나 충돌 | conclusion + evidence ledger | claim 7 | 허구의 단일 흐름을 만들지 않음 |
 
-두 문법이 동률이면 관계 시각화 하나와 정확성을 보완하는 표 하나만 쓴다. 노드 예산을 넘으면 subsystem으로 묶고, 묶어서 의미가 사라지면 표로 전환한다.
+위 숫자는 가독성을 위한 출발점이다. 관계가 더 필요하면 의미 단위로 묶거나 보조 표로 풀어 쓰되, 숫자에 맞춰 핵심 경로를 생략하지 않는다. 문법을 섞을 때는 주 시각화가 무엇인지 분명하게 한다.
 
 ## 문법별 핵심 질문
 
@@ -65,7 +65,7 @@
 - cycle·recursion은 노드를 복제하지 말고 loop 하나로 접는다.
 - generated·vendor·minified 파일은 주 도식에서 제외하고 범위에 적는다.
 
-## 전역 예산
+## 가독성 권장값
 
 - 주 시각화 1개, 보조 시각화 최대 2개
 - 최상위 section 최대 6개
@@ -73,7 +73,7 @@
 - 의미 색상 최대 4개와 neutral
 - label 최대 40자, 본문 최소 16px, metadata 최소 12px
 - disclosure 중첩 깊이 1, 상호작용 종류 최대 2개
-- drag·pan·zoom·carousel·자동 재생 금지
+- 핵심 내용을 읽는 데 drag·pan·zoom이나 자동 재생이 필요하지 않게 한다
 
 ## 빠른 markup recipe
 
