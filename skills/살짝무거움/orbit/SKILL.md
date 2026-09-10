@@ -2,557 +2,89 @@
 name: orbit
 license: Apache-2.0
 metadata:
-  version: 1.12.2
-description: (v1.12.2) 레포를 SAFE/ARCH/DEP/BUILD/DATA/OPS/DOC 7개 관점으로 점검해 통과한 finding만 GitHub/GitLab 이슈로 발행하는 워크플로 스킬. "레포 점검해줘", "기술 부채 찾아줘", "의존성/CI/아키텍처 점검해줘", "이슈 자동 등록해줘", "$orbit" 등 정기 레포 감사나 기술 이슈 발행 요청에 사용한다. 특정 PR/diff 리뷰나 단발성 코드 수정은 code-review를 쓴다.
+  version: 2.0.0
+description: (v2.0.0) 레포를 SAFE/ARCH/DEP/BUILD/DATA/OPS/DOC 관점으로 점검하고 요청받은 기술 이슈를 GitHub/GitLab에 발행한다. "레포 점검해줘", "기술 부채 찾아줘", "의존성/CI/아키텍처 점검해줘", "이슈 자동 등록해줘", "$orbit" 요청에 사용한다. 특정 PR·diff 결함 리뷰와 단발성 수정은 review/code-review가 맡는다.
 ---
 
 # orbit 🪐
 
-7개 관점(view)을 요일마다 하나씩 고정 배정해 레포를 분석하고, 기준을 통과한 finding만 이슈로 발행한다.
-각 view는 **3명의 리뷰어**를 병렬 실행하고, **리드 리뷰어**가 사실 관찰을 병합해 채점한다.
+근거가 있는 문제를 찾아 영향과 다음 행동을 설명한다. 조사 범위와 불확실성에 맞춰 검토하고, 발행을 요청받았으면 중복 확인부터 이슈 생성·갱신까지 완료한다.
 
-## 표시 용어
+## 실행 범위
 
-내부 JSON 키와 파일명은 영어 계약을 유지한다. 사용자에게 보이는 보고서와 설명에서는 아래 이름을 우선 쓴다.
-
-| 내부 이름 | 표시 이름 | 역할 |
-|-----------|-----------|------|
-| `orchestrator` / Orchestrator | 리드 리뷰어 | 결과 병합, 채점, 이슈화 판단, 발행 제어 |
-| Agent A | 변경 리뷰어 | 변경 파일과 그 영향권을 우선 확인 |
-| Agent B | 커버리지 리뷰어 | 미탐색 파일과 오래된 surface 탐색 영역을 확인 |
-| Agent C | 위험 리뷰어 | view별 고위험 경로와 핵심 흐름을 확인 |
-
-이 문서는 **core 규칙**만 담는다.
-실제 view별 리뷰어 지시는 `agents/`, JSON 스키마와 템플릿은 `references/`, 반복 실행 로직은 `scripts/`에서 읽는다.
-
-## 디렉터리 구조
+- `점검해줘`, `기술 부채 찾아줘`, `$orbit <repo>`는 분석과 결과 보고다.
+- `이슈로 올려줘`, `자동 발행해줘`, `--publish`는 통과 finding의 발행까지 포함한다. 같은 작업에서 이미 정해진 발행 권한이나 자동화 설정은 다시 묻지 않는다.
+- `분석만`, `미리 보기`, `--dry-run`은 실제 발행을 하지 않는다. 발행 요청과 함께 있어도 이 제한을 우선한다. `--dry-run`은 발행 payload를 준비해 보여주는 모드다.
+- `--suppress <fingerprint>`는 해당 finding의 로컬 상태만 `suppressed`로 바꾼다. 분석·발행 전체를 자동으로 이어 실행하지 않는다. `--dry-run`과 함께면 변경 예정만 보여준다.
+- 저장소 코드를 자동 수정하거나 대상 프로젝트의 script를 무조건 실행하지 않는다. 검증 실행은 사용자 요청과 저장소 지침 안에서 필요한 범위만 수행한다.
 
 ```text
-orbit/                               # 스킬 루트
-├── SKILL.md                          # 스킬 메인 규칙과 실행 흐름
-├── README.md                         # 설치·인증·사용 안내
-├── CHANGELOG.md                      # 버전별 변경 이력
-├── INDEX.md                          # 리소스 탐색 순서
-├── LICENSE
-├── agents/                           # view별 리뷰어와 Codex 메타데이터
-│   ├── openai.yaml
-│   ├── orchestrator.md
-│   ├── SAFE.md
-│   ├── ARCH.md
-│   ├── DEP.md
-│   ├── BUILD.md
-│   ├── DATA.md
-│   ├── OPS.md
-│   └── DOC.md
-├── evals/
-│   ├── evals.json                    # 동작 시나리오
-│   └── trigger-eval.json             # 트리거 경계 케이스
-├── references/                       # 공통 참조 문서와 출력 계약
-│   ├── agent-playbook.md
-│   ├── coverage-log-schema.md
-│   ├── execution-lifecycle.md
-│   ├── output-templates.md
-│   ├── repo-types.md
-│   ├── triage-rules.md
-│   └── view-playbooks.md
-└── scripts/                          # 자동 발행과 테스트 스크립트
-    ├── pipeline_contracts.py        # view·채점·triage·fingerprint 순수 계약 로직
-    ├── publish_issue.py             # GitHub/GitLab 이슈 create/update (closed 이슈는 skipped_closed 반환)
-    ├── test_contracts.py            # 문서/발행 계약 정합성 테스트
-    ├── test_pipeline.py             # Step 1~5 파이프라인 로직 테스트
-    └── test_publish_issue.py        # 발행 스크립트 회귀 테스트
-```
-
-## Quick Start
-
-```text
-# 기본 실행 (오늘 요일에 맞는 view 자동 선택)
-$orbit https://github.com/owner/repo
-
-# 현재 디렉터리가 레포일 때
 $orbit .
-
-# 특정 view 강제 지정 (요일 무관)
-$orbit https://github.com/owner/repo --view SAFE
-
-# 분석만 하고 이슈는 발행하지 않음 (안전하게 결과 미리 보기)
-$orbit https://github.com/owner/repo --dry-run
-
-# triage 기준 완화 (이슈가 너무 안 올라올 때)
-$orbit https://github.com/owner/repo --triage-min-impact 3
-
-# 특정 finding을 영구적으로 무시 ("알고 있음, 다시 보고하지 마")
-$orbit https://github.com/owner/repo --suppress pipeline:owner/repo:BUILD:f-12345678
+$orbit . --view BUILD --dry-run
+$orbit https://github.com/owner/repo --view SAFE --publish
+$orbit . --suppress pipeline:owner/repo:BUILD:f-12345678
 ```
 
-`--suppress`는 해당 fingerprint의 `status`를 `suppressed`로 변경해 이후 실행에서 이슈화 대상에서 제외한다.
-수동으로 처리하려면 `~/.orbit/<group>/<project>/<VIEW>.json`의 `known_findings[fingerprint].status`를 직접 `"suppressed"`로 수정해도 된다.
+`--publish`는 스킬의 실행 모드이며 publisher CLI 옵션이 아니다. `scripts/publish_issue.py`를 직접 실행하면 `--dry-run`이 없는 한 발행한다.
 
-레포 URL을 제공하지 않으면 현재 작업 디렉터리가 git 레포인지 먼저 확인하고,
-그것도 아니면 사용자에게 URL을 요청한다.
+## 대상과 관점 결정
 
-## 요일별 View 배정
+대상이 없으면 현재 Git 저장소를 사용하고, 그것도 없으면 URL이나 경로를 요청한다. host와 namespace/project를 확인하고 이미 인증된 `gh`·`glab` 또는 HTTPS 접근을 우선한다. 현재 저장소를 재사용할 수 있는데 매번 clone하지 않는다.
 
-| 요일 | view_id | 관점 | 핵심 질문 |
-|------|---------|------|-----------|
-| 월 | `SAFE`  | 변경 안전성 | 핵심 흐름에 테스트·검증 게이트가 있는가 |
-| 화 | `ARCH`  | 경계 건강도 | FSD 레이어 의존성이 올바른 방향인가, 슬라이스 경계가 지켜지는가 |
-| 수 | `DEP`   | 의존성/설정 안정성 | 환경변수·버전 고정이 분산·중복되지 않는가 |
-| 목 | `BUILD` | 빌드/배포 재현성 | 로컬과 CI가 같은 경로를 타는가 |
-| 금 | `DATA`  | 데이터 구조 & 흐름 | 데이터가 단일 출처에서 예측 가능한 경로로 흐르는가 |
-| 토 | `OPS`   | 운영 관측성 | 장애 시 로그·알림·복구 경로를 빠르게 찾을 수 있는가 |
-| 일 | `DOC`   | 지식 내구성 | 문서·의사결정 기록·온보딩 경로가 남아 있는가 |
+사용자가 지정한 branch·commit이 우선이다. 정기 감사는 저장소의 실제 기본 branch를 조회해 사용한다. `main/master`를 추정하거나 현재 작업 branch로 바꾸지 않는다. 최신 상태가 필요할 때만 필요한 ref를 fetch하고, 읽을 `scan_sha`를 한 번 고정한다. 파일·diff·근거·메모리는 모두 이 SHA를 기준으로 한다. working tree의 변경은 이 커밋 감사에 섞지 않는다.
 
-## 실행 방식
+관점은 명시한 `--view` 또는 요청한 주제가 우선이다. 전체 관점을 요청했으면 일곱 관점을 다루고, 범위가 없는 정기 실행은 현지 날짜의 요일 기본값을 쓴다.
 
-이 스킬은 별도 옵션 없이 실행한다.
-오늘 날짜 기준으로 view 하나를 선택해 Step 1~6을 순서대로 수행한다.
+| 요일 기본값 | view | 핵심 질문 |
+|---|---|---|
+| 월 | SAFE | 핵심 흐름의 변경 안전성을 확인할 근거가 있는가 |
+| 화 | ARCH | 저장소가 정한 경계와 실제 의존 관계가 맞는가 |
+| 수 | DEP | 의존성·환경·버전 설정이 일관적인가 |
+| 목 | BUILD | 로컬·CI·배포의 입력과 실행 경로가 재현 가능한가 |
+| 금 | DATA | 데이터 계약과 상태 변경 경로가 일관적인가 |
+| 토 | OPS | 장애를 알아차리고 복구할 실제 경로가 있는가 |
+| 일 | DOC | 현재 동작을 설명하는 지식이 유지되는가 |
 
-## 파이프라인 핵심
+선택한 `agents/<VIEW>.md`와 [공통 조사 기준](references/agent-playbook.md)을 읽는다. 저장소 유형에 맞지 않는 전제는 [유형별 가이드](references/repo-types.md)로 조정한다.
 
-1. **View 결정 + 메모리 로드**: 오늘 날짜 기준으로 view를 선택하고, 해당 view의 메모리 파일(`~/.orbit/.../VIEW.json`)을 읽어 `last_scan_commit`을 가져온다.
-2. **레포 구조 파악 + 탐색 우선순위**: 상위 트리와 설정 파일로 유형을 판정하고, diff(`last_scan_commit..HEAD`)를 계산해 탐색 우선순위(변경→미탐색→오래된 surface)를 리뷰어에게 전달한다. 변경도 없고 미탐색 파일도 없으면 조기 종료.
-3. **사실 관찰 수집**: 선택된 view의 리뷰어 3명을 병렬 실행해 사실 관찰만 받는다.
-4. **병합·채점**: 중복 관찰을 병합하고 리드 리뷰어가 impact/urgency/confidence/actionability를 부여한다.
-5. **Triage**: 통과 조건을 만족하는 finding만 이슈화 대상으로 고른다. Step 2에서 로드한 전체 view의 `status == "open"`, `status == "closed"`, `status == "suppressed"` finding과 실질적으로 같은 문제이면 상태별로 처리한다. 같은 view의 `open`은 ID 알고리즘 변경으로 fingerprint만 달라진 경우 `--legacy-fingerprint`로 기존 이슈를 update하고, 같은 view의 `closed`는 `--legacy-fingerprint`로 `skipped_closed`까지 확인한다. 다른 view의 `open`은 alias가 아니라 `[이미 추적 중]`으로 보고만 하고 발행하지 않는다. 다른 view의 `closed`는 `[이미 닫힌 이슈]`로 보고하고 새 이슈를 만들지 않는다. `suppressed`는 이슈화하지 않는다.
-6. **발행 + 메모리 갱신**: triage 통과 finding마다 `scripts/publish_issue.py`를 호출해 이슈를 생성·업데이트하고, 실행 완료 후 view 메모리 파일을 갱신한다.
+## 조사와 근거 확인
 
-`Step 4.5` 재조사는 **초기 채점 뒤, triage 전에** 선택적으로 발생한다.
-정확한 흐름은 [`references/execution-lifecycle.md`](references/execution-lifecycle.md)를 읽는다.
+[메모리](references/coverage-log-schema.md)가 있으면 `last_scan_commit..scan_sha`의 변경, 미탐색 파일, 오래된 얕은 조사, 재시도할 발행 후보 순으로 이번 범위를 정한다. 마지막 커밋을 가져올 수 없거나 이력이 갈라졌으면 diff를 추정하지 말고 관련 범위를 새로 조사한다.
 
-## Step 1 — 레포 접근 + View 결정 + 메모리 로드
+최근에 충분히 확인한 미변경 파일은 우선순위를 낮출 수 있다. 다만 현재 claim의 호출 경로·반례를 확인하려면 다시 읽는다. 변경·미탐색·재확인 대상과 보류된 발행 후보가 모두 없을 때만 변경 없음으로 끝낸다.
 
-### 레포 접근
+작은 범위는 직접 조사한다. 독립된 범위를 분담할 이점이 있거나 중요한 결론에 별도 검증이 필요하면 병렬 리뷰어를 사용할 수 있다. A/B/C는 조사 관점이며 필수 인원수가 아니다. 분담할 때만 [조정 지침](agents/orchestrator.md)을 읽고 같은 `scan_sha`와 조사 범위를 공유한다.
 
-실행 시작 전 레포에 접근할 수 있는지 확인한다.
+finding에는 확인한 문제, 직접 읽은 `file:line`, 영향을 받는 경로와 재현 조건, 구체적 `next_step`이 필요하다. 이름·폴더 모양·파일 부재만으로 결함을 단정하지 않는다. 강한 반례가 나오면 사실 관계를 확인해 claim을 좁히거나 철회한다. 반박이 없다는 사실을 입증으로 쓰지 않는다.
 
-1. **URL 제공된 경우**: 임시 디렉터리에 shallow clone한다.
-   ```bash
-   git clone --depth=1 <repo_url> /tmp/orbit-<timestamp>
-   ```
-2. **`.` 또는 로컬 경로 제공된 경우**: `git fetch origin` 을 실행한다.
-3. **아무것도 없는 경우**: 현재 디렉터리에 `.git`이 있는지 확인하고,
-   있으면 fetch, 없으면 사용자에게 레포 URL을 요청한다.
+같은 원인과 수정으로 해결되는 관찰만 병합한다. 같은 줄의 다른 문제나 다른 줄의 같은 문제를 구분한다. 재조사는 중요한 판단을 바꿀 새 근거가 있을 때 하고, 고정된 라운드·질의·항소 절차를 매번 수행하지 않는다. 일부 조사 실패는 확인한 결과와 미검토 범위를 구분해 보고한다.
 
-접근 자체가 실패하면 `[error] 레포 접근 실패: <사유>`를 남기고 중단한다.
+## 선별과 중복 처리
 
-### View 결정
+채점과 JSON 기록이 필요하면 [결과 계약](references/execution-lifecycle.md)을 따른다. 기본 발행 기준은 impact ≥ 4, urgency ≥ 3, confidence ≠ low, actionability ≥ 3이다. 값은 [pipeline_contracts.py](scripts/pipeline_contracts.py)의 기본 triage·ID·actionability 함수를 사용한다. 기준 조정은 [triage-rules.md](references/triage-rules.md)를 참고한다.
 
-프롬프트에 `--view <VIEW>` 옵션이 있으면 요일과 무관하게 해당 view를 사용한다.
-없으면 오늘 날짜 기준으로 아래 매핑을 따른다.
+숫자 기준에 앞서 영향 경로와 문제의 성립 근거가 있어야 한다. 이슈 수를 채우려고 점수를 올리거나 next_step에 불필요한 명령어를 끼워 넣지 않는다. 분석 결과에는 발행 기준 미달이어도 사용자 판단에 필요한 중요한 제한을 설명할 수 있다.
 
-```text
-월 SAFE
-화 ARCH
-수 DEP
-목 BUILD
-금 DATA
-토 OPS
-일 DOC
+ID는 정규화한 claim과 impact_surface의 SHA1 앞 8자에 `f-`를 붙인 값이다. fingerprint는 `pipeline:<repo>:<view_id>:<finding_id>`를 유지한다. 문구 변경으로 ID가 달라질 수 있으므로 모든 view의 `known_findings`에서 같은 원인도 비교한다.
+
+- `status == "open"`: 같은 view의 동일 문제는 갱신 대상이다. 과거 ID와만 다르면 검증된 `--legacy-fingerprint`를 전달한다. 다른 view에서 추적 중이면 그 이슈를 보고하고 새로 발행하지 않는다.
+- `status == "closed"`: 자동 재오픈·대체 이슈 생성을 하지 않는다. 같은 view의 과거 ID는 `--legacy-fingerprint`로 publisher의 `skipped_closed` 판정까지 연결한다. 다른 view의 닫힌 문제도 새 이슈로 만들지 않는다.
+- `status == "suppressed"`: 발행하지 않는다. 코드 변경이나 모델의 재분석만으로 억제를 해제하지 않는다.
+
+다른 view의 fingerprint는 갱신 alias로 전달하지 않는다. 메모리는 중복 탐색의 단서이며 실제 open/closed 상태는 원격 확인 결과를 따른다.
+
+## 발행과 마무리
+
+발행 권한이 있으면 [본문 계약](references/output-templates.md)에 맞춰 payload를 파일로 만들고 `scripts/publish_issue.py`로 생성·갱신한다. 제목은 `[view: <VIEW>]`로 시작하는 50자 이내 문장이고, 본문은 `format_version: orbit/v2.4`와 정확한 footer를 포함한다.
+
+```html
+<!-- orbit-fingerprint: pipeline:owner/repo:BUILD:f-12345678 -->
 ```
 
-- `--dry-run` 옵션이 있으면 Step 6 발행 단계를 건너뛰고 이슈 payload를 출력만 한다.
-- 날짜·요일은 항상 확인하되, 요일과 view가 달라도 오류가 아니다.
+publisher가 pagination, fingerprint·동일 view legacy alias 검색, open 갱신, closed 재오픈 방지를 맡는다. 이 계약을 우회하는 별도 발행 루프를 만들지 않는다. 인증은 기존 환경변수나 사용자 로컬 설정을 이용하고, token을 대화에 요청하거나 출력하지 않는다. 사용할 인증이 없으면 발행 가능한 payload와 필요한 설정만 전달한다.
 
-### View 메모리 로드
+`created`·`updated`, `skipped_closed`, `manual_required`를 구분한다. 실패가 있어도 독립된 후보는 계속 처리하되 완료 응답이 없는 발행은 성공으로 세지 않는다. 재시도 전에 기존 이슈를 다시 확인한다.
 
-view가 결정되면 해당 view의 메모리 파일을 읽는다.
+분석·dry-run은 지속 메모리의 탐색 기준과 발행 상태를 변경하지 않는다. 발행 실행은 실제 확인한 범위와 원격 결과만 [메모리 규칙](references/coverage-log-schema.md)에 기록한다. 실패·부분 조사를 완전 탐색으로 기록하지 않는다.
 
-```bash
-# group = repo URL에서 추출한 owner, project = repo 이름
-~/.orbit/<group>/<project>/<VIEW>.json
-```
-
-- 파일이 없으면 **최초 실행**으로 간주한다. `last_scan_commit` = null, `explored_files` = [], `known_findings` = {}.
-- 파일이 있으면 `last_scan_commit`을 diff 기준으로 사용한다.
-- 환경변수 `REPO_ORBIT_HOME`이 설정되어 있으면 `~/.orbit` 대신 그 경로를 사용한다.
-
-메모리 스키마 상세는 [`references/coverage-log-schema.md`](references/coverage-log-schema.md)를 읽는다.
-
-### Step 1 완료 보고
-
-```text
-날짜 : YYYY-MM-DD (요일)
-view : DATA — 데이터 구조 & 흐름
-레포 : owner/repo
-유형 : Node Backend          ← Step 2에서 판정 후 기입
-메모리 : last_scan_commit=abc1234f (또는 최초 실행)
-옵션 : --dry-run (있을 때만)
-```
-
-## Step 2 — 레포 구조 파악 + 유형 판정 + 탐색 우선순위 계산
-
-리드 리뷰어가 직접 아래를 확인한다.
-목적은 **레포 유형 판정**, **서브태스크 스킵 조건 판단**, **탐색 우선순위 계산**이다.
-
-레포 유형(FSD Frontend / Generic Frontend / Node Backend / Python Backend / Go·Rust·Java / Monorepo / Microservices / Library / CLI / Static Site)에 따라 각 view 리뷰어의 조사 경로가 달라진다.
-유형 판정 기준과 view별 적용 가이드는 [`references/repo-types.md`](references/repo-types.md)를 읽는다.
-판정 결과를 Step 1 보고에 한 줄 추가한다: `유형 : Monorepo (turborepo)`
-
-**브랜치 기준:** Step 1에서 이미 clone/fetch를 완료했으므로 추가 fetch는 불필요하다.
-분석 기준은 `origin/main` 또는 `origin/master`의 최신 HEAD다.
-(shallow clone인 경우 HEAD만 존재한다. 깊은 히스토리가 필요한 분석은 그 시점에 `--unshallow`를 실행한다.)
-
-- 파일 트리 상위 2단계
-- `package.json`, `vite.config.*`, `tsconfig.*`
-- CI 설정 파일 존재 여부 (`.github/`, `.gitlab-ci.yml` 등)
-- 상태관리 라이브러리 사용 여부
-- 테스트 파일 존재 여부 (`*.test.*`, `*.spec.*`)
-- FSD 구조 여부 (`src/app/`, `src/pages/`, `src/features/` 등)
-
-처리 원칙은 아래와 같다.
-
-- 파일 트리 확인 자체가 불가능하면 실행을 중단하고 `[error] 레포 접근 실패: <사유>`를 남긴다.
-- 일부 설정 파일만 없는 경우는 있는 것만 읽고 계속 진행한다.
-- 선택된 view에 해당하는 파일이 없어 모든 서브태스크가 스킵되면 findings `0`으로 정상 종료한다.
-
-### diff 계산
-
-```bash
-# last_scan_commit이 있을 때
-git diff <last_scan_commit>..HEAD --name-only
-
-# 최초 실행 (last_scan_commit = null)
-# diff 없음. changed_files = [] 로 처리.
-```
-
-- shallow clone에서 `last_scan_commit`이 존재하지 않으면 `git fetch --unshallow` 후 재시도한다.
-- diff 결과를 `changed_files` 목록으로 저장한다.
-
-### 조기 종료 조건
-
-아래 **두 조건을 모두** 만족하면 이번 실행을 변경사항 없음으로 간주하고 조기 종료한다.
-
-```
-changed_files = []
-AND
-이 view의 explored_files에서 unexplored(미탐색) 파일 없음
-```
-
-조기 종료 시 아래를 출력하고 메모리 파일의 `run_history`에 항목을 추가한 뒤 종료한다.
-
-```text
-[skip] 변경사항 없음 — 새로 탐색할 파일도 없습니다.
-  last_scan_commit : abc1234f
-  다음 실행 예상 view : <내일 view>
-```
-
-### 탐색 우선순위 계산
-
-조기 종료가 발생하지 않으면 아래 우선순위로 탐색 목록을 만들어 리뷰어에게 전달한다.
-
-```
-Priority 1 — 변경된 파일 (changed_files에 있는 것)
-  → 이 view에 관련된 파일 중 diff에서 감지된 것. 반드시 분석.
-
-Priority 2 — 미탐색 파일 (explored_files에 없는 것)
-  → 이 view에 관련된 파일 중 한 번도 분석하지 않은 것.
-
-Priority 3 — 오래된 surface 탐색 파일
-  → explored_files에 있고 depth=surface이며 last_explored가 오래된 것.
-
-Skip — 최근 thorough + 변경 없음
-  → explored_files에 있고 depth=thorough이며 changed_files에 없는 것.
-```
-
-이 우선순위 목록을 리뷰어 지시에 포함한다. 리뷰어는 Priority 1 → 2 → 3 순서로 탐색하며,
-시간이 허락하는 한 Skip 파일을 건드리지 않는다.
-
-## Step 3 — 사실 관찰 수집
-
-선택된 view의 리뷰어 3명을 병렬 실행한다.
-공통 제어 규칙은 [`agents/orchestrator.md`](agents/orchestrator.md)를, view별 역할과 스킵 조건은 `agents/<VIEW>.md`를 읽는다.
-
-### 핵심 원칙
-
-- 리드 리뷰어는 **선택된 view 파일 하나만** 읽고 리뷰어를 띄운다.
-- 리뷰어는 **사실 관찰만** 반환한다.
-- 점수(impact, urgency, confidence, actionability)는 리뷰어가 붙이지 않는다.
-- 관찰에는 직접 읽은 `file:line` 근거가 있어야 한다.
-- 1라운드 결과가 2개 이상이면 2라운드 교차 반박을 진행한다.
-- 채점 전 의문이 남으면 3라운드 리드 리뷰어 질의를 선택적으로 수행한다.
-
-### 타임아웃 · 실패 처리 (인라인 요약)
-
-리뷰어별 제한:
-
-| 상황 | 처리 |
-|------|------|
-| 리뷰어 결과 미반환 (timeout/오류) | 나머지 결과만으로 계속 진행. `agent_errors`에 기록 |
-| 결과 반환 리뷰어 1명만 남음 | 2라운드 교차 반박 생략 |
-| 전체 리뷰어 실패 | 실행 중단, `[error] 모든 리뷰어 실패` 보고 |
-
-재시도는 하지 않는다. 실패한 리뷰어가 맡았던 서브태스크 범위를 최종 보고에 명시한다.
-
-### 반환 형식 요약
-
-**1라운드 — observation** (리뷰어 → 리드 리뷰어)
-
-```json
-{
-  "agent": "A",
-  "observations": [
-    {
-      "claim": "문제 한 문장",
-      "evidence": ["src/path/file.ts:42"],
-      "impact_surface": "영향 범위",
-      "next_step": "구체적 다음 행동 한 문장"
-    }
-  ]
-}
-```
-
-규칙: `impact`, `urgency`, `confidence`, `actionability`는 observation에 넣지 않는다.
-추정·가능성만 있는 claim은 evidence 없으므로 올리지 않는다.
-
-**2라운드 — rebuttal** (리뷰어 → 리드 리뷰어)
-
-직접 읽은 파일/코드와 충돌하는 claim에 한정한다.
-
-```json
-{
-  "agent": "B",
-  "rebuttals": [
-    {
-      "target_agent": "A",
-      "target_claim": "반박 대상 claim 요약",
-      "rebuttal": "반박 근거 한 문장",
-      "evidence": ["반박을 뒷받침하는 파일:줄"]
-    }
-  ]
-}
-```
-
-규칙: evidence 없는 rebuttal은 참고만 하고 confidence에 반영하지 않는다.
-evidence 있는 rebuttal이 하나라도 있으면 해당 claim의 confidence는 `low` 후보가 된다.
-
-**3라운드 — query_response** (리뷰어 → 리드 리뷰어, 선택적)
-
-리드 리뷰어가 사실이 불명확할 때만, finding당 1회·리뷰어당 1회로 재확인을 요청한다. 응답은 `claim 유지 | claim 수정 필요 | claim 철회`로 귀결되며, `claim 철회` 시 finding을 제거하고 `queries_withdrawn`에 기록한다. JSON 형식은 [`references/execution-lifecycle.md`](references/execution-lifecycle.md)의 "리드 리뷰어 질의 형식"을 읽는다.
-
-result.json 전체 스키마, comment_history, 병합 규칙은 [`references/execution-lifecycle.md`](references/execution-lifecycle.md)를 읽는다.
-
-## Step 4 — 병합·채점
-
-리드 리뷰어가 수집된 관찰을 병합하고 finding 단위로 채점한다.
-
-핵심 원칙:
-
-- 같은 `file:line`을 가리키는 관찰은 하나로 병합한다.
-- 병합된 finding의 `agents`에는 원본 리뷰어를 모두 남긴다.
-- finding ID는 `SHA1(normalized_claim + "\n" + normalized_impact_surface)[:8]` 앞에 `f-`를 붙여 만든다.
-- normalize는 `str.lower().strip()` 후 내부 공백을 단일 공백으로 collapse한다.
-- fingerprint는 `pipeline:<repo>:<view_id>:<finding_id>` 형식을 유지한다.
-
-채점 기준의 핵심은 아래와 같다.
-
-### impact
-
-| 점수 | 기준 |
-|------|------|
-| 5 | 핵심 비즈니스 경로 또는 보안/인증에 직접 영향 |
-| 4 | 배포·CI·공통 모듈 등 넓은 범위에 영향 |
-| 3 | 특정 기능이나 페이지에 국한 |
-| 2 | 단일 컴포넌트 또는 비핵심 경로 |
-| 1 | 코드 스타일·주석 수준 |
-
-### urgency
-
-| 점수 | 기준 |
-|------|------|
-| 5 | 현재 production에서 재현 가능 |
-| 4 | 다음 배포 또는 신규 환경에서 즉시 재현 가능 |
-| 3 | 조건부 재현 |
-| 2 | 장기적 리스크 |
-| 1 | 이론적 리스크 |
-
-### confidence
-
-- `high`: 직접 읽은 `file:line` 근거가 있고, evidence를 가진 반박이 없다
-- `low`: 근거가 없거나 추정만 있거나, evidence를 가진 반박이 들어왔다
-- `medium`: 위 두 조건 사이의 나머지
-
-### Step 4.5 — 재심 (선택적)
-
-채점 직후 triage 전에, 아래 두 경로 중 하나로만 재심이 발생할 수 있다. 둘 다 finding당 최대 1회이고, 하나가 발동하면 다른 하나는 발동하지 않는다.
-
-- (a) 리드 리뷰어 주도 재조사: evidence 있는 rebuttal이 claim을 일부만 뒤집거나, source와 산출물·테스트·문서가 서로 다른 사실을 가리켜 의문이 남는 finding에 대해 해당 리뷰어에게 재조사를 건다.
-- (b) 리뷰어 주도 이의 제기: triage 미달로 스킵될 finding에 대해, 리뷰어가 원래 observation에 없던 **새 evidence**를 들고 점수에 이의를 제기한다. 새 evidence 없는 이의는 기각한다. 리드 리뷰어가 `sustained`(재채점·triage 재적용) 또는 `overruled`(점수 유지, 최종)로 판정한다.
-
-`claim_refined / claim_withdrawn / claim_upheld / sustained / overruled` 중 하나로 귀결된다. 발동 조건·반환 JSON·판정 규칙 상세는 [`references/execution-lifecycle.md`](references/execution-lifecycle.md)의 "Step 4.5 재심 정책"을 읽는다.
-
-## Step 5 — Triage
-
-모든 finding에 아래 기준을 순서대로 적용한다.
-하나라도 스킵 조건에 걸리면 이슈화하지 않는다.
-
-### 통과 조건
-
-```text
-1) impact >= 4 AND urgency >= 3
-2) confidence != low
-3) actionability.score >= 3
-```
-
-### actionability.score
-
-아래 규칙의 합으로 계산한다. 재량 채점은 없다.
-
-| 규칙 | 점수 |
-|------|------|
-| next_step에 파일 경로 포함 | +2 |
-| next_step에 식별자 포함 | +1 |
-| next_step에 CLI 명령어 포함 | +1 |
-| next_step이 한 문장 이하 | +1 |
-
-최대 점수는 `5`, 이슈화 최소 점수는 `3`이다.
-
-### 자동 스킵 사유
-
-| 조건 | skip_reason |
-|------|-------------|
-| impact < 4 | `low_impact` |
-| urgency < 3 | `low_urgency` |
-| confidence == "low" | `low_confidence` |
-| actionability.score < 3 | `low_actionability` |
-
-triage 통과 finding이 0개여도 실패가 아니다.
-override 옵션, 재검토 트리거, 상세 예시는 [`references/triage-rules.md`](references/triage-rules.md)를 읽는다.
-
-## Step 6 — 발행
-
-`--dry-run` 옵션이 있으면 실제 API 호출 없이 이슈 payload만 출력하고 종료한다.
-
-```bash
-# dry-run: 이슈 payload 출력만 (API 호출 없음)
-python3 scripts/publish_issue.py \
-  --repo-url  https://github.com/owner/repo \
-  --title     "[view: SAFE] ..." \
-  --body-file /tmp/orbit-issue.md \
-  --fingerprint "pipeline:owner/repo:SAFE:f-12345678" \
-  --labels    automation \
-  --dry-run
-```
-
-dry-run이 아닌 경우 triage 통과 finding마다 `python3 scripts/publish_issue.py`를 호출해 발행한다.
-직접 `curl`과 `grep`으로 JSON을 파싱하지 않는다.
-
-### 발행 전 사전 확인 (Preflight)
-
-| 항목 | 확인 방법 | 없을 때 |
-|------|-----------|---------|
-| 레포 URL | Step 1에서 이미 확인 | Step 1에서 처리 완료 |
-| `--dry-run` 옵션 | 프롬프트 확인 | 없으면 실제 발행 진행 |
-| `scripts/publish_issue.py` | 파일 존재 여부 확인 | 실행 중단 + `[error] publish_issue.py 없음` |
-| Python 3.10+ | `python3 --version` | 실행 중단 + `[error] Python 3.10 이상 필요` |
-| 인증 토큰 | 환경변수 → `~/.orbit/auth.json` 순으로 탐색 | 사용자에게 입력 요청. 없으면 manual payload로 종료 가능. dry-run이면 토큰 불필요 |
-
-### 토큰 로드
-
-`~/.orbit/auth.json`을 읽은 뒤 해당 플랫폼 토큰을 추출한다.
-환경변수 `GITHUB_TOKEN` / `GITLAB_TOKEN`이 있으면 우선 사용한다.
-토큰이 없으면 사용자에게 직접 요청하고, 응답이 없으면 스크립트의 manual payload를 그대로 출력한다.
-
-`auth.json` 구조는 `references/coverage-log-schema.md` 참조.
-
-### 플랫폼 감지
-
-| 레포 URL 패턴 | 플랫폼 | API Base |
-|--------------|--------|----------|
-| `github.com` 포함 | GitHub | `https://api.github.com` |
-| 그 외 | GitLab | `auth.json`의 `gitlab_base_url` 또는 레포 URL scheme+host |
-
-### Fingerprint 중복 체크
-
-`scripts/publish_issue.py`가 아래를 모두 담당한다.
-
-- 페이지네이션 처리
-- JSON 구조 파싱
-- 동일 fingerprint 또는 같은 repo/view의 명시적 legacy fingerprint alias가 있는 open 이슈 update
-- 동일 fingerprint 또는 같은 repo/view의 명시적 legacy fingerprint alias가 있는 closed 이슈 → reopen하지 않고 `skipped_closed`로 반환
-- 토큰/네트워크 오류 시 manual payload 반환
-
-리드 리뷰어는 중복 체크용 임시 `grep` 로직을 만들지 않는다. ID 알고리즘 변경 전 같은 repo/view 안에서 같은 finding을 가리키던 fingerprint를 메모리에서 확인했을 때만 `--legacy-fingerprint`로 넘긴다. 다른 view에서 같은 문제를 찾은 경우에는 발행하지 않고 `[이미 추적 중: <기존 fingerprint>]` 또는 `[이미 닫힌 이슈: <기존 fingerprint>]`로 보고한다.
-
-### 호출 예시
-
-```bash
-python3 scripts/publish_issue.py \
-  --repo-url  https://github.com/owner/repo \
-  --title     "[view: BUILD] 로컬과 CI 빌드 경로 일치" \
-  --body-file /tmp/orbit-issue.md \
-  --fingerprint "pipeline:owner/repo:BUILD:f-12345678" \
-  --legacy-fingerprint "<old-fingerprint-from-known_findings>" \
-  --labels    automation
-```
-
-### 핵심 규칙
-
-- 제목은 50자 이내로 자른다.
-- 이슈 본문에는 `format_version: orbit/v2.3`를, 하단에는 `<!-- orbit-fingerprint: pipeline:owner/repo:VIEW:f-12345678 -->`를 반드시 포함한다.
-- 동일 fingerprint 또는 같은 repo/view의 `--legacy-fingerprint` alias의 open 이슈 → 제목·본문·label을 현재 포맷으로 update.
-- 동일 fingerprint 또는 같은 repo/view의 `--legacy-fingerprint` alias의 closed 이슈 → reopen하지 않는다. 최종 보고에 "이미 닫힌 이슈" 항목으로 기록하고, 사용자가 원하면 새 이슈를 열 수 있음을 안내한다.
-- 다른 view의 동일 claim은 update alias가 아니다. 기존 이슈 소유 view를 유지하고 최종 보고의 "이미 추적 중" 또는 "이미 닫힌 이슈" 항목에만 표시한다.
-- update 성공만 발행 성공 건수에 포함한다. `skipped_closed`는 별도 항목으로 집계한다.
-- 발행 실패 항목이 있어도 나머지 finding은 계속 진행한다.
-- 스크립트가 `manual_required`를 반환하면 title/body/labels/fingerprint/legacy_fingerprints를 그대로 최종 보고에 포함한다.
-
-`format_version`은 상단 카드 구조나 필수 섹션 구성이 바뀔 때만 올린다.
-이슈 본문 템플릿과 최종 실행 보고 템플릿은 [`references/output-templates.md`](references/output-templates.md)를 읽는다.
-
-## 출력 계약
-
-실행 종료 후 최소한 아래 항목은 항상 보고한다.
-
-- 날짜
-- 레포
-- view
-- 리뷰어 상태
-- raw 관찰 수
-- 병합 후 finding 수
-- triage 통과/스킵 수
-- 발행 성공/실패 수
-- 내일 view
-
-실행 완료 후 view 메모리 파일(`~/.orbit/<group>/<project>/<VIEW>.json`)을 갱신한다.
-
-- `last_scan_commit` → 현재 HEAD 커밋 해시로 업데이트
-- `explored_files` → 이번에 분석한 파일 추가/갱신 (depth, last_explored 포함)
-- `known_findings` → 새 finding 추가, 관련 코드 변경 영역의 closed finding 상태 재검토
-- `run_history` → 새 entry prepend, 11번째 이상 제거
-
-정확한 포맷은 [`references/output-templates.md`](references/output-templates.md)를 읽는다.
-메모리 갱신 규칙 상세는 [`references/coverage-log-schema.md`](references/coverage-log-schema.md)를 읽는다.
-
-## Guide
-
-필요한 문서만 읽고, 무조건 전부 읽지 않는다.
-
-- [`agents/orchestrator.md`](agents/orchestrator.md)
-  - Step 2~6 공통 제어 순서와 어떤 파일을 언제 읽는지 필요할 때
-- `agents/<VIEW>.md`
-  - 선택된 view의 서브태스크와 스킵 조건이 필요할 때
-- [`references/agent-playbook.md`](references/agent-playbook.md)
-  - view 공통 조사 우선순위, finding 승격 조건, 반례 처리 규칙이 필요할 때
-- [`references/execution-lifecycle.md`](references/execution-lifecycle.md)
-  - observation/rebuttal/query/result.json/comment_history/reexamination의 정확한 형식이 필요할 때
-- [`references/triage-rules.md`](references/triage-rules.md)
-  - triage override, 재검토 트리거, 상세 스킵 정책이 필요할 때
-- [`references/output-templates.md`](references/output-templates.md)
-  - 이슈 본문과 최종 실행 보고 템플릿이 필요할 때
-- [`references/repo-types.md`](references/repo-types.md)
-  - 레포 유형 판정 기준과 유형별 view 적용 가이드가 필요할 때
-  - Monorepo, Microservices, Library, CLI, Python/Go/Rust 등 비 FSD 레포를 분석할 때
-- [`references/coverage-log-schema.md`](references/coverage-log-schema.md)
-  - coverage-log 저장 위치와 스키마, 리뷰어 실패 기록 방식이 필요할 때
-- [`scripts/publish_issue.py`](scripts/publish_issue.py)
-  - 발행 로직, fingerprint 처리, manual payload 형식이 필요할 때
-
-## 최소 규칙
-
-- 근거 없는 claim을 만들지 않는다.
-- 리뷰어는 점수 없이 사실만 반환한다.
-- 리드 리뷰어만 병합, 채점, triage, 발행 판단을 한다.
-- Step 3에서는 선택된 view 파일만 읽는다.
-- fingerprint는 `pipeline:<repo>:<view_id>:<finding_id>`를 유지한다.
-- 발행 분기 규칙(legacy alias의 open update, closed reopen 금지)은 Step 5·6을 따른다.
+최종 답변은 대상 revision·관점, 중요한 결과와 근거, 실제 발행 결과·링크, 미검토 또는 실패 범위를 중심으로 쓴다. 상세 통계와 JSON은 필요할 때 파일로 연결한다. finding이 없으면 그 사실과 조사 범위만 말하고 전역 안전 판정으로 확대하지 않는다.

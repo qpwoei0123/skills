@@ -1,57 +1,30 @@
-# Triage Rules (override & 재검토용)
+# 발행 기준과 조정
 
-일반 실행에서는 SKILL.md Step 5의 인라인 기준만으로 충분하다.
-이 파일은 **기준 override, 예외 처리, 재검토 트리거** 상황에서만 읽는다.
+기본 기준은 impact ≥ 4, urgency ≥ 3, confidence ≠ low, actionability ≥ 3이다. 근거와 영향 경로가 성립한 finding에 적용한다. 기본 계산은 `scripts/pipeline_contracts.py`를 사용한다.
 
----
+## 명시적 override
 
-## Override 옵션
+| 옵션 | 기본값 |
+|---|---:|
+| `--triage-min-impact` | 4 |
+| `--triage-min-urgency` | 3 |
+| `--triage-min-score` | 3 |
+| `--triage-allow-low-confidence` | false |
 
-프롬프트에 명시적으로 지정하면 인라인 기준을 override한다.
+사용자가 명시한 값을 적용하고 실행 기록에 실제 기준과 `triage_override: true`를 남긴다. 기본 helper의 `triage_pass`는 override 인자를 받지 않으므로 이 경우 동일한 비교 순서에 지정된 기준을 적용한다. 점수 범위 1~5 밖의 값 등 잘못된 입력은 임의로 보정하지 않는다.
 
-| 옵션 | 기본값 | 예시 |
-|------|--------|------|
-| `--triage-min-impact` | 4 | `--triage-min-impact 3` |
-| `--triage-min-urgency` | 3 | `--triage-min-urgency 2` |
-| `--triage-min-score` | 3 | `--triage-min-score 2` |
-| `--triage-allow-low-confidence` | false | `--triage-allow-low-confidence` |
+`--triage-allow-low-confidence`가 있어도 근거 없는 주장을 만들 수는 없다. 확인된 사실과 남은 조건을 명확히 나누며, 반례로 철회된 claim은 발행하지 않는다. 이 옵션만으로 발행 권한이 생기지는 않는다.
 
-override 사용 시 coverage-log에 `"triage_override": true`를 기록한다.
+## 기준을 다시 볼 때
 
----
+실제 오탐, 중복, 누락 사례가 기준과 연결될 때 조정을 제안한다. 발행 0건이 반복되거나 이슈가 많다는 사실만으로 기준을 낮추거나 올리지 않는다. 같은 view·비슷한 조사 범위의 실행을 비교하고 사용자가 수용한 기준을 유지한다.
 
-## 기준 재검토 트리거
+`low_actionability`가 많으면 실제 다음 행동이 모호한지, 문자열 heuristic 때문에 낮게 계산됐는지 구분한다. 점수에 맞추기 위한 문장 꾸미기를 하지 않는다.
 
-아래 패턴이 3회 이상 반복되면 기준 재검토를 권고한다.
+## 상태와 재발행
 
-**기준이 너무 엄격한 방향 (이슈가 너무 적게 올라올 때):**
-- **findings_issued = 0** 이 연속 3회: `min_impact` 또는 `min_urgency`를 낮추는 것을 검토
-- **findings_skipped(low_actionability) > 50%** 가 연속 3회: next_step 품질 점검
+open 상태의 동일 문제는 triage를 통과하면 갱신할 수 있다. 형식 버전이 같아도 실제 근거·claim·next_step이 달라졌으면 본문을 갱신한다.
 
-**기준이 너무 관대한 방향 (이슈가 너무 많이 올라올 때):**
-- **triage 스킵 없이 전량 통과** 가 연속 3회: `min_impact`를 높이거나 `min_urgency`를 높이는 것을 검토
-- **findings_issued >= 4** 가 연속 3회: 동일 view에서 반복 발행되는 패턴인지 확인 후 `min_impact` 상향 검토
+closed는 자동 재오픈하거나 새 ID로 대체 발행하지 않는다. suppressed도 자동 해제하지 않는다. 다른 view의 동일 문제는 해당 view의 기존 이슈를 가리킨다. 메모리와 원격 상태가 다르면 확인된 원격 결과를 기록한다.
 
-재검토는 해당 view의 `run_history` 최근 **3개** entry를 기준으로 판단한다.
-전체 실행 횟수가 아니라 view별로 독립 집계한다 (view 파일 `~/.orbit/<group>/<project>/<VIEW>.json`).
-run_history가 3개 미만이면 트리거를 적용하지 않는다.
-기준 변경 시 run_history entry에 `"triage_calibration": "<방향>/<이유>"` 를 기록한다.
-
----
-
-## 스킵 처리 상세 정책
-
-### fingerprint update
-- open 이슈의 fingerprint가 일치해도 triage 스킵하지 않는다.
-- Step 6에서 제목/본문/automation label을 최신 `format_version`으로 update한다.
-- closed 이슈는 재오픈하지 않는다. `skipped_closed`로 기록하고 이슈화하지 않는다.
-- 같은 `format_version`이어도 claim, evidence, next_step이 달라졌으면 최신 본문으로 갱신한다.
-
-### low_confidence
-- confidence == "low"이면 무조건 스킵한다.
-- `--triage-allow-low-confidence` 옵션이 있을 때만 예외.
-- low confidence finding은 result.json에 남기되 이슈화하지 않는다.
-
-### low_actionability
-- score 계산은 SKILL.md 채점 공식을 그대로 따른다. 재량 채점 없음.
-- score 2점 이하 finding은 result.json에 남기되 이슈화하지 않는다.
+통과 후보가 0개여도 정상 결과다. 분석 결과와 발행 결과를 구분하고, 중요한 미확정은 발행된 finding으로 포장하지 않는다.

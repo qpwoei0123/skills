@@ -1,138 +1,64 @@
-```text
-  ════════════════════════════════════════════════════════╗
-║  ____  _____ ____   ___    ══════════     ══════════  ═ ║
-║ |  _ \| ____|  _ \ / _ \      ═══════════ ══  ═════ ═══ ║
-║ | |_) |  _| | |_) | | | |  ___  ____  ____ ___ _____    ║
-║ |  _ <| |___|  __/| |_| | / _ \|  _ \| __ )_ _|_   _|  ═║
-║ |_| \_\_____|_|    \___/ | | | | |_) |  _ \| |  | |     ║
-║  ══════════   ══  ═════  | |_| |  _ <| |_) | |  | | ═══ ║
-║═══  ═══════════   ═══     \___/|_| \_\____/___| |_|   ══║
-╚══════════════════════════════════════════════════════════
-```
-
 # orbit 🪐
 
-`version: 1.12.2`
+`version: 2.0.0`
 
-요일별 고정 view로 레포를 분석하고, triage를 통과한 finding만 이슈로 발행하는 스킬입니다.
-사용자에게 보이는 실행 보고에서는 `리드 리뷰어`, `변경 리뷰어`, `커버리지 리뷰어`, `위험 리뷰어`라는 역할 이름을 씁니다. 내부 JSON 키와 파일명은 호환성을 위해 영어 이름을 유지합니다.
+레포를 관점별로 점검하고, 요청받은 기술 이슈의 생성·갱신까지 수행합니다. 조사 인원과 절차는 실제 범위에 맞춥니다.
 
-## 포함 파일
-
-```text
-orbit/                               # 스킬 루트
-├── SKILL.md                          # 스킬 메인 규칙과 실행 흐름
-├── README.md                         # 설치·인증·사용 안내
-├── CHANGELOG.md                      # 버전별 변경 이력
-├── INDEX.md                          # 리소스 탐색 순서
-├── LICENSE
-├── agents/                           # view별 리뷰어와 Codex 메타데이터
-│   ├── openai.yaml
-│   ├── orchestrator.md
-│   ├── SAFE.md
-│   ├── ARCH.md
-│   ├── DEP.md
-│   ├── BUILD.md
-│   ├── DATA.md
-│   ├── OPS.md
-│   └── DOC.md
-├── evals/
-│   ├── evals.json                    # 동작 시나리오
-│   └── trigger-eval.json             # 트리거 경계 케이스
-├── references/                       # 공통 참조 문서와 출력 계약
-│   ├── agent-playbook.md
-│   ├── coverage-log-schema.md
-│   ├── execution-lifecycle.md
-│   ├── output-templates.md
-│   ├── repo-types.md
-│   ├── triage-rules.md
-│   └── view-playbooks.md
-└── scripts/                          # 자동 발행과 테스트 스크립트
-    ├── pipeline_contracts.py        # view·채점·triage·fingerprint 순수 계약 로직
-    ├── publish_issue.py             # GitHub/GitLab 이슈 create/update (closed 이슈는 재오픈하지 않음)
-    ├── test_contracts.py            # 문서/발행 계약 정합성 테스트
-    ├── test_pipeline.py             # Step 1~5 파이프라인 로직 테스트
-    └── test_publish_issue.py        # 발행 스크립트 회귀 테스트
-```
-
-## 요구사항
-
-- Python 3.10+
-- Git 접근 권한
-- 이슈를 올릴 대상 레포 URL
-
-자동 발행을 쓰려면 아래 둘 중 하나가 필요합니다.
-
-- `GITHUB_TOKEN` 또는 `GITLAB_TOKEN`
-- `~/.orbit/auth.json`
-
-## auth.json 예시
-
-```json
-{
-  "github_token": "ghp_xxx",
-  "gitlab_token": "glpat-xxx",
-  "gitlab_base_url": "https://gitlab.example.com"
-}
-```
-
-## 사용 예시
+## Quick Start
 
 ```text
-# 기본 실행
-$orbit https://github.com/owner/repo
-
-# 특정 view 강제 지정
-$orbit https://github.com/owner/repo --view SAFE
-
-# 분석만 하고 이슈 발행은 건너뜀
-$orbit https://github.com/owner/repo --dry-run
+$orbit .
+$orbit . --view BUILD --dry-run
+$orbit https://github.com/owner/repo --view SAFE --publish
+$orbit 이 레포의 데이터 흐름을 점검하고 통과한 문제를 이슈로 올려줘.
 ```
 
-발행 스크립트를 직접 실행할 때:
+관점이나 주제를 지정하면 우선합니다. 범위가 없는 정기 실행은 월 SAFE, 화 ARCH, 수 DEP, 목 BUILD, 금 DATA, 토 OPS, 일 DOC를 기본으로 합니다. 전체 관점을 요청하면 일곱 관점을 다룹니다.
+
+발행에는 Python 3.10+와 대상 저장소 접근·이슈 쓰기 권한이 필요합니다. 저장소 접근은 이미 인증된 `gh`·`glab` 또는 HTTPS를 우선하고, publisher는 `GITHUB_TOKEN`·`GITLAB_TOKEN` 또는 `~/.orbit/auth.json`을 사용합니다. 인증 파일을 쓸 경우 `github_token`, `gitlab_token`, 선택적 `gitlab_base_url` 키를 설정합니다. 비밀 값은 저장소나 대화에 넣지 않습니다.
+
+## 2.0 전환
+
+기본 `$orbit <repo>`는 분석 결과를 제공합니다. 발행을 원하는 자동화에는 `--publish`나 `통과한 문제를 이슈로 발행`을 명시합니다. 이미 같은 작업에서 발행을 허용한 지시는 유지되며, `--dry-run`·`분석만`은 실제 발행을 하지 않습니다. Codex UI의 기본 프롬프트는 발행 요청을 명시하므로 발행까지 수행합니다.
+
+고정 3인 리뷰·교차 반박 라운드·형식적인 선택지 메뉴를 제거했습니다. 필요한 근거 검증과 중복·closed·suppressed 처리는 유지합니다. 이슈 본문은 `orbit/v2.4`로 간결해졌으며 기존 ID와 publisher 계약은 유지합니다.
+
+분석·dry-run은 지속 메모리를 변경하지 않습니다. 발행 실행은 실제 조사 SHA와 원격 결과를 기록하고 실패 후보를 다음 실행에 재확인할 수 있게 남깁니다. 기존 메모리 필드는 읽을 수 있으며 `pending_findings` 등 추가 필드는 필요할 때 기록합니다. 코드 변경만으로 닫힌 이슈를 다시 열지 않습니다.
+
+## Structure
+
+```text
+orbit/
+├── SKILL.md, README.md, CHANGELOG.md, INDEX.md, LICENSE
+├── agents/             # 관점별 조사 기준·조정 지침·UI 메타데이터
+├── references/         # 근거·선별·메모리·본문 계약
+├── evals/              # 기존 트리거·동작 평가 시나리오
+└── scripts/            # 순수 계약 함수·publisher·기존 회귀 테스트
+```
+
+상세 리소스는 [INDEX.md](INDEX.md)를 참고합니다.
+
+## Scripts
+
+스킬 루트에서 publisher를 직접 실행할 수 있습니다. 이 CLI는 `--dry-run`을 빼면 실제 발행하므로 미리보기에는 아래 옵션을 유지합니다.
 
 ```bash
 python3 scripts/publish_issue.py \
   --repo-url https://github.com/owner/repo \
-  --title "[view: BUILD] 로컬과 CI 빌드 경로가 다릅니다" \
-  --body-file /tmp/orbit-issue.md \
-  --fingerprint "pipeline:owner/repo:BUILD:f-12345678" \
-  --legacy-fingerprint "<old-fingerprint-from-known_findings>" \
-  --labels automation
-
-# dry-run (API 호출 없이 payload만 출력)
-python3 scripts/publish_issue.py \
-  --repo-url https://github.com/owner/repo \
-  --title "[view: BUILD] ..." \
+  --title "[view: BUILD] 로컬과 CI의 런타임 버전이 다릅니다" \
   --body-file /tmp/orbit-issue.md \
   --fingerprint "pipeline:owner/repo:BUILD:f-12345678" \
   --labels automation \
   --dry-run
 ```
 
-## 자동 발행 실패 시 동작
+본문·footer 규칙은 [본문 계약](references/output-templates.md)을 따릅니다. 동일 repo/view의 검증된 과거 ID에만 `--legacy-fingerprint`를 사용합니다. publisher는 pagination·중복 조회·open 갱신·closed 재오픈 방지를 처리하고, 인증·API 실패는 수동 payload로 반환합니다. 이슈가 많은 저장소의 전체 중복 조회는 시간이 걸릴 수 있습니다.
 
-아래 상황에서는 API 호출을 포기하고, 수동 복붙용 출력만 JSON으로 반환합니다.
+## Test
 
-- 인증 토큰이 없을 때
-- GitHub / GitLab API 네트워크 호출이 실패할 때
-
-이때 출력에는 아래 정보가 포함됩니다.
-
-- `title`
-- `body`
-- `labels`
-- `fingerprint`
-- `copy_paste_text`
-
-## 알려진 제한
-
-- fingerprint 중복 검색은 GitHub/GitLab API를 페이지네이션으로 전체 순회합니다. 이슈가 매우 많은 레포(수천 개 이상)에서는 첫 실행 시 시간이 걸릴 수 있습니다.
-- 라벨 생성 권한이 없는 환경에서는 자동 발행이 수동 복붙 출력으로 내려갈 수 있습니다.
-- shallow clone(기본값)으로 접근한 레포에서 히스토리가 필요한 분석은 일부 제한될 수 있습니다.
-
-## 테스트
+저장소 루트에서 실행합니다. 새 이슈 발행이나 대상 저장소 코드 실행 없이 기존 회귀 테스트를 확인합니다.
 
 ```bash
-python3 -m unittest discover -s scripts -p 'test_*.py'
+python3 scripts/validate_skills.py --skill orbit
+python3 -m unittest discover -s skills/살짝무거움/orbit/scripts -p 'test_*.py'
 ```

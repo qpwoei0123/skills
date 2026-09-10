@@ -5,7 +5,7 @@
       "id": 0,
       "eval_name": "dry-run-github",
       "prompt": "https://github.com/expressjs/express 레포 분석해줘. 오늘이 수요일이라고 가정하고, --dry-run 모드로 실행해서 이슈 발행은 하지 말고 결과만 보여줘.",
-      "expected_output": "DEP view 실행, triage 통과 finding 목록, dry-run payload 출력 (API 호출 없음)",
+      "expected_output": "DEP view의 근거 있는 분석과 통과 후보의 dry-run payload. 이슈 쓰기와 지속 메모리 변경 없음.",
       "files": [],
       "assertions": [
         {
@@ -16,17 +16,17 @@
         {
           "id": "a2",
           "name": "dry-run-no-api-call",
-          "description": "--dry-run 모드이므로 실제 이슈 발행 API 호출 없이 payload만 출력해야 한다"
+          "description": "--dry-run은 이슈 쓰기 API와 탐색·발행 상태의 지속 메모리 변경을 하지 않는다. 읽기 전용 자료 조회는 가능하다."
         },
         {
           "id": "a3",
-          "name": "step1-report-present",
-          "description": "날짜/view/레포/유형 보고 줄이 Step 1 완료 후 나타나야 한다"
+          "name": "scope-and-revision-reported",
+          "description": "분석한 저장소·revision·관점과 중요한 누락을 보고한다. 고정 Step 1 보고 형식은 요구하지 않는다."
         },
         {
           "id": "a4",
           "name": "triage-result-reported",
-          "description": "triage 통과/스킵 건수가 최종 보고에 포함되어야 한다"
+          "description": "중요한 finding과 triage 결과를 보고한다. 후보가 없으면 이유와 조사 범위를 밝히며 통계를 채우려고 finding을 만들지 않는다."
         }
       ]
     },
@@ -34,23 +34,23 @@
       "id": 1,
       "eval_name": "no-url-ask",
       "prompt": "코드베이스 점검해줘. 기술 부채 좀 찾아줘.",
-      "expected_output": "레포 URL 또는 로컬 경로가 없으므로 사용자에게 URL 요청. 현재 디렉터리에 .git 없으면 질문해야 함.",
+      "expected_output": "현재 Git 저장소가 있으면 그 대상을 분석한다. 현재 맥락에도 대상을 찾을 수 없을 때만 URL이나 경로를 요청한다. 발행 요청 없이 외부 이슈를 만들지 않는다.",
       "files": [],
       "assertions": [
         {
           "id": "b1",
           "name": "skill-triggered",
-          "description": "orbit 스킬이 트리거되어야 한다 (스킬 없는 버전과 비교 시 orbit 특유의 파이프라인 언급)"
+          "description": "레포 감사 요청으로 orbit을 적용하되 파이프라인 용어를 형식적으로 출력할 필요는 없다."
         },
         {
           "id": "b2",
-          "name": "asks-for-url",
-          "description": "레포 URL 또는 경로를 사용자에게 요청해야 한다 (바로 분석 시작하면 안 됨)"
+          "name": "reuse-context-or-ask",
+          "description": "현재 저장소를 먼저 확인하고, 대상을 알 수 없을 때만 URL이나 경로를 요청한다. 이슈 발행은 하지 않는다."
         },
         {
           "id": "b3",
           "name": "no-hallucinated-analysis",
-          "description": "URL 없이 가상의 레포를 분석하거나 결과를 꾸며내면 안 된다"
+          "description": "실제 접근한 저장소 근거 없이 분석 결과를 꾸며내지 않는다."
         }
       ]
     },
