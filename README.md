@@ -77,7 +77,7 @@ python3 scripts/validate_skills.py
 
 ```bash
 python3 scripts/validate_skills.py --skill orbit
-python3 scripts/validate_skills.py --skill trim
+python3 scripts/validate_skills.py --skill good
 ```
 
 자동 검증:
@@ -98,8 +98,8 @@ python3 -m unittest discover -s 'skills/살짝무거움/soul-extractor/scripts' 
 자동 수정 가능한 항목은 로컬에서 먼저 정규화할 수 있습니다.
 
 ```bash
-python3 scripts/normalize_skill.py --skill trim --check
-python3 scripts/normalize_skill.py --skill trim --write
+python3 scripts/normalize_skill.py --skill good --check
+python3 scripts/normalize_skill.py --skill good --write
 ```
 
 기본 운영 흐름은 `main` push 기준입니다.
@@ -116,7 +116,7 @@ python3 scripts/normalize_skill.py --skill trim --write
 
 ```bash
 python3 scripts/deploy_skills.py             # validate 통과 시 전체 동기화
-python3 scripts/deploy_skills.py --skill trim
+python3 scripts/deploy_skills.py --skill good
 python3 scripts/deploy_skills.py --check     # 버전과 실제 파일 내용 차이 확인
 ```
 
@@ -140,8 +140,7 @@ python3 scripts/deploy_skills.py --check     # 버전과 실제 파일 내용 �
     ├── 데일리함/                   # 가벼운 일상 도구
     │   ├── commit/                 # git diff 기반 커밋 계획/실행 스킬
     │   ├── mr/                     # draft MR/PR 계획/생성 스킬
-    │   ├── annotate/               # 작업 관련 로직 주석 정리 스킬
-    │   ├── trim/                   # diff 군더더기 축소·중복 엮기 스킬 (weave 흡수)
+    │   ├── good/                   # 동작 보존 코드 정리와 필요한 맥락 주석
     │   └── wow/                    # 설계 관점 재구상 스킬
     └── 살짝무거움/                 # 멀티스텝 워크플로
         ├── code-visualizer/        # 코드·아키텍처를 단일 HTML로 설명하는 시각화 스킬
@@ -156,8 +155,7 @@ python3 scripts/deploy_skills.py --check     # 버전과 실제 파일 내용 �
 
 - `commit`: 현재 git diff를 분석해 적절한 커밋 단위와 한글 Conventional Commits 메시지로 커밋하는 스킬
 - `mr`: 현재 브랜치의 커밋과 diff를 분석해 draft MR/PR을 계획하거나 생성하는 스킬
-- `annotate`: 현재 작업과 관련된 로직을 짧은 한글 주석으로 정리하는 스킬
-- `trim`: 이미 구현된 diff의 동작을 유지하면서 군더더기를 덜어내고 흩어진 중복·패턴을 엮는 스킬 (weave 흡수 통합)
+- `good`: 동작을 유지하면서 코드를 읽고 수정하기 쉽게 정리하고 필요한 맥락 주석을 남기는 스킬 (trim·annotate 통합)
 - `wow`: 구현된 변경을 새 관점으로 다시 설계해 우아한 단순화안을 제안하는 스킬
 - `orbit 🪐`: 레포를 요일별 관점으로 분석하고 finding을 이슈로 발행하는 워크플로 스킬
 - `soul-extractor`: 허가된 글 샘플에서 문체 지문을 추출하고 스타일 일치도를 점검하는 스킬
@@ -168,33 +166,37 @@ python3 scripts/deploy_skills.py --check     # 버전과 실제 파일 내용 �
 
 ## 추천 사용 흐름
 
-아래는 주인장의 추천 조합일 뿐 필수 파이프라인이 아닙니다. 필요한 스킬 하나만 쓰거나 중간 단계를 건너뛰어도 됩니다.
+필요한 작업을 골라 맡깁니다. 모든 단계를 거칠 필요는 없습니다.
 
 ```text
-wow? → trim? → annotate? → commit? → mr?
-재구상   코드 정리   맥락 주석     로컬 이력    원격 리뷰
+wow? → good? → commit? → mr?
+재설계   코드·맥락 정리   로컬 이력   Draft 제출
 ```
-
-`?`는 필요할 때만 선택한다는 뜻입니다.
-
-이렇게 요청하면 각 스킬의 역할이 선명합니다.
 
 ```text
-/wow 이 구조를 처음부터 다시 설계한다면 어떤 모델이 더 단순할까?
-/trim --go 현재 변경의 동작을 유지하면서 군더더기와 중복을 줄여줘
-/annotate --go 최종 diff에서 코드만으로 안 보이는 이유만 주석으로 남겨줘
-/commit --go 변경분을 의미 단위로 나눠 커밋해줘
-/mr --go 현재 브랜치를 draft PR/MR로 올려줘
-$ship --go 현재 작업을 다듬고 커밋해 새 Draft를 만들거나 기존 Draft를 갱신해줘
-$context-review <PR/MR URL> 이 변경에서 사람이 답해야 할 고맥락 질문만 추려줘
-$code-visualizer 이 기능의 요청부터 저장까지를 HTML로 한눈에 보여줘
+$wow 이 구조를 처음부터 다시 본다면 어떤 모델이 더 단순할까?
+$good 현재 변경의 동작을 유지하면서 읽고 수정하기 쉽게 다듬어줘.
+$good 이 분기가 필요한 이유만 주석으로 남겨줘. 코드는 그대로 둬.
+$commit 변경분을 의미 단위로 나눠 커밋해줘.
+$mr 현재 작업을 Draft PR/MR로 올려줘.
+$ship 다듬고 커밋해 새 Draft를 만들거나 기존 Draft를 갱신해줘.
+$context-review <PR/MR URL> 사람이 답해야 할 고맥락 질문만 추려줘.
+$code-visualizer 이 기능의 요청부터 저장까지를 HTML로 보여줘.
 ```
 
-복합 요청은 다음 스킬이 전체 흐름을 맡습니다.
+`wow`는 기본 제안, `good`·`commit`·`mr`·`ship`은 기본 실행입니다. "계획만", "주석만", "기존 커밋만" 같은 제한을 우선합니다. 기존 `--go`, `-go`도 실행 표기로 지원하지만 실행을 위해 반드시 붙일 필요는 없습니다.
 
-- "변경분을 다듬고 필요한 주석도 남겨줘" → `trim`이 수정·검증한 뒤 `annotate`가 최종 diff에 주석을 남김
-- "커밋하고 PR까지 올려줘" → `mr`이 전체 흐름을 맡고 `commit`을 먼저 실행한 뒤 push·draft 리뷰 요청을 이어감
-- "다듬고 주석·커밋해서 Draft까지 한 번에 올려줘" → `ship`이 전체 흐름을 맡아 새 Draft를 만들고, 현재 branch에 Draft가 있으면 생성 대신 기존 본문을 갱신함
+- "다듬고 필요한 주석도 남겨줘" → `good`이 코드와 맥락을 한 흐름에서 정리합니다.
+- "커밋하고 PR까지 올려줘" → `mr`이 필요한 `commit`을 거쳐 Draft를 생성합니다.
+- "출항해줘" → `ship`이 `good → commit`을 거쳐 새 Draft 생성 또는 기존 Draft 본문 갱신까지 이어갑니다.
+
+## 데일리 스킬 1.0 전환
+
+`trim`과 `annotate`를 `good`으로 통합했습니다. 기존 명시 호출은 `$good`과 `$good 주석만`으로 바꿉니다. 옛 이름의 호출 별칭은 제공하지 않습니다.
+
+기본 호출의 계획·실행 의미가 달라졌으므로 미리보기는 "계획만"으로 명시합니다. `wow`에서 선택과 구현도 맡기면 같은 요청 안에서 구현을 이어갑니다.
+
+기존 설치를 갱신할 때는 `good`, `wow`, `commit`, `mr`, `ship`을 함께 동기화합니다. `deploy_skills.py`는 저장소에서 사라진 이름을 자동 삭제하지 않습니다. 기존 설치본이 이 저장소의 trim·annotate인지 확인하고, 별도 수정이 있으면 보존한 뒤 스킬 탐색 경로 밖에 백업해 중복 선택을 막습니다. 다른 출처의 스킬은 이관 대상으로 삼지 않습니다.
 
 ## Release Flow
 

@@ -1,0 +1,21 @@
+[
+  {"query": "방금 짠 코드 좀 줄여줘", "should_trigger": true, "expected_behavior": "good이 요청한 범위에서 동작을 보존하며 정리하고 필요한 맥락만 주석으로 남긴다"},
+  {"query": "이 diff 너무 장황한데 단순하게 해줘", "should_trigger": true, "expected_behavior": "good이 요청한 범위에서 동작을 보존하며 정리하고 필요한 맥락만 주석으로 남긴다"},
+  {"query": "여기저기 흩어진 중복 코드 합쳐줘", "should_trigger": true, "expected_behavior": "good이 요청한 범위에서 동작을 보존하며 정리하고 필요한 맥락만 주석으로 남긴다"},
+  {"query": "결제 검증 로직이 세 군데 반복되는데 공통화해줘", "should_trigger": true, "expected_behavior": "good이 요청한 범위에서 동작을 보존하며 정리하고 필요한 맥락만 주석으로 남긴다"},
+  {"query": "/good --go", "should_trigger": true, "expected_behavior": "good이 요청한 범위에서 동작을 보존하며 정리하고 필요한 맥락만 주석으로 남긴다"},
+  {"query": "변경분을 단순하게 다듬고 필요한 이유만 주석으로 남겨줘", "should_trigger": true, "expected_behavior": "good이 요청한 범위에서 동작을 보존하며 정리하고 필요한 맥락만 주석으로 남긴다"},
+  {"query": "작업 끝났으니 커밋 정리해줘", "should_trigger": false},
+  {"query": "이 함수 왜 이렇게 짰는지 주석 정리해줘", "should_trigger": true, "expected_behavior": "good이 요청한 범위의 주석만 다루고 코드 동작이나 추측한 정책을 추가하지 않는다"},
+  {"query": "이 변경에 버그 없는지 리뷰해줘", "should_trigger": false},
+  {"query": "이 모듈 구조가 마음에 안 들어, 처음부터 다시 설계한다면?", "should_trigger": false},
+  {"query": "README 문장 좀 다듬어줘", "should_trigger": false},
+  {"query": "/good 현재 diff에 필요한 주석 후보만 봐줘", "should_trigger": true, "expected_behavior": "good이 코드나 주석을 수정하지 않고 필요한 후보만 제안한다"},
+  {"query": "이번 작업과 연관된 로직을 파악하기 쉽게 주석 정리해줘", "should_trigger": true, "expected_behavior": "good이 요청한 범위의 주석만 다루고 코드 동작이나 추측한 정책을 추가하지 않는다"},
+  {"query": "이 함수 왜 이렇게 분기되는지 짧은 한글 주석 달아줘", "should_trigger": true, "expected_behavior": "good이 요청한 범위의 주석만 다루고 코드 동작이나 추측한 정책을 추가하지 않는다"},
+  {"query": "코드 전체에 주석을 최대한 많이 달아줘", "should_trigger": true, "expected_behavior": "good이 요청한 범위의 주석만 다루고 코드 동작이나 추측한 정책을 추가하지 않는다"},
+  {"query": "이 코드 리팩터링해서 중복 줄여줘", "should_trigger": true, "expected_behavior": "good이 요청한 범위에서 동작을 보존하며 정리하고 필요한 맥락만 주석으로 남긴다"},
+  {"query": "README에 설치 방법 추가해줘", "should_trigger": false},
+  {"query": "이 diff 군더더기 많은데 좀 정리해서 줄여줘", "should_trigger": false},
+  {"query": "커밋 메시지들 좀 정리해줘", "should_trigger": false}
+]

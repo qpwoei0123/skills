@@ -12,7 +12,7 @@
 
 - 스킬마다 최소한의 형식을 맞춘다.
 - 버전, 변경 이력, 사용자 문서를 일관되게 유지한다.
-- `orbit` 같은 복잡한 스킬과 `annotate` 같은 단순한 스킬을 모두 수용한다.
+- `orbit` 같은 복잡한 스킬과 `commit` 같은 단순한 스킬을 모두 수용한다.
 - 이후 `validator(형식 검증 스크립트)`와 `CI(자동 검증 파이프라인)`로 자동 검사할 수 있게 만든다.
 
 ## 적용 범위
@@ -209,7 +209,7 @@ interface:
 ### 단순 스킬
 
 ```text
-skills/데일리함/annotate/
+skills/데일리함/commit/
 ├── SKILL.md
 ├── README.md
 ├── CHANGELOG.md
@@ -325,4 +325,4 @@ skills/살짝무거움/orbit/
 1. `scripts/validate_skills.py`로 전체 스킬 계약을 검사한다.
 2. 루트 unittest로 validator·normalizer·deploy 회귀를 확인한다.
 3. `templates/skill/`을 현재 표준과 함께 유지한다.
-4. `orbit`, `annotate`, `soul-extractor`를 포함한 현재 accepted 스킬의 정합성을 유지한다.
+4. `orbit`, `good`, `soul-extractor`를 포함한 현재 accepted 스킬의 정합성을 유지한다.

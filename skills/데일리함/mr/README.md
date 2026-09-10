@@ -1,27 +1,22 @@
 # mr
 
-`version: 0.7.0`
+`version: 1.0.0`
 
-현재 브랜치의 커밋과 diff를 읽고 GitHub PR 또는 GitLab MR을 항상 draft로 계획하거나 생성하는 스킬입니다.
+요청한 작업을 push하고 저장소 관례에 맞는 GitHub Draft PR 또는 GitLab Draft MR을 만듭니다.
 
 ## Quick Start
 
 ```text
-/mr
-/mr --go
-/mr -go
+$mr 현재 작업을 Draft PR로 올려줘.
+$mr 기존 커밋만 MR로 올려줘.
+$mr 생성하지 말고 제목과 본문만 준비해줘.
 ```
 
-- `/mr`: draft MR/PR 계획을 제안한 뒤 승인을 기다립니다.
-- `/mr --go`, `/mr -go`: 필요한 A/B·rename 선택만 받은 뒤 push하고 draft MR/PR을 생성합니다.
+`$mr`, `/mr`은 기본적으로 제출까지 수행하고 `--go`, `-go`도 지원합니다. "계획만" 같은 명시적 제한이 우선합니다.
 
-"커밋하고 PR까지"처럼 커밋을 함께 요청하면 `mr`이 전체 흐름을 맡고 `commit` 절차를 먼저 실행합니다.
+현재 작업의 미커밋 변경을 포함하는 요청이면 `commit`을 거쳐 제출합니다. 기존 커밋만 지정하면 남은 변경을 포함하지 않습니다. 범위가 명확하면 A/B 선택을 다시 묻지 않습니다.
 
-두 모드 모두 push 전에 아래를 수행합니다.
-
-- 레포 기여 문서(CONTRIBUTING 등)를 먼저 확인하고, 브랜치명·제목·본문 규칙이 있으면 우선 적용합니다.
-- 최근 머지된 MR/PR의 브랜치명으로 레포 컨벤션을 점검하고, 현재 브랜치명이 벗어나면 rename을 제안합니다.
-- 커밋 안 된 변경이 남아 있으면 중단하는 대신 commit 스킬을 불러 diff 제외(A안)와 커밋 포함(B안) 두 계획을 나란히 제시하고 선택을 받습니다.
+인증된 gh/glab과 HTTPS 경로를 우선합니다. 같은 source/head의 열린 요청은 중복 생성하지 않고 URL을 보고하며, 기존 Draft 본문 갱신은 `ship`이 맡습니다.
 
 ## Structure
 
@@ -30,32 +25,23 @@ mr/
 ├── SKILL.md
 ├── README.md
 ├── CHANGELOG.md
-├── agents/
-│   └── openai.yaml
-├── evals/
-│   └── trigger-eval.json
-├── references/
-│   ├── branch-conventions.md
-│   └── review-format.md
-└── scripts/
-    └── preflight.sh
+├── agents/openai.yaml
+├── evals/trigger-eval.json
+├── references/branch-conventions.md
+├── references/review-format.md
+└── scripts/preflight.sh
 ```
-
-- `references/branch-conventions.md`: push 전 브랜치명 관례 판정과 rename 안전 규칙
-- `references/review-format.md`: 레포 관례에 맞는 제목·본문 생성 규칙
 
 ## Scripts
 
-- `scripts/preflight.sh`: mr 계획에 필요한 읽기 전용 git 사전 점검(worktree 상태, 브랜치/remote, base 후보, 기여 문서 후보, 최근 머지 브랜치명 후보, 플랫폼 추정)을 한 번에 출력한다. 아무것도 변경하지 않는다.
+대상 git 저장소에서 읽기 전용 사전 점검을 실행합니다.
 
 ```bash
-# 스킬 디렉터리에서 실행
-bash scripts/preflight.sh
+bash <스킬 디렉터리>/scripts/preflight.sh
 ```
 
 ## Test
 
 ```bash
-# 레포 루트에서 실행
 python3 scripts/validate_skills.py --skill mr
 ```

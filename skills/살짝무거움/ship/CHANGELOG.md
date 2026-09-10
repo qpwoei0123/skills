@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.0.0
+
+### Changed
+- trim·annotate를 통합 스킬 good으로 교체하고 기본 호출을 출항 실행으로 변경
+- 명시적인 계획 요청을 우선하고 하위 단계의 승인·검증·push 중복 제거
+- 기존 Draft의 대상·본문 보호와 갱신 절차를 references/draft-update.md로 분리
+- 인증된 gh/glab과 HTTPS 경로를 우선하며 필요한 결과만 간결하게 보고
+
 ## 0.2.0
 
 ### Added

@@ -1,16 +1,18 @@
 # wow
 
-`version: 0.4.2`
+`version: 1.0.0`
 
-문제를 새 관점으로 다시 설계해 "이렇게 했으면 훨씬 단순했겠다" 싶은 우아한 단순화안을 제안하는 스킬입니다.
+문제 정의와 설계 모델을 다시 보고, 더 적은 상태와 책임으로 같은 목표를 이루는 방식을 제안합니다.
 
 ## Quick Start
 
 ```text
-/wow
+$wow 이 상태 관리를 처음부터 다시 본다면 어떤 개념을 없앨 수 있어?
+$wow 재설계안을 먼저 보여줘. 선택하면 구현하자.
+$wow 가장 나은 안을 골라 구현까지 해줘.
 ```
 
-`wow`는 제안 전용입니다. 파일을 수정하거나 커밋하지 않으며, 사용자가 제안을 고른 뒤 별도 수정 작업으로 이어갑니다.
+기본 호출과 `/wow`는 제안까지 수행합니다. 사용자가 선택과 구현도 맡겼다면 같은 요청 안에서 구현을 이어갑니다. 현재 동작을 유지하며 코드를 정리할 때는 `good`을 사용합니다.
 
 ## Structure
 
@@ -19,17 +21,13 @@ wow/
 ├── SKILL.md
 ├── README.md
 ├── CHANGELOG.md
-├── agents/
-│   └── openai.yaml
-├── references/
-│   └── example.md
-└── evals/
-    └── trigger-eval.json
+├── agents/openai.yaml
+├── references/example.md
+└── evals/trigger-eval.json
 ```
 
 ## Test
 
 ```bash
-# 레포 루트에서 실행
 python3 scripts/validate_skills.py --skill wow
 ```
