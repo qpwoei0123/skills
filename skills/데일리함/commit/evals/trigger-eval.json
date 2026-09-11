@@ -2,7 +2,7 @@
   {"query": "변경분 의미 단위로 나눠서 커밋해줘", "should_trigger": true, "expected_behavior": "요청한 변경을 의미 단위로 커밋하며 실행 승인을 다시 묻지 않는다"},
   {"query": "지금 작업한 거 커밋해줘", "should_trigger": true, "expected_behavior": "요청한 변경을 의미 단위로 커밋하며 실행 승인을 다시 묻지 않는다"},
   {"query": "커밋 메시지 뭐라고 쓸지 추천해서 커밋해줘", "should_trigger": true, "expected_behavior": "요청한 변경을 의미 단위로 커밋하며 실행 승인을 다시 묻지 않는다"},
-  {"query": "커밋하고 PR까지 올려줘", "should_trigger": true, "expected_behavior": "mr이 요청한 범위를 소유하고 commit을 완료한 뒤 같은 승인으로 Draft 제출을 이어간다"},
+  {"query": "커밋하고 PR까지 올려줘", "should_trigger": true, "expected_behavior": ".⚡ship이 요청한 범위를 소유하고 .⚡commit을 완료한 뒤 같은 승인으로 Draft 제출을 이어간다"},
   {"query": "이 브랜치 PR 올려줘", "should_trigger": false},
   {"query": "이 코드 단순하게 줄여줘", "should_trigger": false},
   {"query": "마지막 커밋 메시지 좀 고쳐줘", "should_trigger": false},

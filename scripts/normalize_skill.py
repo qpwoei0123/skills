@@ -11,14 +11,16 @@ from skill_repo_lib import (
     NormalizeResult,
     build_json_payload,
     discover_skills,
+    frontmatter_value,
     load_frontmatter_document,
     metadata_version,
     normalize_changelog_content,
-    normalize_description_prefix,
     normalize_readme_content,
     parse_frontmatter,
+    remove_description_version_prefix,
     render_frontmatter_document,
     repo_root_from_script,
+    select_skills,
     upsert_metadata_version,
     validate_skill,
 )
@@ -45,11 +47,12 @@ def normalize_skill_directory(skill_dir: Path, repo_root: Path, write: bool) -> 
     skill_text = skill_path.read_text(encoding="utf-8")
     document = load_frontmatter_document(skill_text)
     frontmatter = parse_frontmatter(skill_text)
+    name = frontmatter_value(frontmatter, "name")
     changed_frontmatter, resolved_version = upsert_metadata_version(document)
     if not resolved_version:
         resolved_version = metadata_version(frontmatter)
 
-    changed_prefix = normalize_description_prefix(document, resolved_version)
+    changed_prefix = remove_description_version_prefix(document)
 
     pending_writes: list[tuple[Path, str]] = []
     if changed_frontmatter or changed_prefix:
@@ -57,13 +60,14 @@ def normalize_skill_directory(skill_dir: Path, repo_root: Path, write: bool) -> 
         if changed_frontmatter:
             result.applied_changes.append("SKILL.md metadata.version 정규화")
         if changed_prefix:
-            result.applied_changes.append("SKILL.md description 버전 접두사 동기화")
+            result.applied_changes.append("SKILL.md description 버전 접두사 제거")
 
     readme_path = skill_dir / "README.md"
     if readme_path.exists():
         readme_text = readme_path.read_text(encoding="utf-8")
         normalized_readme, readme_changes = normalize_readme_content(
-            skill_name=skill_dir.name,
+            skill_name=name,
+            skill_dir_name=skill_dir.name,
             version=resolved_version,
             text=readme_text,
         )
@@ -77,7 +81,8 @@ def normalize_skill_directory(skill_dir: Path, repo_root: Path, write: bool) -> 
                 load_template(
                     repo_root,
                     "README.md.tmpl",
-                    skill_name=skill_dir.name,
+                    skill_name=name,
+                    skill_dir_name=skill_dir.name,
                     version=resolved_version,
                 ),
             )
@@ -101,7 +106,7 @@ def normalize_skill_directory(skill_dir: Path, repo_root: Path, write: bool) -> 
                 load_template(
                     repo_root,
                     "CHANGELOG.md.tmpl",
-                    skill_name=skill_dir.name,
+                    skill_name=name,
                     version=resolved_version,
                 ),
             )
@@ -128,11 +133,12 @@ def main() -> int:
     args = parser.parse_args()
 
     repo_root = repo_root_from_script(Path(__file__))
-    skill_dir = next((d for d in discover_skills(repo_root) if d.name == args.skill), None)
-    if skill_dir is None:
+    skill_dirs, missing = select_skills(discover_skills(repo_root), {args.skill})
+    if missing:
         print(f"[error] 알 수 없는 스킬: {args.skill}")
         return 1
 
+    skill_dir = skill_dirs[0]
     result = normalize_skill_directory(skill_dir, repo_root=repo_root, write=args.write)
     if result.blockers:
         print(f"[block] {result.skill}")

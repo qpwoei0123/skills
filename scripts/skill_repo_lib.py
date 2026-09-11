@@ -10,6 +10,7 @@ SEMVER_RE = re.compile(r"^\d+\.\d+\.\d+$")
 README_VERSION_RE = re.compile(r"version:\s*([0-9]+\.[0-9]+\.[0-9]+)", re.IGNORECASE)
 CHANGELOG_VERSION_RE = re.compile(r"^##\s+([0-9]+\.[0-9]+\.[0-9]+)\s*$", re.MULTILINE)
 DESC_VERSION_PREFIX_RE = re.compile(r"^\(v([0-9]+\.[0-9]+\.[0-9]+)\)\s*")
+DESCRIPTION_MAX_LENGTH = 30
 BLOCK_SCALAR_RE = re.compile(r"^[>|](?:[+-]?[1-9]?|[1-9]?[+-]?)(?:\s+#.*)?$")
 ACCEPTED_SKILL_LINE_RE = re.compile(r"^- `([^`]+)`", re.MULTILINE)
 
@@ -28,7 +29,7 @@ AUTOFIXABLE_ERROR_CODES = {
     "changelog_missing_version_header",
     "changelog_version_mismatch",
     "metadata_version_missing_with_legacy_version",
-    "description_version_prefix_mismatch",
+    "description_version_prefix",
 }
 
 
@@ -209,6 +210,27 @@ def frontmatter_value(frontmatter: dict[str, object], key: str) -> str:
     return value if isinstance(value, str) else ""
 
 
+def skill_name(skill_dir: Path) -> str:
+    """호출명을 읽는다. 잘못된 문서는 폴더명으로 식별하고 validate_skill에서 보고한다."""
+    try:
+        frontmatter = parse_frontmatter((skill_dir / "SKILL.md").read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return skill_dir.name
+    return frontmatter_value(frontmatter, "name") or skill_dir.name
+
+
+def select_skills(skill_dirs: list[Path], requested: set[str]) -> tuple[list[Path], set[str]]:
+    """호출명과 저장 폴더명으로 선택하되 같은 스킬은 한 번만 반환한다."""
+    selected: list[Path] = []
+    matched: set[str] = set()
+    for skill_dir in skill_dirs:
+        matches = requested & {skill_dir.name, skill_name(skill_dir)}
+        if matches:
+            selected.append(skill_dir)
+            matched.update(matches)
+    return selected, requested - matched
+
+
 def metadata_version(frontmatter: dict[str, object]) -> str:
     metadata = frontmatter.get("metadata")
     if not isinstance(metadata, dict):
@@ -369,17 +391,18 @@ def validate_openai_manifest(skill_dir: Path, report: SkillReport) -> None:
             )
 
     short_description = interface.get("short_description", "")
-    if short_description and not 25 <= len(short_description) <= 64:
+    if len(short_description) > DESCRIPTION_MAX_LENGTH:
         report.add_error(
             "openai_yaml_short_description_length",
-            "agents/openai.yaml interface.short_description은 25~64자여야 합니다.",
+            f"agents/openai.yaml interface.short_description은 공백 포함 {DESCRIPTION_MAX_LENGTH}자 이하여야 합니다.",
         )
 
     default_prompt = interface.get("default_prompt", "")
-    if default_prompt and f"${skill_dir.name}" not in default_prompt:
+    name = skill_name(skill_dir)
+    if default_prompt and f"${name}" not in default_prompt:
         report.add_error(
             "openai_yaml_default_prompt_trigger",
-            f"agents/openai.yaml interface.default_prompt에 ${skill_dir.name} 호출 예시가 필요합니다.",
+            f"agents/openai.yaml interface.default_prompt에 ${name} 호출 예시가 필요합니다.",
         )
 
 
@@ -406,12 +429,13 @@ def validate_skill(skill_dir: Path) -> SkillReport:
         return report
 
     name = frontmatter_value(frontmatter, "name")
+    allowed_names = tuple(f"{prefix}{skill_dir.name}" for prefix in ("", ".", ".⚡", ".🌈"))
     if not name:
         report.add_error("invalid_name", "frontmatter 필수 키 누락 또는 빈 값: name")
-    elif name != skill_dir.name:
+    elif name not in allowed_names:
         report.add_error(
             "invalid_name",
-            f"frontmatter name 불일치: {name} != {skill_dir.name}",
+            f"frontmatter name 불일치: {name} (허용: {', '.join(allowed_names)})",
         )
 
     if not frontmatter_value(frontmatter, "license"):
@@ -446,18 +470,23 @@ def validate_skill(skill_dir: Path) -> SkillReport:
             "description_must_be_single_line",
             "description은 block scalar가 아닌 단일행 문자열이어야 합니다.",
         )
-    elif description and version:
-        prefix_match = DESC_VERSION_PREFIX_RE.match(description)
-        if not prefix_match:
-            report.add_error(
-                "description_version_prefix_mismatch",
-                "description에 (vx.y.z) 버전 접두사가 없습니다.",
-            )
-        elif prefix_match.group(1) != version:
-            report.add_error(
-                "description_version_prefix_mismatch",
-                f"description 버전 접두사 불일치: {prefix_match.group(1)} != {version}",
-            )
+    elif description:
+        value = parse_simple_yaml_scalar(description)
+        if not value:
+            report.add_error("missing_description", "description은 비어 있지 않은 문자열이어야 합니다.")
+        else:
+            prefix_match = DESC_VERSION_PREFIX_RE.match(value)
+            if prefix_match:
+                report.add_error(
+                    "description_version_prefix",
+                    f"description에서 버전 접두사 (v{prefix_match.group(1)})를 제거하세요.",
+                )
+            visible_description = DESC_VERSION_PREFIX_RE.sub("", value)
+            if len(visible_description) > DESCRIPTION_MAX_LENGTH:
+                report.add_error(
+                    "description_too_long",
+                    f"description은 공백 포함 {DESCRIPTION_MAX_LENGTH}자 이하여야 합니다 (현재 {len(visible_description)}자).",
+                )
 
     if readme_exists:
         readme_text = (skill_dir / "README.md").read_text(encoding="utf-8")
@@ -580,21 +609,21 @@ def upsert_metadata_version(document: FrontmatterDocument) -> tuple[bool, str]:
     return changed, resolved_version
 
 
-def normalize_description_prefix(document: FrontmatterDocument, version: str) -> bool:
-    """description 단일행 스칼라의 (vx.y.z) 접두사를 metadata.version과 동기화한다."""
-    if not version:
-        return False
+def remove_description_version_prefix(document: FrontmatterDocument) -> bool:
+    """목록 설명에서 버전 접두사만 제거하고 설명 내용은 보존한다."""
     entry = frontmatter_entry(document.entries, "description")
     if entry is None:
         return False
-    value = scalar_value(entry)
-    if not value or is_block_scalar(value):
+    raw_value = scalar_value(entry)
+    if is_block_scalar(raw_value):
         return False
-    stripped = DESC_VERSION_PREFIX_RE.sub("", value)
-    desired = f"(v{version}) {stripped}"
-    if value == desired:
+    value = parse_simple_yaml_scalar(raw_value)
+    if not value:
         return False
-    entry.lines[0] = f"description: {desired}"
+    stripped, count = DESC_VERSION_PREFIX_RE.subn("", value, count=1)
+    if not count:
+        return False
+    entry.lines[0] = f"description: {json.dumps(stripped, ensure_ascii=False)}"
     return True
 
 
@@ -616,7 +645,7 @@ def validate_skill_name_uniqueness(root: Path, skill_dirs: list[Path]) -> SkillR
 
 
 def validate_root_readme(root: Path, skill_names: list[str]) -> SkillReport:
-    """루트 README의 Accepted Skills 목록과 스킬 디렉터리 일치를 검사한다."""
+    """루트 README의 Accepted Skills 목록과 실제 호출명 일치를 검사한다."""
     report = SkillReport(name="(repo)")
     readme_path = root / "README.md"
     if not readme_path.exists():
@@ -648,7 +677,9 @@ def validate_root_readme(root: Path, skill_names: list[str]) -> SkillReport:
     return report
 
 
-def normalize_readme_content(skill_name: str, version: str, text: str | None = None) -> tuple[str, list[str]]:
+def normalize_readme_content(
+    skill_name: str, skill_dir_name: str, version: str, text: str | None = None
+) -> tuple[str, list[str]]:
     changes: list[str] = []
     if text is None:
         return "", changes
@@ -686,7 +717,7 @@ def normalize_readme_content(skill_name: str, version: str, text: str | None = N
     if not contains_any(normalized, STRUCTURE_MARKERS):
         normalized = normalized.rstrip() + (
             "\n\n## Structure\n\n```text\n"
-            f"{skill_name}/\n"
+            f"{skill_dir_name}/\n"
             "├── SKILL.md\n"
             "├── README.md\n"
             "└── CHANGELOG.md\n"

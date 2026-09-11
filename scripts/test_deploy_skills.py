@@ -27,7 +27,7 @@ class DeploySkillsTest(unittest.TestCase):
                     "license: Apache-2.0",
                     "metadata:",
                     "  version: 0.1.0",
-                    "description: (v0.1.0) 테스트 스킬",
+                    "description: 테스트 스킬",
                     "---",
                     "",
                     f"# {skill_dir.name}",

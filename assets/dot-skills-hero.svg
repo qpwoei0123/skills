@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="25 10 650 525" fill="none" role="img" aria-labelledby="title desc">
+  <title id="title">닷 스킬</title>
+  <desc id="desc">두 손가락이 점과 슬래시 키를 누르는 낙서. 옆에는 번개와 무지개가 있고 배경은 투명하다.</desc>
+  <g stroke-linecap="round" stroke-linejoin="round">
+    <!-- Neighboring keys -->
+    <path d="M48 375 112 383Q132 386 123 408L107 455M498 506 514 442Q518 422 536 426L622 438" stroke="#aaa7a2" stroke-width="4"/>
+
+    <!-- Period key -->
+    <path d="M177 342Q181 334 193 338L291 356Q307 359 311 375L321 422 299 477Q296 483 280 480L149 463Q132 461 139 443Z" fill="#fffdf7" stroke="#292a29" stroke-width="5"/>
+    <path d="m149 419 137 24 25-68 10 47-22 55q-3 6-19 3l-131-17q-17-2-10-20Z" fill="#e8e5de"/>
+    <path d="m149 419 137 24 25-68M286 443l-4 36" stroke="#aaa7a2" stroke-width="3"/>
+    <path d="M177 342Q181 334 193 338L291 356Q307 359 311 375L321 422 299 477Q296 483 280 480L149 463Q132 461 139 443Z" stroke="#292a29" stroke-width="5"/>
+    <circle cx="229" cy="394" r="6" fill="#292a29"/>
+
+    <!-- Slash key -->
+    <path d="M327 356Q333 351 343 354L447 374Q460 378 465 393L480 442 464 494Q462 503 448 500L311 479Q297 477 301 465Z" fill="#fffdf7" stroke="#292a29" stroke-width="5"/>
+    <path d="m312 440 137 24 16-71 15 49-16 52q-2 9-16 6l-137-21q-14-2-10-14Z" fill="#e8e5de"/>
+    <path d="m312 440 137 24 16-71M449 464l-1 36" stroke="#aaa7a2" stroke-width="3"/>
+    <path d="M327 356Q333 351 343 354L447 374Q460 378 465 393L480 442 464 494Q462 503 448 500L311 479Q297 477 301 465Z" stroke="#292a29" stroke-width="5"/>
+    <path d="m378 425 23-30" stroke="#292a29" stroke-width="8"/>
+
+    <!-- Flat doodle hand: no skin texture or anatomical detail -->
+    <path d="M434 30C351 66 290 132 253 211S215 307 217 338Q219 361 240 362C268 367 281 337 302 305L359 207C365 245 362 286 364 330Q364 372 388 379C422 390 453 350 457 300L458 248Q460 289 482 294C512 303 542 287 549 261Q556 238 556 209C560 231 589 225 601 210C628 176 621 127 594 88Z" fill="#fffdf7"/>
+    <path d="M434 30C351 66 290 132 253 211S215 307 217 338Q219 361 240 362C268 367 281 337 302 305L359 207C365 245 362 286 364 330Q364 372 388 379C422 390 453 350 457 300L458 248Q460 289 482 294C512 303 542 287 549 261Q556 238 556 209C560 231 589 225 601 210C628 176 621 127 594 88" stroke="#292a29" stroke-width="7"/>
+
+    <!-- Lightning -->
+    <path d="m94 207 29 47 12-20 17 93-29-46-9 17Z" fill="#f5c640" stroke="#292a29" stroke-width="4"/>
+    <path d="m61 264 13 6m85-53 5-23m24 54 11-11" stroke="#292a29" stroke-width="5"/>
+
+    <!-- Rainbow -->
+    <path d="M518 372C536 326 590 324 607 361Q615 380 611 398" stroke="#ef7958" stroke-width="7"/>
+    <path d="M525 376C542 339 583 335 598 366Q605 382 602 397" stroke="#f3b84f" stroke-width="7"/>
+    <path d="M534 378C551 351 577 346 588 371Q595 384 593 395" stroke="#e4cf64" stroke-width="7"/>
+    <path d="M543 380C557 361 574 360 581 377Q586 387 584 394" stroke="#95ba83" stroke-width="7"/>
+    <path d="M552 384C563 372 574 375 575 389" stroke="#6baac8" stroke-width="7"/>
+    <path d="m632 375 12-5m-11 23 10 2m-151-43-3-11" stroke="#292a29" stroke-width="5"/>
+  </g>
+</svg>

@@ -12,6 +12,8 @@ from skill_repo_lib import (
     discover_skills,
     dumps_json,
     repo_root_from_script,
+    select_skills,
+    skill_name,
     validate_root_readme,
     validate_skill,
     validate_skill_name_uniqueness,
@@ -38,8 +40,7 @@ def main() -> int:
 
     if args.skills:
         requested = set(args.skills)
-        skill_dirs = [skill for skill in skill_dirs if skill.name in requested]
-        missing = requested - {skill.name for skill in skill_dirs}
+        skill_dirs, missing = select_skills(skill_dirs, requested)
         if missing:
             if args.json:
                 payload = {
@@ -55,7 +56,7 @@ def main() -> int:
 
     reports = [validate_skill(skill_dir) for skill_dir in skill_dirs]
     if not args.skills:
-        repo_report = validate_root_readme(root, [skill.name for skill in skill_dirs])
+        repo_report = validate_root_readme(root, [skill_name(skill) for skill in skill_dirs])
         repo_report.errors.extend(validate_skill_name_uniqueness(root, skill_dirs).errors)
         reports.append(repo_report)
     payload = build_json_payload(reports)

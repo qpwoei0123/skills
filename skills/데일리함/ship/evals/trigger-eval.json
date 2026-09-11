@@ -1,0 +1,12 @@
+[
+  {"query": "이 브랜치 draft PR 올려줘", "should_trigger": true, "expected_behavior": "요청한 범위의 필요한 커밋·push·Draft 생성을 같은 승인으로 완료한다"},
+  {"query": "MR 올려줘", "should_trigger": true, "expected_behavior": "요청한 범위의 필요한 커밋·push·Draft 생성을 같은 승인으로 완료한다"},
+  {"query": "작업 끝났으니 리뷰 올릴 준비해줘", "should_trigger": true, "expected_behavior": "필요한 변경을 커밋하고 실제 커밋 범위의 제목·본문을 준비하되 원격 변경은 수행하지 않는다"},
+  {"query": "push하고 리뷰 요청까지 해줘", "should_trigger": true, "expected_behavior": "요청한 범위의 필요한 커밋·push·Draft 생성을 같은 승인으로 완료한다"},
+  {"query": "변경분 커밋하고 draft PR까지 올려줘", "should_trigger": true, "expected_behavior": "요청한 범위의 필요한 커밋·push·Draft 생성을 같은 승인으로 완료한다"},
+  {"query": "변경분 커밋부터 해줘", "should_trigger": false},
+  {"query": "이 코드 좀 다듬어줘", "should_trigger": false},
+  {"query": "이 diff 코드 리뷰 해줘", "should_trigger": false},
+  {"query": "올라온 PR #12 리뷰해줘", "should_trigger": false},
+  {"query": "PR 머지해줘", "should_trigger": false}
+]

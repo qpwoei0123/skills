@@ -1,4 +1,4 @@
 interface:
-  display_name: "Good · 코드 다듬기"
-  short_description: "동작을 유지하며 코드를 정리하고 필요한 맥락 주석을 남깁니다"
-  default_prompt: "$good으로 현재 변경을 읽고 수정하기 쉽게 다듬어 주세요."
+  display_name: ".⚡good"
+  short_description: "동작 유지하며 코드·주석 정리"
+  default_prompt: "$.⚡good으로 현재 변경을 읽고 수정하기 쉽게 다듬어 주세요."

@@ -12,7 +12,7 @@
 
 - 스킬마다 최소한의 형식을 맞춘다.
 - 버전, 변경 이력, 사용자 문서를 일관되게 유지한다.
-- `won-orbit` 같은 복잡한 스킬과 `commit` 같은 단순한 스킬을 모두 수용한다.
+- `.🌈orbit` 같은 복잡한 스킬과 `.⚡commit` 같은 단순한 스킬을 모두 수용한다.
 - 이후 `validator(형식 검증 스크립트)`와 `CI(자동 검증 파이프라인)`로 자동 검사할 수 있게 만든다.
 
 ## 적용 범위
@@ -21,7 +21,7 @@
 
 - 정식 스킬: `skills/<카테고리>/` 아래의 스킬 디렉터리
 - 카테고리: 사용 무게 기준 — `데일리함`(가벼운 일상 도구), `살짝무거움`(멀티스텝 워크플로)
-- 예시: `skills/데일리함/commit/`, `skills/살짝무거움/won-orbit/`
+- 예시: `skills/데일리함/commit/`, `skills/살짝무거움/orbit/`
 - 스킬 디렉터리 이름은 카테고리가 달라도 전역에서 유일해야 한다. 배포와 npx 설치가 이름 기준이기 때문이다.
 
 임시 초안은 이 저장소 밖에서 만들 수 있다.
@@ -70,11 +70,11 @@ frontmatter 최소 형식:
 
 ```yaml
 ---
-name: won-orbit
+name: .🌈orbit
 license: Apache-2.0
 metadata:
-  version: 1.7.0
-description: (v1.7.0) 스킬 설명. 트리거 문구 예시 포함.
+  version: 4.0.0
+description: 레포 점검·기술 이슈 발행
 ---
 ```
 
@@ -87,11 +87,13 @@ description: (v1.7.0) 스킬 설명. 트리거 문구 예시 포함.
 
 규칙:
 
-- `name`은 호출 이름과 일치해야 한다.
+- `name`은 호출 이름과 일치해야 한다. 닷 스킬은 저장 폴더명 앞에 데일리함은 `.⚡`, 살짝무거움은 `.🌈`를 붙인다. 예: `skills/데일리함/review/SKILL.md`의 `name: .⚡review`.
+- 점·이모지는 호출명·목록 표시명에 사용하고 저장 폴더는 `review`, `orbit`처럼 둔다. 루트 README의 Accepted Skills에도 실제 호출명을 쓴다. validator는 기존 폴더명·점 접두사 형식도 허용한다.
+- 점·이모지 접두사는 이 저장소의 이름 규칙이다. 기본 `skill-creator`의 `quick_validate.py`는 이를 거부하므로, 닷 스킬은 저장소 validator와 실제 스킬 로더로 확인한다. 로더 인식과 UI 검색·정렬 검증은 구분한다.
 - `metadata.version`은 `SemVer(주버전.부버전.수정버전 규칙)` 형식을 따른다.
 - 버전 표기의 `SSOT(단일 기준 원천)`는 항상 `metadata.version`이다.
-- `description`은 트리거와 용도를 설명해야 한다.
-- `description`은 단일행으로 쓰고 `(vx.y.z)` 버전 접두사로 시작한다. 접두사는 `metadata.version`과 같아야 하며 normalize가 자동 동기화한다.
+- `description`은 어떤 작업을 맡기는지 바로 알 수 있는 단일행 행동 설명으로 쓴다. 공백 포함 1~30자로 제한하며, YAML의 따옴표와 주석은 글자 수에서 제외한다.
+- 버전 접두사와 호출 예시를 `description`에 넣지 않는다. 버전은 `metadata.version`, 호출 예시·상세 범위는 본문·README에 둔다. normalize는 기존 `(vx.y.z)` 접두사만 제거하고 설명을 임의로 줄이지 않는다.
 - `description: |`, `description: >` 같은 block scalar는 단일행 규약 위반으로 처리한다.
 
 ### MUST — `README.md`
@@ -156,14 +158,14 @@ description: (v1.7.0) 스킬 설명. 트리거 문구 예시 포함.
 
 ```yaml
 interface:
-  display_name: "won-orbit"
-  short_description: "레포를 7개 관점으로 점검해 검증된 기술 이슈를 발행합니다"
-  default_prompt: "$won-orbit으로 이 레포를 종합 점검해 주세요."
+  display_name: ".🌈orbit"
+  short_description: "레포 점검·기술 이슈 발행"
+  default_prompt: "$.🌈orbit으로 이 레포를 종합 점검해 주세요."
 ```
 
 - `display_name`은 비어 있지 않아야 한다.
-- `short_description`은 25~64자여야 한다.
-- `default_prompt`에는 `$<skill-name>` 호출 예시가 있어야 한다.
+- `short_description`도 공백 포함 1~30자로 쓰며, `description`과 같은 문구를 권장한다. 이 저장소에서는 짧고 직관적인 한국어 목록 설명을 우선한다.
+- `default_prompt`에는 frontmatter `name` 기준의 `$<skill-name>` 호출 예시가 있어야 한다. 닷 스킬은 `$.⚡review`처럼 쓴다.
 
 ### `references/`
 
@@ -219,7 +221,7 @@ skills/데일리함/commit/
 ### 복잡한 워크플로 스킬
 
 ```text
-skills/살짝무거움/won-orbit/
+skills/살짝무거움/orbit/
 ├── SKILL.md
 ├── README.md
 ├── CHANGELOG.md
@@ -272,7 +274,8 @@ skills/살짝무거움/won-orbit/
 
 ## 검증과 배포
 
-- `validate_skills.py`는 필수 문서, 단일행 description, trigger eval, OpenAI manifest 계약을 검사한다.
+- `validate_skills.py`는 필수 문서, 단일행 description, 두 목록 설명의 30자 상한, trigger eval, OpenAI manifest 계약을 검사한다.
+- validate·normalize·deploy의 `--skill`은 호출명과 저장 폴더명을 모두 받는다. 예: `--skill .⚡review`, `--skill review`. 배포 경로와 CI 보고 식별자는 저장 폴더명을 유지한다.
 - `deploy_skills.py --check`는 버전뿐 아니라 배포 디렉터리의 실제 파일 내용 drift도 검사한다.
 - 배포는 모든 선택 스킬을 staging에 복사해 다시 검증한 뒤 swap한다.
 - swap이 실패하면 이미 교체한 스킬을 역순으로 rollback해 기존 배포본을 복구한다.
@@ -286,7 +289,7 @@ skills/살짝무거움/won-orbit/
 자동 수정 가능한 항목:
 
 - `SKILL.md`의 top-level `version`을 `metadata.version`으로 이동
-- 단일행 `description`의 `(vx.y.z)` 접두사를 `metadata.version`에 동기화
+- 단일행 `description`의 기존 `(vx.y.z)` 접두사 제거
 - 누락된 `README.md`, `CHANGELOG.md` 생성
 - README의 `version:` 표기 동기화
 - README의 `Quick Start`, `Structure`, `Test` 섹션 보강
@@ -296,7 +299,7 @@ skills/살짝무거움/won-orbit/
 
 - `name`
 - `license`
-- block scalar description과 설명 본문
+- block scalar description과 설명 본문, 30자를 넘는 설명의 축약
 - README 소개 문장의 의미
 - 스킬 트리거와 동작 의미
 
@@ -325,4 +328,4 @@ skills/살짝무거움/won-orbit/
 1. `scripts/validate_skills.py`로 전체 스킬 계약을 검사한다.
 2. 루트 unittest로 validator·normalizer·deploy 회귀를 확인한다.
 3. `templates/skill/`을 현재 표준과 함께 유지한다.
-4. `won-orbit`, `good`, `won-soul-extractor`를 포함한 현재 accepted 스킬의 정합성을 유지한다.
+4. `.🌈orbit`, `.⚡good`, `.🌈soul-extractor`를 포함한 현재 accepted 스킬의 정합성을 유지한다.

@@ -17,6 +17,7 @@ from skill_repo_lib import (
     metadata_version,
     parse_frontmatter,
     repo_root_from_script,
+    select_skills,
     validate_skill,
 )
 
@@ -189,8 +190,7 @@ def main() -> int:
 
     if args.skills:
         requested = set(args.skills)
-        skill_dirs = [d for d in skill_dirs if d.name in requested]
-        missing = requested - {d.name for d in skill_dirs}
+        skill_dirs, missing = select_skills(skill_dirs, requested)
         if missing:
             for name in sorted(missing):
                 print(f"[error] 알 수 없는 스킬: {name}")

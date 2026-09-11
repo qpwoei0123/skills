@@ -1,0 +1,92 @@
+---
+name: .🌈orbit
+license: Apache-2.0
+metadata:
+  version: 4.0.0
+description: 레포 점검·기술 이슈 발행
+---
+
+# .🌈orbit
+
+근거가 있는 문제를 찾아 영향과 다음 행동을 설명한다. 조사 범위와 불확실성에 맞춰 검토하고, 발행을 요청받았으면 중복 확인부터 이슈 생성·갱신까지 완료한다.
+
+특정 PR·diff의 버그 검토와 단발성 수정은 별도 작업으로 다룬다.
+
+## 실행 범위
+
+- `점검해줘`, `기술 부채 찾아줘`, `$.🌈orbit <repo>`는 분석과 결과 보고다.
+- `이슈로 올려줘`, `자동 발행해줘`, `--publish`는 통과 finding의 발행까지 포함한다. 같은 작업에서 이미 정해진 발행 권한이나 자동화 설정은 다시 묻지 않는다.
+- `분석만`, `미리 보기`, `--dry-run`은 실제 발행을 하지 않는다. 발행 요청과 함께 있어도 이 제한을 우선한다. `--dry-run`은 발행 payload를 준비해 보여주는 모드다.
+- `--suppress <fingerprint>`는 해당 finding의 로컬 상태만 `suppressed`로 바꾼다. 분석·발행 전체를 자동으로 이어 실행하지 않는다. `--dry-run`과 함께면 변경 예정만 보여준다.
+- 저장소 코드를 자동 수정하거나 대상 프로젝트의 script를 무조건 실행하지 않는다. 검증 실행은 사용자 요청과 저장소 지침 안에서 필요한 범위만 수행한다.
+
+```text
+$.🌈orbit .
+$.🌈orbit . --view BUILD --dry-run
+$.🌈orbit https://github.com/owner/repo --view SAFE --publish
+$.🌈orbit . --suppress pipeline:owner/repo:BUILD:f-12345678
+```
+
+`--publish`는 스킬의 실행 모드이며 publisher CLI 옵션이 아니다. `scripts/publish_issue.py`를 직접 실행하면 `--dry-run`이 없는 한 발행한다.
+
+## 대상과 관점 결정
+
+대상이 없으면 현재 Git 저장소를 사용하고, 그것도 없으면 URL이나 경로를 요청한다. host와 namespace/project를 확인하고 이미 인증된 `gh`·`glab` 또는 HTTPS 접근을 우선한다. 현재 저장소를 재사용할 수 있는데 매번 clone하지 않는다.
+
+사용자가 지정한 branch·commit이 우선이다. 정기 감사는 저장소의 실제 기본 branch를 조회해 사용한다. `main/master`를 추정하거나 현재 작업 branch로 바꾸지 않는다. 최신 상태가 필요할 때만 필요한 ref를 fetch하고, 읽을 `scan_sha`를 한 번 고정한다. 파일·diff·근거·메모리는 모두 이 SHA를 기준으로 한다. working tree의 변경은 이 커밋 감사에 섞지 않는다.
+
+관점은 명시한 `--view` 또는 요청한 주제가 우선이다. 전체 관점을 요청했으면 일곱 관점을 다루고, 범위가 없는 정기 실행은 현지 날짜의 요일 기본값을 쓴다.
+
+| 요일 기본값 | view | 핵심 질문 |
+|---|---|---|
+| 월 | SAFE | 핵심 흐름의 변경 안전성을 확인할 근거가 있는가 |
+| 화 | ARCH | 저장소가 정한 경계와 실제 의존 관계가 맞는가 |
+| 수 | DEP | 의존성·환경·버전 설정이 일관적인가 |
+| 목 | BUILD | 로컬·CI·배포의 입력과 실행 경로가 재현 가능한가 |
+| 금 | DATA | 데이터 계약과 상태 변경 경로가 일관적인가 |
+| 토 | OPS | 장애를 알아차리고 복구할 실제 경로가 있는가 |
+| 일 | DOC | 현재 동작을 설명하는 지식이 유지되는가 |
+
+선택한 `agents/<VIEW>.md`와 [공통 조사 기준](references/agent-playbook.md)을 읽는다. 저장소 유형에 맞지 않는 전제는 [유형별 가이드](references/repo-types.md)로 조정한다.
+
+## 조사와 근거 확인
+
+[메모리](references/coverage-log-schema.md)가 있으면 `last_scan_commit..scan_sha`의 변경, 미탐색 파일, 오래된 얕은 조사, 재시도할 발행 후보 순으로 이번 범위를 정한다. 마지막 커밋을 가져올 수 없거나 이력이 갈라졌으면 diff를 추정하지 말고 관련 범위를 새로 조사한다.
+
+최근에 충분히 확인한 미변경 파일은 우선순위를 낮출 수 있다. 다만 현재 claim의 호출 경로·반례를 확인하려면 다시 읽는다. 변경·미탐색·재확인 대상과 보류된 발행 후보가 모두 없을 때만 변경 없음으로 끝낸다.
+
+작은 범위는 직접 조사한다. 독립된 범위를 분담할 이점이 있거나 중요한 결론에 별도 검증이 필요하면 병렬 리뷰어를 사용할 수 있다. A/B/C는 조사 관점이며 필수 인원수가 아니다. 분담할 때만 [조정 지침](agents/orchestrator.md)을 읽고 같은 `scan_sha`와 조사 범위를 공유한다.
+
+finding에는 확인한 문제, 직접 읽은 `file:line`, 영향을 받는 경로와 재현 조건, 구체적 `next_step`이 필요하다. 이름·폴더 모양·파일 부재만으로 결함을 단정하지 않는다. 강한 반례가 나오면 사실 관계를 확인해 claim을 좁히거나 철회한다. 반박이 없다는 사실을 입증으로 쓰지 않는다.
+
+같은 원인과 수정으로 해결되는 관찰만 병합한다. 같은 줄의 다른 문제나 다른 줄의 같은 문제를 구분한다. 재조사는 중요한 판단을 바꿀 새 근거가 있을 때 하고, 고정된 라운드·질의·항소 절차를 매번 수행하지 않는다. 일부 조사 실패는 확인한 결과와 미검토 범위를 구분해 보고한다.
+
+## 선별과 중복 처리
+
+채점과 JSON 기록이 필요하면 [결과 계약](references/execution-lifecycle.md)을 따른다. 기본 발행 기준은 impact ≥ 4, urgency ≥ 3, confidence ≠ low, actionability ≥ 3이다. 값은 [pipeline_contracts.py](scripts/pipeline_contracts.py)의 기본 triage·ID·actionability 함수를 사용한다. 기준 조정은 [triage-rules.md](references/triage-rules.md)를 참고한다.
+
+숫자 기준에 앞서 영향 경로와 문제의 성립 근거가 있어야 한다. 이슈 수를 채우려고 점수를 올리거나 next_step에 불필요한 명령어를 끼워 넣지 않는다. 분석 결과에는 발행 기준 미달이어도 사용자 판단에 필요한 중요한 제한을 설명할 수 있다.
+
+ID는 정규화한 claim과 impact_surface의 SHA1 앞 8자에 `f-`를 붙인 값이다. fingerprint는 `pipeline:<repo>:<view_id>:<finding_id>`를 유지한다. 문구 변경으로 ID가 달라질 수 있으므로 모든 view의 `known_findings`에서 같은 원인도 비교한다.
+
+- `status == "open"`: 같은 view의 동일 문제는 갱신 대상이다. 과거 ID와만 다르면 검증된 `--legacy-fingerprint`를 전달한다. 다른 view에서 추적 중이면 그 이슈를 보고하고 새로 발행하지 않는다.
+- `status == "closed"`: 자동 재오픈·대체 이슈 생성을 하지 않는다. 같은 view의 과거 ID는 `--legacy-fingerprint`로 publisher의 `skipped_closed` 판정까지 연결한다. 다른 view의 닫힌 문제도 새 이슈로 만들지 않는다.
+- `status == "suppressed"`: 발행하지 않는다. 코드 변경이나 모델의 재분석만으로 억제를 해제하지 않는다.
+
+다른 view의 fingerprint는 갱신 alias로 전달하지 않는다. 메모리는 중복 탐색의 단서이며 실제 open/closed 상태는 원격 확인 결과를 따른다.
+
+## 발행과 마무리
+
+발행 권한이 있으면 [본문 계약](references/output-templates.md)에 맞춰 payload를 파일로 만들고 `scripts/publish_issue.py`로 생성·갱신한다. 제목은 `[view: <VIEW>]`로 시작하는 50자 이내 문장이고, 본문은 `format_version: orbit/v2.4`와 정확한 footer를 포함한다.
+
+```html
+<!-- orbit-fingerprint: pipeline:owner/repo:BUILD:f-12345678 -->
+```
+
+publisher가 pagination, fingerprint·동일 view legacy alias 검색, open 갱신, closed 재오픈 방지를 맡는다. 이 계약을 우회하는 별도 발행 루프를 만들지 않는다. 인증은 기존 환경변수나 사용자 로컬 설정을 이용하고, token을 대화에 요청하거나 출력하지 않는다. 사용할 인증이 없으면 발행 가능한 payload와 필요한 설정만 전달한다.
+
+`created`·`updated`, `skipped_closed`, `manual_required`를 구분한다. 실패가 있어도 독립된 후보는 계속 처리하되 완료 응답이 없는 발행은 성공으로 세지 않는다. 재시도 전에 기존 이슈를 다시 확인한다.
+
+분석·dry-run은 지속 메모리의 탐색 기준과 발행 상태를 변경하지 않는다. 발행 실행은 실제 확인한 범위와 원격 결과만 [메모리 규칙](references/coverage-log-schema.md)에 기록한다. 실패·부분 조사를 완전 탐색으로 기록하지 않는다.
+
+최종 답변은 대상 revision·관점, 중요한 결과와 근거, 실제 발행 결과·링크, 미검토 또는 실패 범위를 중심으로 쓴다. 상세 통계와 JSON은 필요할 때 파일로 연결한다. finding이 없으면 그 사실과 조사 범위만 말하고 전역 안전 판정으로 확대하지 않는다.

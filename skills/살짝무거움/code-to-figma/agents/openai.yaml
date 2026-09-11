@@ -1,0 +1,4 @@
+interface:
+  display_name: ".🌈code-to-figma"
+  short_description: "웹 화면을 편집 가능한 Figma로"
+  default_prompt: "$.🌈code-to-figma로 현재 웹 화면을 Figma 디자인으로 옮겨 주세요."

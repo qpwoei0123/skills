@@ -1,0 +1,4 @@
+interface:
+  display_name: ".⚡review"
+  short_description: "사람이 결정할 리뷰 질문 추리기"
+  default_prompt: "$.⚡review로 현재 변경에서 사람이 결정해야 할 질문을 근거와 함께 추려 주세요."

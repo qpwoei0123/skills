@@ -17,7 +17,7 @@ class ValidateSkillsTest(unittest.TestCase):
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(content, encoding="utf-8")
 
-    def write_valid_skill(self, skill_dir: Path, description: str = "(v0.1.0) 테스트 스킬") -> None:
+    def write_valid_skill(self, skill_dir: Path, description: str = "테스트 스킬") -> None:
         self.write(
             skill_dir / "SKILL.md",
             "\n".join(
@@ -121,7 +121,7 @@ class ValidateSkillsTest(unittest.TestCase):
             report = validate_skill(skill_dir)
 
         prefix_error = next(
-            error for error in report.errors if error.code == "description_version_prefix_mismatch"
+            error for error in report.errors if error.code == "description_version_prefix"
         )
         self.assertIn("0.1.0", prefix_error.message)
         self.assertTrue(prefix_error.autofixable)
@@ -211,7 +211,7 @@ class ValidateSkillsTest(unittest.TestCase):
                     [
                         "interface:",
                         '  display_name: ""',
-                        '  short_description: "너무 짧음"',
+                        '  short_description: "목록에서 한눈에 읽을 수 없을 정도로 지나치게 길어진 설명입니다"',
                         '  default_prompt: "호출 이름이 없는 기본 프롬프트"',
                     ]
                 ),

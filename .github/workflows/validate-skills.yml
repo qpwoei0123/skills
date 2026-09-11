@@ -33,7 +33,7 @@ jobs:
         with:
           node-version: "20"
           cache: npm
-          cache-dependency-path: "skills/살짝무거움/won-code-to-figma/package-lock.json"
+          cache-dependency-path: "skills/살짝무거움/code-to-figma/package-lock.json"
 
       - name: Check script syntax
         run: |
@@ -43,11 +43,11 @@ jobs:
       - name: Run Python tests
         run: |
           python3 -m unittest discover -s scripts -p 'test_*.py' -v
-          python3 -m unittest discover -s 'skills/살짝무거움/won-orbit/scripts' -p 'test_*.py' -v
-          python3 -m unittest discover -s 'skills/살짝무거움/won-soul-extractor/scripts' -p 'test_*.py' -v
+          python3 -m unittest discover -s 'skills/살짝무거움/orbit/scripts' -p 'test_*.py' -v
+          python3 -m unittest discover -s 'skills/살짝무거움/soul-extractor/scripts' -p 'test_*.py' -v
 
-      - name: Check won-code-to-figma capture driver
-        working-directory: "skills/살짝무거움/won-code-to-figma"
+      - name: Check code-to-figma capture driver
+        working-directory: "skills/살짝무거움/code-to-figma"
         env:
           PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: "1"
         run: |

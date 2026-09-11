@@ -1,0 +1,4 @@
+interface:
+  display_name: ".🌈orbit"
+  short_description: "레포 점검·기술 이슈 발행"
+  default_prompt: "$.🌈orbit으로 이 레포를 종합 점검하고 검증된 기술 이슈를 발행해 주세요."

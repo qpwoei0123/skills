@@ -1,0 +1,4 @@
+interface:
+  display_name: ".🌈soul-extractor"
+  short_description: "내 문체 추출·초안 작성"
+  default_prompt: "$.🌈soul-extractor로 이 글 샘플의 문체 지문을 추출해 주세요."
