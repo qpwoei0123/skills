@@ -12,7 +12,7 @@
 
 - 스킬마다 최소한의 형식을 맞춘다.
 - 버전, 변경 이력, 사용자 문서를 일관되게 유지한다.
-- `orbit` 같은 복잡한 스킬과 `commit` 같은 단순한 스킬을 모두 수용한다.
+- `won-orbit` 같은 복잡한 스킬과 `commit` 같은 단순한 스킬을 모두 수용한다.
 - 이후 `validator(형식 검증 스크립트)`와 `CI(자동 검증 파이프라인)`로 자동 검사할 수 있게 만든다.
 
 ## 적용 범위
@@ -21,7 +21,7 @@
 
 - 정식 스킬: `skills/<카테고리>/` 아래의 스킬 디렉터리
 - 카테고리: 사용 무게 기준 — `데일리함`(가벼운 일상 도구), `살짝무거움`(멀티스텝 워크플로)
-- 예시: `skills/데일리함/commit/`, `skills/살짝무거움/orbit/`
+- 예시: `skills/데일리함/commit/`, `skills/살짝무거움/won-orbit/`
 - 스킬 디렉터리 이름은 카테고리가 달라도 전역에서 유일해야 한다. 배포와 npx 설치가 이름 기준이기 때문이다.
 
 임시 초안은 이 저장소 밖에서 만들 수 있다.
@@ -70,7 +70,7 @@ frontmatter 최소 형식:
 
 ```yaml
 ---
-name: orbit
+name: won-orbit
 license: Apache-2.0
 metadata:
   version: 1.7.0
@@ -156,9 +156,9 @@ description: (v1.7.0) 스킬 설명. 트리거 문구 예시 포함.
 
 ```yaml
 interface:
-  display_name: "Orbit"
+  display_name: "won-orbit"
   short_description: "레포를 7개 관점으로 점검해 검증된 기술 이슈를 발행합니다"
-  default_prompt: "$orbit으로 이 레포를 종합 점검해 주세요."
+  default_prompt: "$won-orbit으로 이 레포를 종합 점검해 주세요."
 ```
 
 - `display_name`은 비어 있지 않아야 한다.
@@ -219,7 +219,7 @@ skills/데일리함/commit/
 ### 복잡한 워크플로 스킬
 
 ```text
-skills/살짝무거움/orbit/
+skills/살짝무거움/won-orbit/
 ├── SKILL.md
 ├── README.md
 ├── CHANGELOG.md
@@ -325,4 +325,4 @@ skills/살짝무거움/orbit/
 1. `scripts/validate_skills.py`로 전체 스킬 계약을 검사한다.
 2. 루트 unittest로 validator·normalizer·deploy 회귀를 확인한다.
 3. `templates/skill/`을 현재 표준과 함께 유지한다.
-4. `orbit`, `good`, `soul-extractor`를 포함한 현재 accepted 스킬의 정합성을 유지한다.
+4. `won-orbit`, `good`, `won-soul-extractor`를 포함한 현재 accepted 스킬의 정합성을 유지한다.

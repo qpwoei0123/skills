@@ -2,8 +2,8 @@
 name: mr
 license: Apache-2.0
 metadata:
-  version: 1.0.0
-description: (v1.0.0) 요청한 작업을 push하고 저장소 관례에 맞는 GitHub Draft PR 또는 GitLab Draft MR을 만드는 스킬. "PR 올려줘", "MR 만들어줘", "커밋하고 PR까지", "$mr" 요청에 사용한다. 결함 리뷰는 review, 기존 Draft 본문 갱신은 ship이 맡는다.
+  version: 1.0.1
+description: (v1.0.1) 요청한 작업을 push하고 저장소 관례에 맞는 GitHub Draft PR 또는 GitLab Draft MR을 만드는 스킬. "PR 올려줘", "MR 만들어줘", "커밋하고 PR까지", "$mr" 요청에 사용한다. 결함 리뷰는 review, 기존 Draft 본문 갱신은 won-ship이 맡는다.
 ---
 
 # mr

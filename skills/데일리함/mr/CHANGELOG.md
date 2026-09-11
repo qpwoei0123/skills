@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.1
+
+### Fixed
+
+- 기존 Draft 갱신 담당 스킬 참조를 `won-ship`으로 변경
+
 ## 1.0.0
 
 ### Changed
