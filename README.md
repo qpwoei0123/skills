@@ -143,7 +143,6 @@ python3 scripts/deploy_skills.py --check     # 버전과 실제 파일 내용 �
     │   ├── good/                   # 동작 보존 코드 정리와 필요한 맥락 주석
     │   └── wow/                    # 설계 관점 재구상 스킬
     └── 살짝무거움/                 # 멀티스텝 워크플로
-        ├── won-code-visualizer/        # 코드·아키텍처를 단일 HTML로 설명하는 시각화 스킬
         ├── won-context-review/         # 큰 PR/MR에서 고맥락 질문을 추리는 리뷰 스킬
         ├── won-ship/                   # 새 Draft 생성·기존 Draft 갱신까지 잇는 출항 워크플로
         ├── won-orbit/                  # 레포 점검/이슈 발행 워크플로 스킬
@@ -162,7 +161,6 @@ python3 scripts/deploy_skills.py --check     # 버전과 실제 파일 내용 �
 - `won-code-to-figma`: 구현된 웹 화면을 요청한 편집 구조와 디자인 시스템 연결에 맞춰 Figma로 옮기는 스킬
 - `won-ship`: 현재 작업을 다듬고 주석·검증·커밋한 뒤 새 Draft를 만들거나 기존 Draft 본문을 갱신하는 출항 워크플로
 - `won-context-review`: 큰 PR/MR과 관련 자료에서 사람이 답해야 할 고맥락 리뷰 질문만 근거와 함께 추리는 스킬
-- `won-code-visualizer`: 코드·diff의 아키텍처와 실행·데이터·상태 흐름을 근거가 연결된 단일 HTML로 보여주는 스킬
 
 ## 추천 사용 흐름
 
@@ -181,7 +179,6 @@ $commit 변경분을 의미 단위로 나눠 커밋해줘.
 $mr 현재 작업을 Draft PR/MR로 올려줘.
 $won-ship 다듬고 커밋해 새 Draft를 만들거나 기존 Draft를 갱신해줘.
 $won-context-review <PR/MR URL> 사람이 답해야 할 고맥락 질문만 추려줘.
-$won-code-visualizer 이 기능의 요청부터 저장까지를 HTML로 보여줘.
 $won-orbit . --view BUILD --dry-run
 $won-orbit . --view SAFE --publish
 $won-code-to-figma 현재 화면들을 새 Figma 파일에 편집 가능한 레이어로 옮겨줘.
@@ -219,7 +216,6 @@ Figma 변환은 화면 수와 관계없이 요청한 편집·DS 기준을 따릅
 | `$ship` | `$won-ship` |
 | `$orbit` | `$won-orbit` |
 | `$context-review` | `$won-context-review` |
-| `$code-visualizer` | `$won-code-visualizer` |
 | `$code-to-figma` | `$won-code-to-figma` |
 | `$soul-extractor` | `$won-soul-extractor` |
 
