@@ -100,6 +100,8 @@ description: 레포 점검·기술 이슈 발행
 
 `README.md`는 사람용 사용 설명서다.
 
+README는 무엇을 하는지와 어떻게 쓰는지가 바로 보여야 한다. 목적·사용법부터 설명하고, 구현 용어와 내부 처리 설명은 필요한 만큼만 넣는다.
+
 최소 포함 섹션:
 
 - 한 줄 소개
@@ -329,3 +331,7 @@ skills/살짝무거움/orbit/
 2. 루트 unittest로 validator·normalizer·deploy 회귀를 확인한다.
 3. `templates/skill/`을 현재 표준과 함께 유지한다.
 4. `.🌈orbit`, `.⚡good`, `.🌈soul-extractor`를 포함한 현재 accepted 스킬의 정합성을 유지한다.
+
+## 공통 판단 규칙
+
+코드 품질 기준은 `rules/modules/`에서 관리하고 `rules/skills.json`으로 스킬별 적용 범위를 정한다. `python3 scripts/sync_skill_rules.py --write`가 각 `SKILL.md`의 frontmatter 아래 생성 영역을 갱신한다. 규칙과 겹치는 고유 본문·참조 문서는 정리하되 스킬별 권한과 동작 보존 조건은 유지한다. 새 스킬은 배정표에도 등록하며, 필요 없는 경우 빈 모듈 목록을 사용한다. 생성 결과는 커밋에 포함한다. [수정 방법과 CI 동작](../rules/README.md)을 따른다.

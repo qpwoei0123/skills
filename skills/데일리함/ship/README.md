@@ -1,6 +1,6 @@
 # .⚡ship
 
-`version: 3.0.0`
+`version: 3.1.0`
 
 닷 스킬(Dot Skills)의 PR/MR 준비 도구입니다. `.⚡commit`의 연장선에서 필요한 diff를 커밋하고, 저장소 관례에 맞는 제목·본문을 완성합니다. 기존 `mr`과 `won-ship`을 통합했습니다.
 

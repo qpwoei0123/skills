@@ -10,7 +10,7 @@ jobs:
   validate-skills:
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write
     outputs:
       matrix: ${{ steps.compute-targets.outputs.matrix }}
       has_targets: ${{ steps.compute-targets.outputs.has_targets }}
@@ -27,6 +27,13 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+
+      - name: Assemble shared skill rules on main
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: python3 scripts/sync_skill_rules.py --write
+
+      - name: Check shared skill rules
+        run: python3 scripts/sync_skill_rules.py --check
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
@@ -134,6 +141,18 @@ jobs:
       - name: Fail if validation has errors
         if: steps.validate-json.outputs.exit_code != '0'
         run: exit 1
+
+      - name: Commit assembled skill rules
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          git add -- ':(glob)skills/*/*/SKILL.md'
+          if git diff --cached --quiet; then
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'chore(skills): 공통 판단 규칙 동기화'
+          git push origin HEAD:main
 
   open-normalize-prs:
     needs: validate-skills

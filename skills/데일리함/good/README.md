@@ -1,6 +1,6 @@
 # .⚡good
 
-`version: 2.0.0`
+`version: 2.1.0`
 
 코드의 동작을 유지하면서 복잡성과 중복을 줄이고, 코드만으로 드러나지 않는 맥락을 주석으로 남깁니다. 기존 `trim`과 `annotate`를 통합했습니다.
 
@@ -25,7 +25,6 @@ good/
 ├── README.md
 ├── CHANGELOG.md
 ├── agents/openai.yaml
-├── references/weave-criteria.md
 └── evals/trigger-eval.json
 ```
 
