@@ -87,9 +87,9 @@ description: 레포 점검·기술 이슈 발행
 
 규칙:
 
-- `name`은 호출 이름과 일치해야 한다. 닷 스킬은 저장 폴더명 앞에 데일리함은 `.⚡`, 살짝무거움은 `.🌈`를 붙인다. 예: `skills/데일리함/review/SKILL.md`의 `name: .⚡review`.
+- `name`은 호출 이름과 일치해야 한다. 슬래시 닷 스킬은 저장 폴더명 앞에 데일리함은 `.⚡`, 살짝무거움은 `.🌈`를 붙인다. 예: `skills/데일리함/review/SKILL.md`의 `name: .⚡review`.
 - 점·이모지는 호출명·목록 표시명에 사용하고 저장 폴더는 `review`, `orbit`처럼 둔다. 루트 README의 Accepted Skills에도 실제 호출명을 쓴다. validator는 기존 폴더명·점 접두사 형식도 허용한다.
-- 점·이모지 접두사는 이 저장소의 이름 규칙이다. 기본 `skill-creator`의 `quick_validate.py`는 이를 거부하므로, 닷 스킬은 저장소 validator와 실제 스킬 로더로 확인한다. 로더 인식과 UI 검색·정렬 검증은 구분한다.
+- 점·이모지 접두사는 이 저장소의 이름 규칙이다. 기본 `skill-creator`의 `quick_validate.py`는 이를 거부하므로, 슬래시 닷 스킬은 저장소 validator와 실제 스킬 로더로 확인한다. 로더 인식과 UI 검색·정렬 검증은 구분한다.
 - `metadata.version`은 `SemVer(주버전.부버전.수정버전 규칙)` 형식을 따른다.
 - 버전 표기의 `SSOT(단일 기준 원천)`는 항상 `metadata.version`이다.
 - `description`은 어떤 작업을 맡기는지 바로 알 수 있는 단일행 행동 설명으로 쓴다. 공백 포함 1~30자로 제한하며, YAML의 따옴표와 주석은 글자 수에서 제외한다.
@@ -165,7 +165,7 @@ interface:
 
 - `display_name`은 비어 있지 않아야 한다.
 - `short_description`도 공백 포함 1~30자로 쓰며, `description`과 같은 문구를 권장한다. 이 저장소에서는 짧고 직관적인 한국어 목록 설명을 우선한다.
-- `default_prompt`에는 frontmatter `name` 기준의 `$<skill-name>` 호출 예시가 있어야 한다. 닷 스킬은 `$.⚡review`처럼 쓴다.
+- `default_prompt`에는 frontmatter `name` 기준의 `$<skill-name>` 호출 예시가 있어야 한다. 슬래시 닷 스킬은 `$.⚡review`처럼 쓴다.
 
 ### `references/`
 

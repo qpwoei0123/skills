@@ -1,4 +1,4 @@
-# 닷 스킬
+# 슬래시 닷
 
 <p align="left">
   <img src="assets/dot-skills-hero.svg" width="420" alt="두 손가락으로 점과 슬래시 키를 누르는 낙서">
@@ -6,10 +6,9 @@
 
 **내가 쓰려고 만든 스킬들.**
 
-스킬이 많아지니 내 거 찾기가 어려워서 이름 앞에 `.`을 붙였다.
+스킬이 많아지니 찾기가 어려워서 내 스킬 이름 앞에 .을 붙였다.
 
-데일리한 건 번개 `⚡`, 깊게 들어가는 건 무지개 `🌈`.
-한눈에 골라 쓰려고 붙인 표시다.
+데일리한 건 번개 ⚡, 깊게 들어가는 건 무지개 🌈. 한눈에 파악 가능하게 심사숙고해 골랐다.
 
 ## Accepted Skills
 
@@ -30,20 +29,7 @@
 ## 설치
 
 ```bash
-gh repo clone qpwoei0123/skills
-cd skills
-python3 scripts/deploy_skills.py
+npx skills add qpwoei0123/skills
 ```
 
-이렇게 하면 `~/.agents/skills`에 들어간다.
-
-## 써보기
-
-스킬 고르고 할 일 적으면 된다.
-
-```text
-$.⚡good 이거 좀 다듬어줘
-$.⚡ship 커밋 잘 나누고 Draft PR로 올려줘
-```
-
-[스킬 만들 때](docs/SKILL-STANDARD.md) · [예전 이름 쓰고 있다면](docs/MIGRATION.md)
+[스킬 만들 때](docs/SKILL-STANDARD.md)
