@@ -87,9 +87,9 @@ jobs:
         run: |
           zero_sha="0000000000000000000000000000000000000000"
           if [ -n "$BEFORE_SHA" ] && [ "$BEFORE_SHA" != "$zero_sha" ] && git cat-file -e "$BEFORE_SHA^{commit}" 2>/dev/null; then
-            git diff --name-only "$BEFORE_SHA" "$CURRENT_SHA" > changed-files.txt
+            git -c core.quotepath=false diff --name-only "$BEFORE_SHA" "$CURRENT_SHA" > changed-files.txt
           else
-            git ls-tree -r --name-only "$CURRENT_SHA" > changed-files.txt
+            git -c core.quotepath=false ls-tree -r --name-only "$CURRENT_SHA" > changed-files.txt
           fi
 
           files_json=$(python3 -c 'import json, sys; print(json.dumps([line.strip() for line in sys.stdin if line.strip()]))' < changed-files.txt)
