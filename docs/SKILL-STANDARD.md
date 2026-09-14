@@ -88,7 +88,7 @@ description: 레포 점검·기술 이슈 발행
 규칙:
 
 - `name`은 호출 이름과 일치해야 한다. 슬래시 닷 스킬은 저장 폴더명 앞에 데일리함은 `.⚡`, 살짝무거움은 `.🌈`를 붙인다. 예: `skills/데일리함/review/SKILL.md`의 `name: .⚡review`.
-- 점·이모지는 호출명·목록 표시명에 사용하고 저장 폴더는 `review`, `orbit`처럼 둔다. 루트 README의 Accepted Skills에도 실제 호출명을 쓴다. validator는 기존 폴더명·점 접두사 형식도 허용한다.
+- 점·이모지는 호출명·목록 표시명에 사용하고 저장 폴더는 `review`, `orbit`처럼 둔다. 루트 README의 Accepted Skills는 읽기 쉬운 저장 폴더명이나 실제 호출명을 쓸 수 있다. validator는 두 표기를 같은 스킬로 인식한다.
 - 점·이모지 접두사는 이 저장소의 이름 규칙이다. 기본 `skill-creator`의 `quick_validate.py`는 이를 거부하므로, 슬래시 닷 스킬은 저장소 validator와 실제 스킬 로더로 확인한다. 로더 인식과 UI 검색·정렬 검증은 구분한다.
 - `metadata.version`은 `SemVer(주버전.부버전.수정버전 규칙)` 형식을 따른다.
 - 버전 표기의 `SSOT(단일 기준 원천)`는 항상 `metadata.version`이다.

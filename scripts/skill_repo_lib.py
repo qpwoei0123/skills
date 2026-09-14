@@ -644,8 +644,8 @@ def validate_skill_name_uniqueness(root: Path, skill_dirs: list[Path]) -> SkillR
     return report
 
 
-def validate_root_readme(root: Path, skill_names: list[str]) -> SkillReport:
-    """루트 README의 Accepted Skills 목록과 실제 호출명 일치를 검사한다."""
+def validate_root_readme(root: Path, skill_dirs: list[Path]) -> SkillReport:
+    """README 목록의 저장 폴더명과 호출명을 실제 스킬에 연결한다."""
     report = SkillReport(name="(repo)")
     readme_path = root / "README.md"
     if not readme_path.exists():
@@ -662,7 +662,12 @@ def validate_root_readme(root: Path, skill_names: list[str]) -> SkillReport:
 
     section = text.split("## Accepted Skills", 1)[1].split("\n## ", 1)[0]
     listed = {match.split()[0] for match in ACCEPTED_SKILL_LINE_RE.findall(section)}
-    dirs = set(skill_names)
+    aliases = {}
+    for skill_dir in skill_dirs:
+        aliases[skill_dir.name] = skill_dir.name
+        aliases[skill_name(skill_dir)] = skill_dir.name
+    listed = {aliases.get(name, name) for name in listed}
+    dirs = {skill_dir.name for skill_dir in skill_dirs}
 
     for name in sorted(dirs - listed):
         report.add_error(

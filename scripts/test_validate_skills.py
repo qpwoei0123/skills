@@ -287,9 +287,11 @@ class ValidateSkillsTest(unittest.TestCase):
                 ),
             )
 
-            report = validate_root_readme(root, ["alpha", "beta"])
+            self.write(root / "alpha" / "SKILL.md", "---\nname: .⚡alpha\n---\n")
+            report = validate_root_readme(root, [root / "alpha", root / "beta"])
 
         codes = {(error.code, error.message) for error in report.errors}
+        self.assertEqual(len(codes), 2)
         self.assertIn(
             ("root_readme_skill_unlisted", "Accepted Skills 목록에 없는 스킬 디렉터리: beta"),
             codes,

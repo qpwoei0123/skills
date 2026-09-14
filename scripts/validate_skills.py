@@ -13,7 +13,6 @@ from skill_repo_lib import (
     dumps_json,
     repo_root_from_script,
     select_skills,
-    skill_name,
     validate_root_readme,
     validate_skill,
     validate_skill_name_uniqueness,
@@ -56,7 +55,7 @@ def main() -> int:
 
     reports = [validate_skill(skill_dir) for skill_dir in skill_dirs]
     if not args.skills:
-        repo_report = validate_root_readme(root, [skill_name(skill) for skill in skill_dirs])
+        repo_report = validate_root_readme(root, skill_dirs)
         repo_report.errors.extend(validate_skill_name_uniqueness(root, skill_dirs).errors)
         reports.append(repo_report)
     payload = build_json_payload(reports)
