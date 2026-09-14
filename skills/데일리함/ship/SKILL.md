@@ -2,7 +2,7 @@
 name: .⚡ship
 license: Apache-2.0
 metadata:
-  version: 3.1.0
+  version: 3.2.0
 description: 커밋하고 PR·MR 제목·본문 준비
 ---
 
@@ -61,7 +61,7 @@ description: 커밋하고 PR·MR 제목·본문 준비
 
 커밋을 마친 뒤 `<base>..HEAD`의 이력과 `<base>...HEAD`의 diff를 읽는다. 제목과 본문은 이 최종 범위를 설명하며, 남겨둔 미커밋 diff를 제출한 것처럼 쓰지 않는다.
 
-[본문 작성 기준](references/review-format.md)에 따라 문제와 변경 후 동작부터 설명한다. 저장소 템플릿·최근 본문의 상세도를 따르고, 작은 변경에 빈 검증·위험 항목이나 체크박스를 채우지 않는다. 과거 초안이 있으면 최종 범위에 맞춰 다시 쓴다.
+제목·본문을 쓰거나 갱신하기 전에 [본문 작성 기준](references/review-format.md)을 읽는다. 리뷰어가 이해해 가는 순서를 우선한다. 기존 저장소 양식과 말투 안에서 필요한 배경, 변경과 결과, 판단할 지점이 자연스럽게 이어지도록 쓴다. 과거 초안이 있으면 최종 범위에 맞춰 다시 쓴다.
 
 새 Draft에서 `.⚡ship`이 작성한 요약·검증·리뷰 설명은 `<!-- ship:managed:start -->`와 `<!-- ship:managed:end -->` 사이에 둔다. 기존 Draft의 표식과 사용자 작성 내용은 [본문 갱신](references/draft-update.md) 기준으로 보존한다.
 
