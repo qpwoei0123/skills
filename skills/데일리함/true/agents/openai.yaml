@@ -1,0 +1,4 @@
+interface:
+  display_name: ".⚡true"
+  short_description: "요청 뒤의 목적과 작업 방향 점검"
+  default_prompt: "$.⚡true로 지금 하는 일이 내가 원하는 결과로 이어지는지 봐 주세요."

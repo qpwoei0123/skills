@@ -14,6 +14,7 @@
 
 - `good` — [더 좋게 만든다, 동작은 그대로, 코드랑 주석 정리](skills/데일리함/good/README.md)
 - `wow` — [더 단순하게 설계해보기, 처음부터 설계를 했다면?](skills/데일리함/wow/README.md)
+- `true` — [지금 하는 일이 진짜 원하는 결과로 가는지 짚어보기](skills/데일리함/true/README.md)
 - `commit` — [레포의 커밋 규칙, 좋은 분리 전부 알아서](skills/데일리함/commit/README.md)
 - `review` — [고리타분한 저맥락 오류보단, 고맥락의 사람이 결정할 질문만 추리기](skills/데일리함/review/README.md)
 - `ship` — [출항! 커밋하고 PR·MR 제목이랑 본문 준비](skills/데일리함/ship/README.md)
